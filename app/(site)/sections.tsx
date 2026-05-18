@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AUDIENCE, NOT_FOR, PROCESS, PRINCIPLES, WORK, PRICING, FAQS } from "@/lib/content";
+import { AUDIENCE, PROCESS, PRINCIPLES, WORK, PRICING, FAQS } from "@/lib/content";
 import type { Theme } from "./themes";
 import { CtaPrimary } from "./chrome";
 
@@ -10,63 +10,58 @@ export function BuiltFor({ theme }: { theme: Theme }) {
   return (
     <section id="built-for" className="py-24 sm:py-32" style={{ background: theme.bgAlt }}>
       <div className="mx-auto max-w-7xl px-6">
-        <Eyebrow theme={theme}>Built for</Eyebrow>
-        <h2
-          className="font-semibold tracking-tight text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.02] mt-5 max-w-3xl text-balance"
-          style={{ fontFamily: theme.fontDisplay, color: theme.ink }}
-        >
-          Small businesses that need to look bigger than they are.
-        </h2>
-        <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-pretty" style={{ color: theme.inkSoft }}>
-          We aren't built for enterprise procurement, agency-of-record retainers, or anyone who
-          needs an RFP. We're built for owner-operators who need a website that works, fast.
-        </p>
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
+          <div className="lg:col-span-7">
+            <Eyebrow theme={theme}>Built for</Eyebrow>
+            <h2
+              className="font-semibold tracking-tight text-[clamp(2.2rem,5vw,4rem)] leading-[1] mt-5 text-balance"
+              style={{ fontFamily: theme.fontDisplay, color: theme.ink }}
+            >
+              Owners.{" "}
+              <span style={{ color: theme.inkMuted }}>Not org charts.</span>
+            </h2>
+          </div>
+          <div className="lg:col-span-5">
+            <p className="text-[17px] leading-[1.55] text-pretty" style={{ color: theme.inkSoft }}>
+              We work with people who answer their own phone and sign their own invoices. Solo
+              founders, small teams, local operators — the kind of business where the website has to
+              pull its weight from day one.
+            </p>
+          </div>
+        </div>
 
-        <div className={`mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-px ${theme.borderRadius} overflow-hidden`}
+        <div
+          className={`mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-px ${theme.borderRadius} overflow-hidden`}
           style={{ background: theme.borderStrong, border: `1px solid ${theme.borderStrong}` }}
         >
           {AUDIENCE.map((a, i) => (
-            <article key={a.name} className="p-7" style={{ background: theme.card }}>
-              <div className="flex items-baseline justify-between mb-4">
-                <span
-                  className="font-mono text-[10px] uppercase tracking-[0.22em] font-medium"
+            <article
+              key={a.name}
+              className="p-8 flex flex-col justify-between min-h-[180px] group transition-colors"
+              style={{ background: theme.card }}
+            >
+              <div>
+                <p
+                  className="text-[10px] uppercase tracking-[0.22em] font-bold mb-5"
                   style={{ color: theme.accent, fontFamily: theme.fontMono }}
                 >
-                  0{i + 1}
-                </span>
-                <span className="h-px flex-1 ml-3" style={{ background: theme.border }} />
+                  · 0{i + 1}
+                </p>
+                <h3
+                  className="text-[22px] tracking-tight leading-[1.1] text-balance"
+                  style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
+                >
+                  {a.name}
+                </h3>
               </div>
-              <h3
-                className="text-xl tracking-tight font-semibold"
-                style={{ fontFamily: theme.fontDisplay, color: theme.ink }}
+              <p
+                className="mt-6 text-[15px] leading-[1.4] text-pretty"
+                style={{ color: theme.inkSoft, fontFamily: theme.fontAccent }}
               >
-                {a.name}
-              </h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-pretty" style={{ color: theme.inkSoft }}>
                 {a.body}
               </p>
             </article>
           ))}
-        </div>
-
-        <div
-          className={`mt-8 ${theme.borderRadius} ${theme.borderWidth} p-5`}
-          style={{ borderColor: theme.border, borderStyle: "dashed", background: theme.card }}
-        >
-          <p
-            className="text-[11px] uppercase tracking-[0.18em] font-semibold mb-2"
-            style={{ color: theme.inkMuted, fontFamily: theme.fontMono }}
-          >
-            Not a fit if you're:
-          </p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px]" style={{ color: theme.inkSoft }}>
-            {NOT_FOR.map((n) => (
-              <li key={n} className="flex items-baseline gap-2">
-                <span style={{ color: theme.accent }}>×</span>
-                {n}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </section>
@@ -79,16 +74,42 @@ export function HowWeWork({ theme }: { theme: Theme }) {
     <section id="how" className="py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6">
         <Eyebrow theme={theme}>How we work</Eyebrow>
-        <h2
-          className="font-semibold tracking-tight text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.02] mt-5 max-w-3xl text-balance"
-          style={{ fontFamily: theme.fontDisplay, color: theme.ink }}
-        >
-          From intake to live site in fourteen days.
-        </h2>
-        <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-pretty" style={{ color: theme.inkSoft }}>
-          No discovery calls. No invoices for "strategy." We ask the right questions on day one,
-          then we build.
-        </p>
+        <div className="mt-5 grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
+          <div className="lg:col-span-8">
+            <h2
+              className="font-semibold tracking-tight text-[clamp(2.2rem,5vw,4rem)] leading-[1] text-balance"
+              style={{ fontFamily: theme.fontDisplay, color: theme.ink }}
+            >
+              Three concepts in 24 hours.{" "}
+              <span style={{ color: theme.accent, fontFamily: theme.fontAccent }}>Live in 72.</span>
+            </h2>
+            <p className="mt-6 max-w-2xl text-[16px] leading-relaxed text-pretty" style={{ color: theme.inkSoft }}>
+              Real designers, transparent process, the fastest delivery in the business. The intake
+              form on day one is the brief — no slide decks, no discovery calls, no week-long
+              kickoffs.
+            </p>
+          </div>
+          <div
+            className={`lg:col-span-4 ${theme.borderRadius} ${theme.borderWidth} p-6 text-center`}
+            style={{ background: theme.card, borderColor: theme.border }}
+          >
+            <p
+              className="text-[11px] uppercase tracking-[0.22em] font-semibold"
+              style={{ color: theme.accent, fontFamily: theme.fontMono }}
+            >
+              Intake → live URL
+            </p>
+            <p
+              className="mt-2 text-[88px] leading-none tracking-tight"
+              style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
+            >
+              72<span style={{ color: theme.accent }}>h</span>
+            </p>
+            <p className="mt-2 text-[13px]" style={{ color: theme.inkMuted }}>
+              Three full days, end to end.
+            </p>
+          </div>
+        </div>
 
         <ol
           className={`mt-14 grid md:grid-cols-3 gap-px ${theme.borderRadius} overflow-hidden`}
@@ -240,11 +261,13 @@ export function Pricing({ theme }: { theme: Theme }) {
           className="font-semibold tracking-tight text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.02] mt-5 max-w-3xl text-balance"
           style={{ fontFamily: theme.fontDisplay, color: theme.ink }}
         >
-          One fair price. Nothing hidden later.
+          Every cost,{" "}
+          <span style={{ color: theme.accent, fontFamily: theme.fontAccent }}>on this page.</span>
         </h2>
         <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-pretty" style={{ color: theme.inkSoft }}>
-          No mystery line items. No 'strategy' invoices. No surprise change orders. Most sites we
-          ship come in between <span className="font-semibold" style={{ color: theme.ink }}>$995 and $1,690 total</span>{" "}
+          Full transparency from quote to launch. Here's exactly what you pay — the base build,
+          optional add-ons, and the ongoing hosting and domain. Most sites total{" "}
+          <span className="font-semibold" style={{ color: theme.ink }}>$995–$1,690</span>{" "}
           to build.
         </p>
 
@@ -433,27 +456,6 @@ export function Pricing({ theme }: { theme: Theme }) {
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Never on the invoice */}
-        <div
-          className={`mt-10 ${theme.borderRadius} p-5`}
-          style={{ borderStyle: "dashed", border: `1px dashed ${theme.border}` }}
-        >
-          <p
-            className="text-[11px] uppercase tracking-[0.18em] font-semibold mb-3"
-            style={{ color: theme.inkMuted, fontFamily: theme.fontMono }}
-          >
-            Never on the invoice
-          </p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-[13px]" style={{ color: theme.inkSoft }}>
-            {PRICING.notIncluded.map((n) => (
-              <li key={n} className="flex items-baseline gap-2">
-                <span style={{ color: theme.accent }}>×</span>
-                {n}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </section>

@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Simple Site — Custom websites for small businesses, from $995",
   description:
-    "We design and build distinctive, conversion-focused websites for service businesses. Fixed pricing. Real designers. Live in two weeks.",
+    "We design and build distinctive, conversion-focused websites for service businesses. Transparent pricing. Real designers. Live in under 72 hours.",
   metadataBase: new URL("https://simplesite.co"),
 };
 
