@@ -145,8 +145,8 @@ export const WORK = [
 // owner-operators, not org charts.
 export const AUDIENCE = [
   {
-    name: "Solo founders & freelancers",
-    body: "It's just you. We make the site that makes you look like a team.",
+    name: "Solo founders & start-ups",
+    body: "Just you, or just a few. We build the site that makes you look like a team.",
   },
   {
     name: "Trades & home services",
