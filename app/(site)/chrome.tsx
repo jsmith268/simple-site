@@ -39,7 +39,7 @@ export function CtaPrimary({
   return (
     <Link
       href={href}
-      className={`group inline-flex items-center gap-2 px-6 py-3.5 text-[15px] font-semibold transition-colors ${
+      className={`group inline-flex items-center justify-center gap-2 px-6 py-3.5 text-[15px] font-semibold transition-colors w-full sm:w-auto ${
         sharp ? "" : "rounded-full"
       }`}
       style={{
@@ -73,7 +73,7 @@ export function CtaCycle({
       onClick={onClick}
       disabled={cycling}
       aria-label="Update site design"
-      className={`group inline-flex items-center gap-2.5 px-5 py-3.5 text-[15px] font-semibold border-2 transition-colors disabled:cursor-not-allowed ${
+      className={`group inline-flex items-center justify-center gap-2.5 px-5 py-3.5 text-[15px] font-semibold border-2 transition-colors disabled:cursor-not-allowed w-full sm:w-auto ${
         sharp ? "" : "rounded-full"
       }`}
       style={{

@@ -8,8 +8,8 @@ import { CtaPrimary } from "./chrome";
 // ─── BUILT FOR ────────────────────────────────────────────────────────
 export function BuiltFor({ theme }: { theme: Theme }) {
   return (
-    <section id="built-for" className="py-24 sm:py-32" style={{ background: theme.bgAlt }}>
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="built-for" className="py-20 sm:py-32" style={{ background: theme.bgAlt }}>
+      <div className="mx-auto max-w-7xl px-5 sm:px-6">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
           <div className="lg:col-span-7">
             <Eyebrow theme={theme}>Built for</Eyebrow>
@@ -71,8 +71,8 @@ export function BuiltFor({ theme }: { theme: Theme }) {
 // ─── HOW WE WORK ──────────────────────────────────────────────────────
 export function HowWeWork({ theme }: { theme: Theme }) {
   return (
-    <section id="how" className="py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="how" className="py-20 sm:py-32">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6">
         <Eyebrow theme={theme}>How we work</Eyebrow>
         <div className="mt-5 grid lg:grid-cols-12 gap-10 lg:gap-16 items-end">
           <div className="lg:col-span-8">
@@ -100,7 +100,7 @@ export function HowWeWork({ theme }: { theme: Theme }) {
               Intake → live URL
             </p>
             <p
-              className="mt-2 text-[88px] leading-none tracking-tight"
+              className="mt-2 text-[72px] sm:text-[88px] leading-none tracking-tight"
               style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
             >
               72<span style={{ color: theme.accent }}>h</span>
@@ -168,8 +168,8 @@ export function HowWeWork({ theme }: { theme: Theme }) {
 // ─── WORK ─────────────────────────────────────────────────────────────
 export function Work({ theme }: { theme: Theme }) {
   return (
-    <section id="work" className="py-24 sm:py-32" style={{ background: theme.bgAlt }}>
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="work" className="py-20 sm:py-32" style={{ background: theme.bgAlt }}>
+      <div className="mx-auto max-w-7xl px-5 sm:px-6">
         <Eyebrow theme={theme}>Recent work</Eyebrow>
         <h2
           className="font-semibold tracking-tight text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.02] mt-5 max-w-3xl text-balance"
@@ -254,8 +254,8 @@ export function Work({ theme }: { theme: Theme }) {
 // ─── PRICING ──────────────────────────────────────────────────────────
 export function Pricing({ theme }: { theme: Theme }) {
   return (
-    <section id="pricing" className="py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="pricing" className="py-20 sm:py-32">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6">
         <Eyebrow theme={theme}>Transparent pricing</Eyebrow>
         <h2
           className="font-semibold tracking-tight text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.02] mt-5 max-w-3xl text-balance"
@@ -274,11 +274,11 @@ export function Pricing({ theme }: { theme: Theme }) {
         {/* One-time block */}
         <div className="mt-12 grid lg:grid-cols-12 gap-5">
           <div
-            className={`lg:col-span-7 ${theme.borderRadius} ${theme.borderWidth} p-8 sm:p-10 relative overflow-hidden`}
+            className={`lg:col-span-7 ${theme.borderRadius} ${theme.borderWidth} p-6 sm:p-10 relative overflow-hidden`}
             style={{ background: theme.card, borderColor: theme.border }}
           >
             <span
-              className="absolute top-0 right-0 px-4 py-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold"
+              className="hidden sm:inline-block absolute top-0 right-0 px-4 py-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold"
               style={{
                 background: theme.accent,
                 color: theme.accentInk,
@@ -287,15 +287,23 @@ export function Pricing({ theme }: { theme: Theme }) {
             >
               One-time · starting at
             </span>
-            <p
-              className="text-[11px] uppercase tracking-[0.2em] font-semibold mb-3"
-              style={{ color: theme.accent, fontFamily: theme.fontMono }}
-            >
-              The Custom Website
-            </p>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center justify-between gap-3 mb-3 sm:mb-3">
+              <p
+                className="text-[11px] uppercase tracking-[0.2em] font-semibold"
+                style={{ color: theme.accent, fontFamily: theme.fontMono }}
+              >
+                The Custom Website
+              </p>
               <span
-                className="text-[88px] leading-none"
+                className="sm:hidden text-[10px] uppercase tracking-[0.14em] font-semibold px-2 py-0.5 whitespace-nowrap"
+                style={{ background: theme.accent, color: theme.accentInk }}
+              >
+                One-time
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span
+                className="text-[64px] sm:text-[88px] leading-none"
                 style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
               >
                 $995
@@ -315,7 +323,7 @@ export function Pricing({ theme }: { theme: Theme }) {
             </ul>
             <Link
               href="/start"
-              className="mt-9 inline-flex items-center gap-2 px-6 py-3.5 text-sm font-semibold"
+              className="mt-9 inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold w-full sm:w-auto"
               style={{
                 background: theme.ink,
                 color: theme.bg,
@@ -379,13 +387,13 @@ export function Pricing({ theme }: { theme: Theme }) {
           <div className="grid md:grid-cols-3 gap-5">
             {/* Hosting card (spans 2) */}
             <div
-              className={`md:col-span-2 ${theme.borderRadius} ${theme.borderWidth} p-7 relative overflow-hidden`}
+              className={`md:col-span-2 ${theme.borderRadius} ${theme.borderWidth} p-6 sm:p-7 relative overflow-hidden`}
               style={{ background: theme.card, borderColor: theme.border }}
             >
-              <div className="flex items-baseline justify-between flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5 sm:gap-3">
                 <div>
                   <h4
-                    className="text-[26px]"
+                    className="text-[24px] sm:text-[26px]"
                     style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
                   >
                     Hosting
@@ -394,9 +402,9 @@ export function Pricing({ theme }: { theme: Theme }) {
                     {PRICING.recurring[0].blurb}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right shrink-0">
                   <p
-                    className="text-[36px] leading-none"
+                    className="text-[32px] sm:text-[36px] leading-none"
                     style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
                   >
                     ${PRICING.recurring[0].annual}
@@ -465,8 +473,8 @@ export function Pricing({ theme }: { theme: Theme }) {
 // ─── FAQ ──────────────────────────────────────────────────────────────
 export function Faq({ theme }: { theme: Theme }) {
   return (
-    <section id="faq" className="py-24 sm:py-32" style={{ background: theme.bgAlt }}>
-      <div className="mx-auto max-w-4xl px-6">
+    <section id="faq" className="py-20 sm:py-32" style={{ background: theme.bgAlt }}>
+      <div className="mx-auto max-w-4xl px-5 sm:px-6">
         <Eyebrow theme={theme}>FAQ</Eyebrow>
         <h2
           className="font-semibold tracking-tight text-[clamp(2rem,4.4vw,3.4rem)] leading-[1.02] mt-5 max-w-3xl text-balance"
@@ -485,8 +493,8 @@ export function Faq({ theme }: { theme: Theme }) {
               className="group"
               style={i < FAQS.length - 1 ? { borderBottom: `1px solid ${theme.border}` } : undefined}
             >
-              <summary className="cursor-pointer list-none p-6 flex items-start justify-between gap-6">
-                <div className="flex items-baseline gap-5 flex-1">
+              <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-start justify-between gap-4 sm:gap-6">
+                <div className="flex items-baseline gap-3 sm:gap-5 flex-1 min-w-0">
                   <span
                     className="font-mono text-[11px] pt-1.5 shrink-0"
                     style={{ color: theme.accent, fontFamily: theme.fontMono }}
@@ -494,7 +502,7 @@ export function Faq({ theme }: { theme: Theme }) {
                     Q{String(i + 1).padStart(2, "0")}
                   </span>
                   <span
-                    className="text-[19px] leading-tight text-balance"
+                    className="text-[17px] sm:text-[19px] leading-tight text-balance"
                     style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
                   >
                     {f.q}
@@ -511,7 +519,7 @@ export function Faq({ theme }: { theme: Theme }) {
                 </span>
               </summary>
               <p
-                className="pl-[3.4rem] pr-6 pb-6 text-[15px] leading-relaxed text-pretty"
+                className="pl-12 sm:pl-[3.4rem] pr-5 sm:pr-6 pb-5 sm:pb-6 text-[15px] leading-relaxed text-pretty"
                 style={{ color: theme.inkSoft }}
               >
                 {f.a}
@@ -528,7 +536,7 @@ export function Faq({ theme }: { theme: Theme }) {
 export function FinalCta({ theme }: { theme: Theme }) {
   return (
     <section className="py-20">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
         <div
           className={`relative overflow-hidden ${theme.borderRadius} p-10 sm:p-16`}
           style={{ background: theme.ink, color: theme.bg }}

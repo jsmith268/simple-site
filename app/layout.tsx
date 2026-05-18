@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -13,6 +13,12 @@ export const metadata: Metadata = {
   description:
     "We design and build distinctive, conversion-focused websites for service businesses. Transparent pricing. Real designers. Live in under 72 hours.",
   metadataBase: new URL("https://simplesite.co"),
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#f6f2ea",
 };
 
 export default function RootLayout({

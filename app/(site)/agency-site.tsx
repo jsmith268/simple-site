@@ -78,8 +78,8 @@ function Nav({ theme }: { theme: Theme }) {
         borderBottom: `1px solid ${theme.border}`,
       }}
     >
-      <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-baseline font-semibold tracking-tight text-[15px]" style={{ color: theme.ink }}>
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
+        <Link href="/" className="flex items-baseline font-semibold tracking-tight text-[15px] shrink-0" style={{ color: theme.ink }}>
           Simple Site<span className="text-lg leading-none mx-[1px]" style={{ color: theme.accent }}>.</span>co
         </Link>
         <nav className="hidden md:flex items-center gap-7 text-sm" style={{ color: theme.inkSoft }}>
@@ -91,7 +91,7 @@ function Nav({ theme }: { theme: Theme }) {
         </nav>
         <Link
           href="/start"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 text-sm font-medium transition-colors shrink-0"
           style={{
             background: theme.ink,
             color: theme.bg,

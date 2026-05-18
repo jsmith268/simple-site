@@ -263,7 +263,7 @@ export function IntakeForm() {
         {current.id === "assets" && (
           <>
             <Field label="Do you have a logo?">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(["Yes", "Sort of", "No — need one"] as const).map((opt) => (
                   <Chip key={opt} active={data.logo === opt} onClick={() => update("logo", opt)}>
                     {opt}
@@ -272,7 +272,7 @@ export function IntakeForm() {
               </div>
             </Field>
             <Field label="Do you have photography we can use?">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {(["Plenty", "A little", "None"] as const).map((opt) => (
                   <Chip key={opt} active={data.photos === opt} onClick={() => update("photos", opt)}>
                     {opt}
