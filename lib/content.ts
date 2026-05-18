@@ -1,9 +1,23 @@
 // Shared content used across the agency site.
 
+// Active launch promo — 50% off every regular price below.
+export const PROMO = {
+  active: true,
+  discountPct: 50,
+  badge: "Limited time · 50% off",
+  helper: "Launch promo — every price below is 50% off for a limited time.",
+};
+
+// Helper: half the price, floored to whole dollars (customer pays slightly
+// less than exact half on prices ending in .50).
+export function promoPrice(regular: number): number {
+  return Math.floor(regular / 2);
+}
+
 export const PRICING = {
   base: {
     name: "Custom Website",
-    price: 995,
+    price: 4995,
     blurb:
       "A unique, conversion-focused marketing site. Three completely original design directions, up to five rounds of revisions, live in under 72 hours.",
     includes: [
@@ -19,22 +33,22 @@ export const PRICING = {
   addons: [
     {
       name: "Blog / CMS",
-      price: 495,
-      billing: "one-time",
+      price: 1995,
+      billing: "one-time" as const,
       blurb:
         "Post and edit articles yourself. Self-serve dashboard, no engineer required.",
     },
     {
       name: "Extra page",
-      price: 195,
+      price: 995,
       unit: "/ page",
-      billing: "one-time",
+      billing: "one-time" as const,
       blurb: "Each additional page beyond the five included.",
     },
     {
       name: "Custom integrations",
       price: null,
-      billing: "one-time",
+      billing: "one-time" as const,
       blurb:
         "Stripe, online booking, CRM connections, custom forms — quoted by scope.",
     },
@@ -44,24 +58,22 @@ export const PRICING = {
       name: "Hosting",
       blurb:
         "Fast global CDN, automatic deploys, SSL, uptime monitoring, daily backups. Everything required to keep your site fast and online.",
-      monthly: 29,
-      annual: 249,
-      annualSavings: 99,
+      annual: 995,
     },
     {
       name: "Domain",
       blurb:
         ".com or .ca registration, renewal, and DNS management — we handle the registrar so you never have to log in.",
-      annual: 49,
+      annual: 199,
     },
   ],
 };
 
 export const HERO = {
-  eyebrow: "Live in 72 hours · From $995",
+  eyebrow: "50% off · Live in 72 hours",
   description:
-    "Three completely original design concepts. One fixed $995 price. Live in under 72 hours.",
-  primaryCta: { label: "Start your site — $995", href: "/start" },
+    "Three completely original design concepts, live in under 72 hours. Launch promo: every price 50% off, limited time.",
+  primaryCta: { label: "Start your site — $2,497", href: "/start" },
   // Note: secondaryCta on the marketing site is repurposed as the design cycler.
   secondaryCta: { label: "See our work", href: "#work" },
 };
@@ -172,8 +184,8 @@ export const AUDIENCE = [
 
 export const FAQS = [
   {
-    q: "What does $995 actually get me?",
-    a: "A fully designed, custom-built marketing website — up to five pages, mobile-first, fast, SEO-ready, with a working contact form. Three original design directions and up to five rounds of revisions are included. It is not a template.",
+    q: "What does the $2,497 launch promo actually get me?",
+    a: "A fully designed, custom-built marketing website — up to five pages, mobile-first, fast, SEO-ready, with a working contact form. Three original design directions and up to five rounds of revisions are included. It is not a template. The $2,497 price is the launch-promo price (50% off the $4,995 regular rate) and lasts for a limited time.",
   },
   {
     q: "How long does it take?",
@@ -181,7 +193,7 @@ export const FAQS = [
   },
   {
     q: "Why is hosting recurring?",
-    a: "Hosting keeps your site online — fast CDN delivery, SSL, automatic deploys, monitoring, daily backups. $29/month or $249/year if you pay annually (save $99). You can also bring your own hosting if you prefer.",
+    a: "Hosting keeps your site online — fast CDN delivery, SSL, automatic deploys, monitoring, daily backups. $995/year, or $497/year during the launch promo (50% off, limited time). You can also bring your own hosting if you prefer.",
   },
   {
     q: "Do I have to use you for hosting and the domain?",
@@ -189,7 +201,7 @@ export const FAQS = [
   },
   {
     q: "What if I want to update content myself?",
-    a: "Add the Blog / CMS option ($495) and you can log in, write, and publish posts yourself from a simple dashboard. For ongoing edits to other pages, send us a list — most copy edits fall inside your five revision rounds.",
+    a: "Add the Blog / CMS option ($997 during the launch promo, $1,995 regular) and you can log in, write, and publish posts yourself from a simple dashboard. For ongoing edits to other pages, send us a list — most copy edits fall inside your five revision rounds.",
   },
   {
     q: "What if I don't like any of the three concepts?",

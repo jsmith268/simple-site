@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AUDIENCE, PROCESS, PRINCIPLES, WORK, PRICING, FAQS } from "@/lib/content";
+import { AUDIENCE, PROCESS, PRINCIPLES, WORK, PRICING, FAQS, PROMO, promoPrice } from "@/lib/content";
 import type { Theme } from "./themes";
 import { CtaPrimary } from "./chrome";
 
@@ -266,10 +266,41 @@ export function Pricing({ theme }: { theme: Theme }) {
         </h2>
         <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-pretty" style={{ color: theme.inkSoft }}>
           Full transparency from quote to launch. Here's exactly what you pay — the base build,
-          optional add-ons, and the ongoing hosting and domain. Most sites total{" "}
-          <span className="font-semibold" style={{ color: theme.ink }}>$995–$1,690</span>{" "}
+          optional add-ons, and the ongoing hosting and domain. During the launch promo, most sites
+          total{" "}
+          <span className="font-semibold" style={{ color: theme.ink }}>
+            ${promoPrice(PRICING.base.price).toLocaleString()}–${(promoPrice(PRICING.base.price) + promoPrice(PRICING.addons[0].price as number) + promoPrice(PRICING.addons[1].price as number)).toLocaleString()}
+          </span>{" "}
           to build.
         </p>
+
+        {/* Promo banner */}
+        {PROMO.active && (
+          <div
+            className={`mt-8 ${theme.borderRadius} ${theme.borderWidth} px-5 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3`}
+            style={{ background: theme.ink, color: theme.bg, borderColor: theme.borderStrong }}
+          >
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span
+                className="inline-flex items-center justify-center w-12 h-12 rounded-full text-[13px] font-bold tracking-tight shrink-0"
+                style={{ background: theme.accent, color: theme.accentInk, fontFamily: theme.fontDisplay }}
+              >
+                -50%
+              </span>
+              <div>
+                <p
+                  className="text-[10px] uppercase tracking-[0.22em] font-bold"
+                  style={{ color: theme.accent, fontFamily: theme.fontMono }}
+                >
+                  {PROMO.badge}
+                </p>
+                <p className="text-[14px] sm:text-[15px] mt-1" style={{ color: `${theme.bg}cc` }}>
+                  {PROMO.helper}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* One-time block */}
         <div className="mt-12 grid lg:grid-cols-12 gap-5">
@@ -301,15 +332,27 @@ export function Pricing({ theme }: { theme: Theme }) {
                 One-time
               </span>
             </div>
-            <div className="flex items-baseline gap-2 flex-wrap">
+            <div className="flex items-baseline gap-3 flex-wrap">
               <span
-                className="text-[64px] sm:text-[88px] leading-none"
+                className="text-[56px] sm:text-[88px] leading-none"
                 style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
               >
-                $995
+                ${promoPrice(PRICING.base.price).toLocaleString()}
+              </span>
+              <span
+                className="line-through text-xl sm:text-2xl leading-none"
+                style={{ color: theme.inkMuted, fontFamily: theme.fontDisplay, fontWeight: 600 }}
+              >
+                ${PRICING.base.price.toLocaleString()}
               </span>
               <span className="text-sm" style={{ color: theme.inkMuted }}>one-time</span>
             </div>
+            <p
+              className="mt-3 text-[11px] uppercase tracking-[0.22em] font-bold"
+              style={{ color: theme.accent, fontFamily: theme.fontMono }}
+            >
+              ★ Save ${(PRICING.base.price - promoPrice(PRICING.base.price)).toLocaleString()} · launch promo
+            </p>
             <p className="mt-4 text-[15px] leading-relaxed max-w-md" style={{ color: theme.inkSoft }}>
               {PRICING.base.blurb}
             </p>
@@ -350,13 +393,29 @@ export function Pricing({ theme }: { theme: Theme }) {
                     {a.name}
                   </h4>
                   <span
-                    className="text-sm font-semibold whitespace-nowrap"
-                    style={{ color: theme.accent, fontFamily: theme.fontMono }}
+                    className="text-right whitespace-nowrap"
+                    style={{ fontFamily: theme.fontMono }}
                   >
-                    {a.price ? `+$${a.price}` : "Quoted"}
-                    {a.unit && (
-                      <span className="text-xs ml-1" style={{ color: theme.inkMuted }}>
-                        {a.unit}
+                    {a.price ? (
+                      <>
+                        <span className="text-sm font-semibold" style={{ color: theme.accent }}>
+                          +${promoPrice(a.price).toLocaleString()}
+                        </span>
+                        <span
+                          className="line-through text-xs ml-2"
+                          style={{ color: theme.inkMuted }}
+                        >
+                          +${a.price.toLocaleString()}
+                        </span>
+                        {a.unit && (
+                          <span className="block text-[11px] mt-0.5" style={{ color: theme.inkMuted }}>
+                            {a.unit}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-sm font-semibold" style={{ color: theme.accent }}>
+                        Quoted
                       </span>
                     )}
                   </span>
@@ -407,17 +466,20 @@ export function Pricing({ theme }: { theme: Theme }) {
                     className="text-[32px] sm:text-[36px] leading-none"
                     style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
                   >
-                    ${PRICING.recurring[0].annual}
+                    ${promoPrice(PRICING.recurring[0].annual).toLocaleString()}
                     <span className="text-sm" style={{ color: theme.inkMuted }}> / year</span>
                   </p>
-                  <p className="mt-1 text-[13px]" style={{ color: theme.inkSoft }}>
-                    or ${PRICING.recurring[0].monthly}/month
+                  <p
+                    className="mt-1 text-[13px] line-through"
+                    style={{ color: theme.inkMuted, fontFamily: theme.fontMono }}
+                  >
+                    ${PRICING.recurring[0].annual.toLocaleString()} / year
                   </p>
                   <p
                     className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] font-semibold rounded-full"
                     style={{ background: theme.accent, color: theme.accentInk }}
                   >
-                    Save ${PRICING.recurring[0].annualSavings} annually
+                    50% off · launch promo
                   </p>
                 </div>
               </div>
@@ -456,10 +518,25 @@ export function Pricing({ theme }: { theme: Theme }) {
                 className="mt-6 text-[36px] leading-none"
                 style={{ fontFamily: theme.fontDisplay, color: theme.ink, fontWeight: 600 }}
               >
-                ${PRICING.recurring[1].annual}
+                ${promoPrice(PRICING.recurring[1].annual).toLocaleString()}
                 <span className="text-sm" style={{ color: theme.inkMuted }}> / year</span>
               </p>
-              <p className="mt-1 text-[12px]" style={{ color: theme.inkMuted, fontFamily: theme.fontMono }}>
+              <p
+                className="mt-1 text-[13px] line-through"
+                style={{ color: theme.inkMuted, fontFamily: theme.fontMono }}
+              >
+                ${PRICING.recurring[1].annual.toLocaleString()} / year
+              </p>
+              <p
+                className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] font-semibold rounded-full"
+                style={{ background: theme.accent, color: theme.accentInk }}
+              >
+                50% off · launch promo
+              </p>
+              <p
+                className="mt-3 text-[12px]"
+                style={{ color: theme.inkMuted, fontFamily: theme.fontMono }}
+              >
                 Standard .com or .ca
               </p>
             </div>
