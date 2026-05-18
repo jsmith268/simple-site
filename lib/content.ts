@@ -70,7 +70,7 @@ export const HERO = {
   description:
     "Three completely original design concepts. One fixed $995 price. Live in two weeks.",
   primaryCta: { label: "Start your site — $995", href: "/start" },
-  // Note: secondaryCta on /v6 is repurposed as the design cycler.
+  // Note: secondaryCta on the marketing site is repurposed as the design cycler.
   secondaryCta: { label: "See our work", href: "#work" },
 };
 

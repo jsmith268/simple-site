@@ -7,6 +7,6 @@ export const metadata: Metadata = {
     "Three completely original design concepts. One fixed $995 price. Live in two weeks. Built for solo entrepreneurs, small businesses, and local service providers.",
 };
 
-export default function V6Page() {
+export default function Page() {
   return <AgencySite />;
 }

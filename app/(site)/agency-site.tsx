@@ -79,7 +79,7 @@ function Nav({ theme }: { theme: Theme }) {
       }}
     >
       <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
-        <Link href="/v6" className="flex items-baseline font-semibold tracking-tight text-[15px]" style={{ color: theme.ink }}>
+        <Link href="/" className="flex items-baseline font-semibold tracking-tight text-[15px]" style={{ color: theme.ink }}>
           Simple Site<span className="text-lg leading-none mx-[1px]" style={{ color: theme.accent }}>.</span>co
         </Link>
         <nav className="hidden md:flex items-center gap-7 text-sm" style={{ color: theme.inkSoft }}>

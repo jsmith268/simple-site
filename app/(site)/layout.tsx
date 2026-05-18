@@ -8,9 +8,10 @@ import {
   Newsreader,
 } from "next/font/google";
 
-// /v6 cycles through all 5 design themes. Each theme uses different fonts,
-// so this route loads them all. Production caches subsetted fonts per visitor;
-// dev cost is bounded by Turbopack and within the watchdog ceiling.
+// The marketing site cycles through 5 design themes via the "Update site
+// design" CTA in the hero. Each theme uses different fonts, so this layout
+// loads them all. Scoping these to a route group keeps /start lean.
+// Production caches subsetted fonts per visitor.
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",

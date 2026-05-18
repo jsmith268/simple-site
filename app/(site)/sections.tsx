@@ -578,14 +578,9 @@ export function Footer({ theme }: { theme: Theme }) {
     <footer className="border-t" style={{ borderColor: theme.border }}>
       <div className="mx-auto max-w-7xl px-6 py-10 flex flex-wrap items-center justify-between gap-4 text-[13px]" style={{ color: theme.inkMuted }}>
         <p>© {new Date().getFullYear()} Simple Site. Built in Calgary, AB.</p>
-        <div className="flex items-center gap-5">
-          <a href="mailto:hello@simplesite.co" style={{ color: theme.inkSoft }} className="hover:opacity-100">
-            hello@simplesite.co
-          </a>
-          <Link href="/" style={{ color: theme.inkSoft }}>
-            All concepts
-          </Link>
-        </div>
+        <a href="mailto:hello@simplesite.co" style={{ color: theme.inkSoft }} className="hover:opacity-100">
+          hello@simplesite.co
+        </a>
       </div>
     </footer>
   );
