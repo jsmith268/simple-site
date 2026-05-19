@@ -17,7 +17,7 @@ export function promoPrice(regular: number): number {
 export const PRICING = {
   base: {
     name: "Custom Website",
-    price: 4995,
+    price: 2497,
     blurb:
       "A unique, conversion-focused marketing site. Three completely original design directions, up to five rounds of revisions, live in under 72 hours.",
     includes: [
@@ -33,14 +33,14 @@ export const PRICING = {
   addons: [
     {
       name: "Blog / CMS",
-      price: 1995,
+      price: 997,
       billing: "one-time" as const,
       blurb:
         "Post and edit articles yourself. Self-serve dashboard, no engineer required.",
     },
     {
       name: "Extra page",
-      price: 995,
+      price: 497,
       unit: "/ page",
       billing: "one-time" as const,
       blurb: "Each additional page beyond the five included.",
@@ -58,13 +58,13 @@ export const PRICING = {
       name: "Hosting",
       blurb:
         "Fast global CDN, automatic deploys, SSL, uptime monitoring, daily backups. Everything required to keep your site fast and online.",
-      annual: 995,
+      annual: 497,
     },
     {
       name: "Domain",
       blurb:
         ".com or .ca registration, renewal, and DNS management — we handle the registrar so you never have to log in.",
-      annual: 199,
+      annual: 99,
     },
   ],
 };
@@ -73,7 +73,7 @@ export const HERO = {
   eyebrow: "50% off · Live in 72 hours",
   description:
     "Three completely original design concepts, live in under 72 hours. Launch promo: every price 50% off, limited time.",
-  primaryCta: { label: "Start your site — $2,497", href: "/start" },
+  primaryCta: { label: "Start your site — $1,248", href: "/start" },
   // Note: secondaryCta on the marketing site is repurposed as the design cycler.
   secondaryCta: { label: "See our work", href: "#work" },
 };
@@ -184,8 +184,8 @@ export const AUDIENCE = [
 
 export const FAQS = [
   {
-    q: "What does the $2,497 launch promo actually get me?",
-    a: "A fully designed, custom-built marketing website — up to five pages, mobile-first, fast, SEO-ready, with a working contact form. Three original design directions and up to five rounds of revisions are included. It is not a template. The $2,497 price is the launch-promo price (50% off the $4,995 regular rate) and lasts for a limited time.",
+    q: "What does the $1,248 launch promo actually get me?",
+    a: "A fully designed, custom-built marketing website — up to five pages, mobile-first, fast, SEO-ready, with a working contact form. Three original design directions and up to five rounds of revisions are included. It is not a template. The $1,248 price is the launch-promo rate (50% off the $2,497 regular price) and lasts for a limited time.",
   },
   {
     q: "How long does it take?",
@@ -193,7 +193,7 @@ export const FAQS = [
   },
   {
     q: "Why is hosting recurring?",
-    a: "Hosting keeps your site online — fast CDN delivery, SSL, automatic deploys, monitoring, daily backups. $995/year, or $497/year during the launch promo (50% off, limited time). You can also bring your own hosting if you prefer.",
+    a: "Hosting keeps your site online — fast CDN delivery, SSL, automatic deploys, monitoring, daily backups. $497/year, or $248/year during the launch promo (50% off, limited time). You can also bring your own hosting if you prefer.",
   },
   {
     q: "Do I have to use you for hosting and the domain?",
@@ -201,7 +201,7 @@ export const FAQS = [
   },
   {
     q: "What if I want to update content myself?",
-    a: "Add the Blog / CMS option ($997 during the launch promo, $1,995 regular) and you can log in, write, and publish posts yourself from a simple dashboard. For ongoing edits to other pages, send us a list — most copy edits fall inside your five revision rounds.",
+    a: "Add the Blog / CMS option ($498 during the launch promo, $997 regular) and you can log in, write, and publish posts yourself from a simple dashboard. For ongoing edits to other pages, send us a list — most copy edits fall inside your five revision rounds.",
   },
   {
     q: "What if I don't like any of the three concepts?",
