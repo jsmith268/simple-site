@@ -333,7 +333,7 @@ export function IntakeForm() {
             </Field>
             <Field label="Budget" hint="Helps us know what add-ons to recommend.">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {(["$995", "$1,500", "$2,500+", "Not sure"] as const).map((opt) => (
+                {(["$1,248", "$1,750", "$2,500+", "Not sure"] as const).map((opt) => (
                   <Chip key={opt} active={data.budget === opt} onClick={() => update("budget", opt)}>
                     {opt}
                   </Chip>
@@ -508,7 +508,7 @@ function DoneScreen({ data }: { data: Record<string, unknown> }) {
       <div className="mt-10 grid sm:grid-cols-3 gap-3 text-sm">
         <Card title="What's next" body="We review your intake, sketch directions, and design three." />
         <Card title="When" body="Concepts in 5 business days. Most sites are live within 2 weeks." />
-        <Card title="Cost" body="$995 base — no card needed until we send the invoice." />
+        <Card title="Cost" body="$1,248 launch-promo base — no card needed until we send the invoice." />
       </div>
       <a
         href="/"

@@ -299,7 +299,7 @@ function HeroCtas({
 }: HeroProps & { center?: boolean }) {
   return (
     <div className={`mt-8 sm:mt-9 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 ${center ? "sm:justify-center" : ""}`}>
-      <CtaPrimary theme={theme} href="/start" label="Start your site — $995" />
+      <CtaPrimary theme={theme} href={HERO.primaryCta.href} label={HERO.primaryCta.label} />
       <CtaCycle theme={theme} onClick={onCycle} cycling={cycling} />
     </div>
   );
