@@ -6,4 +6,5 @@ export * from './repos/commerce';
 export * from './repos/intake';
 export * from './repos/pipeline';
 export * from './repos/observe';
+export * from './repos/hosting';
 export * as offlineStore from './offline-store';
