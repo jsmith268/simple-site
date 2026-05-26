@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "@simplesight/contracts": "workspace:*",
+    "@simplesight/db": "workspace:*",
     "@simplesight/engine": "workspace:*",
     "@simplesight/blocks": "workspace:*",
     "@simplesight/theme": "workspace:*",
     "@simplesight/extractors": "workspace:*",
+    "@simplesight/env": "workspace:*",
+    "@simplesight/observability": "workspace:*",
     "zod": "^3.23.0"
   },
   "devDependencies": {

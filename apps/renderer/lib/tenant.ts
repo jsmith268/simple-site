@@ -8,13 +8,13 @@ import { isOffline } from "@simplesight/env";
  * always has something to draw — the same zero-fail floor the pipeline relies on.
  */
 export async function loadSiteSpec(username: string): Promise<SiteSpec | null> {
-  if (isOffline() || !process.env.DATABASE_URL) {
-    return demoSpec(username);
-  }
-  // DB-backed path (dynamic import keeps the DB client out of the offline bundle).
+  // Always prefer the built+persisted site (works offline via the JSON store).
   const { getSiteSpecByUsername } = await import("@simplesight/db");
   const spec = await getSiteSpecByUsername(username);
-  return spec ?? demoSpec(username);
+  if (spec) return spec;
+  // No site built yet — offline we still show a demo so previews never 404.
+  if (isOffline() || !process.env.DATABASE_URL) return demoSpec(username);
+  return null;
 }
 
 function demoSpec(username: string): SiteSpec {

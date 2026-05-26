@@ -9,11 +9,15 @@ try {
 
 const nextConfig: NextConfig = {
   transpilePackages: [
+    "@simplesight/agents",
+    "@simplesight/blocks",
     "@simplesight/contracts",
     "@simplesight/db",
+    "@simplesight/engine",
     "@simplesight/env",
     "@simplesight/observability",
     "@simplesight/provisioning",
+    "@simplesight/theme",
     "@simplesight/ui",
   ],
   turbopack: {

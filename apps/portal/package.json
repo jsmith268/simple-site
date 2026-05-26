@@ -10,8 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@simplesight/agents": "workspace:*",
+    "@simplesight/blocks": "workspace:*",
     "@simplesight/contracts": "workspace:*",
     "@simplesight/db": "workspace:*",
+    "@simplesight/engine": "workspace:*",
     "@simplesight/env": "workspace:*",
     "@simplesight/observability": "workspace:*",
     "@simplesight/provisioning": "workspace:*",
