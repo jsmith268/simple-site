@@ -2,7 +2,9 @@ import type { BusinessInfo, SiteSpec } from '@simplesight/contracts';
 import {
   completedStepKeys,
   finishRun,
+  getFleetSettings,
   getIntake,
+  getTodaySpendCents,
   markSitePreviewReady,
   openCampaign,
   openRun,
@@ -51,7 +53,20 @@ async function deterministicStep<T>(runId: string, stepName: string, fn: () => T
  * never abort. This is the zero-fail core.
  */
 export async function runBuildPipeline(projectId: string): Promise<BuildResult> {
-  const offline = isOffline();
+  // Operator emergency stop — pause rather than build.
+  const fleet = await getFleetSettings();
+  if (fleet.killSwitchEngaged) {
+    logger.warn('pipeline.kill_switch engaged — not building', { projectId });
+    return { status: 'failed', runId: '', costCents: 0, droppedBlocks: 0 };
+  }
+
+  // Cost sentinel: over the daily ceiling → degrade to the free deterministic
+  // path (still ships a complete site) instead of spending on LLM calls.
+  const spentToday = await getTodaySpendCents();
+  const overBudget = spentToday >= fleet.dailyBudgetCeilingCents;
+  const offline = isOffline() || overBudget;
+  if (overBudget) logger.warn('pipeline.over_budget — building deterministically', { projectId, spentToday });
+
   const intake = await getIntake(projectId);
   const business: BusinessInfo =
     intake?.business ??

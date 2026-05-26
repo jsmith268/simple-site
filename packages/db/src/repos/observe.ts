@@ -146,6 +146,35 @@ export async function setKillSwitch(engaged: boolean, reason?: string): Promise<
     });
 }
 
+/** Runs stuck in 'running' past the threshold — the watchdog re-triggers them. */
+export async function findStaleRuns(thresholdMs: number): Promise<{ id: string; projectId: string }[]> {
+  const cutoff = Date.now() - thresholdMs;
+  if (offline()) {
+    return store
+      .findMany('pipeline_runs', (r) => r.status === 'running' && new Date(r.startedAt ?? 0).getTime() < cutoff)
+      .map((r) => ({ id: r.id as string, projectId: r.projectId as string }));
+  }
+  const rows = await db.select().from(runT).where(eq(runT.status, 'running'));
+  return rows
+    .filter((r) => (r.startedAt?.getTime() ?? 0) < cutoff)
+    .map((r) => ({ id: r.id, projectId: r.projectId }));
+}
+
+/** Total spend (cents) across runs started today — the cost sentinel's input. */
+export async function getTodaySpendCents(): Promise<number> {
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const t = dayStart.getTime();
+  if (offline()) {
+    return store
+      .readColl('pipeline_runs')
+      .filter((r) => new Date(r.startedAt ?? 0).getTime() >= t)
+      .reduce((sum, r) => sum + (Number(r.costCents) || 0), 0);
+  }
+  const rows = await db.select().from(runT);
+  return rows.filter((r) => (r.startedAt?.getTime() ?? 0) >= t).reduce((s, r) => s + (r.costCents ?? 0), 0);
+}
+
 // ── Escalations ─────────────────────────────────────────────────────────────
 
 export async function listOpenEscalations(): Promise<Record<string, unknown>[]> {
