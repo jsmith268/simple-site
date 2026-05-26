@@ -109,6 +109,9 @@ importers:
       '@simplesight/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@simplesight/env':
+        specifier: workspace:*
+        version: link:../../packages/env
       '@simplesight/seo':
         specifier: workspace:*
         version: link:../../packages/seo

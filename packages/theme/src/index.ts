@@ -1,5 +1,7 @@
 import type { ThemeTokens } from '@simplesight/contracts';
 
+export { presets, defaultTheme, pickPreset } from './presets';
+
 /**
  * Convert design tokens into a flat map of CSS custom properties. The renderer
  * spreads these onto a wrapper element's `style`, and every block reads them via

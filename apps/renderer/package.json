@@ -13,6 +13,7 @@
     "@simplesight/blocks": "workspace:*",
     "@simplesight/contracts": "workspace:*",
     "@simplesight/db": "workspace:*",
+    "@simplesight/env": "workspace:*",
     "@simplesight/seo": "workspace:*",
     "@simplesight/theme": "workspace:*",
     "@simplesight/ui": "workspace:*",

@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     "@simplesight/blocks",
     "@simplesight/contracts",
     "@simplesight/db",
+    "@simplesight/env",
     "@simplesight/seo",
     "@simplesight/theme",
     "@simplesight/ui",
