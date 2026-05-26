@@ -194,7 +194,7 @@ export default async function DashboardPage({
               margin: '0 0 8px',
             }}
           >
-            Your SimpleSight project
+            Your Simple Site project
           </p>
           <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.15 }}>
             {businessName ?? 'Your website'}

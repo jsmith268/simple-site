@@ -44,7 +44,7 @@ export function GoLiveClient(props: {
     <div style={{ marginTop: 24, display: "grid", gap: 24 }}>
       {/* Option 1: free subdomain */}
       <section style={card}>
-        <h2 style={h2}>Launch on a SimpleSight subdomain</h2>
+        <h2 style={h2}>Launch on a Simple Site subdomain</h2>
         <p style={muted}>
           Free, instant. Your site goes live at <code>{props.subdomain ?? "—"}</code>.
         </p>

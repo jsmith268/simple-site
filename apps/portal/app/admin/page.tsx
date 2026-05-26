@@ -27,7 +27,7 @@ export default async function FleetOverviewPage() {
   return (
     <main style={pageStyle}>
       <header style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>SimpleSight · Fleet overview</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Simple Site · Fleet overview</h1>
         <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0' }}>
           Operator console — every project, run, and autonomous build control.
         </p>

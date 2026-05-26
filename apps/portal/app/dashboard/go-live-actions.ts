@@ -29,7 +29,7 @@ export async function loadGoLive(projectId: string) {
   return { project: project ?? null, domains, steps, subdomain, refundOpen };
 }
 
-/** Go live on the free SimpleSight subdomain. */
+/** Go live on the free Simple Site subdomain. */
 export async function goLiveSubdomainAction(projectId: string) {
   const project = await getProject(projectId);
   if (!project?.username) return { ok: false, error: "Reserve a username first." };

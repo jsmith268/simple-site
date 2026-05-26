@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Page() {
   return (
     <main style={{ maxWidth: 560, margin: "80px auto", padding: 24, fontFamily: "system-ui" }}>
-      <h1 style={{ fontSize: 30, fontWeight: 700 }}>SimpleSight</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 700 }}>Simple Site</h1>
       <p style={{ color: "#555", marginTop: 12, lineHeight: 1.6 }}>
         Professional informational websites, built for you by an autonomous team of agents. Tell us
         about your business; we build, review, and launch your site.
