@@ -1,19 +1,17 @@
 import type { SiteSpec } from "@simplesight/contracts";
 import { buildBaseline } from "@simplesight/blocks";
-import { isOffline } from "@simplesight/env";
 
 /**
- * Load a tenant's render-ready SiteSpec by username. In offline mode (or with no
- * database) we synthesize a demo site from the baseline assembler so the renderer
- * always has something to draw — the same zero-fail floor the pipeline relies on.
+ * Load a tenant's render-ready SiteSpec by username. Serves the built+persisted
+ * site when one exists. With a real database (production) an unknown username
+ * returns null → 404 (no fake/demo site is ever shown). Only pure local dev
+ * (no DATABASE_URL) falls back to a demo so previews aren't empty.
  */
 export async function loadSiteSpec(username: string): Promise<SiteSpec | null> {
-  // Always prefer the built+persisted site (works offline via the JSON store).
   const { getSiteSpecByUsername } = await import("@simplesight/db");
   const spec = await getSiteSpecByUsername(username);
   if (spec) return spec;
-  // No site built yet — offline we still show a demo so previews never 404.
-  if (isOffline() || !process.env.DATABASE_URL) return demoSpec(username);
+  if (!process.env.DATABASE_URL) return demoSpec(username); // local dev only
   return null;
 }
 
