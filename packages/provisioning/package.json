@@ -14,7 +14,8 @@
     "@simplesight/contracts": "workspace:*",
     "@simplesight/db": "workspace:*",
     "@simplesight/observability": "workspace:*",
-    "@simplesight/env": "workspace:*"
+    "@simplesight/env": "workspace:*",
+    "stripe": "^17.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

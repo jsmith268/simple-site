@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@simplesight/contracts",
     "@simplesight/db",
+    "@simplesight/env",
+    "@simplesight/observability",
+    "@simplesight/provisioning",
     "@simplesight/ui",
   ],
   turbopack: {

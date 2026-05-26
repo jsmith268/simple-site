@@ -1,3 +1,3 @@
-// Vercel deploy API, domains/DNS (Vercel Domains), Stripe billing wrappers,
-// two-phase publish + smoke test. Implemented in Phase 5.
-export {};
+// Vercel deploy API, domains/DNS (Vercel Domains), two-phase publish + smoke
+// test land here in Phase 5. Billing (Stripe) is available now for Phase 2.
+export * from './billing';

@@ -29,8 +29,8 @@ export const projects = pgTable(
     customerId: uuid('customer_id')
       .notNull()
       .references(() => customers.id, { onDelete: 'cascade' }),
-    // Reserves username.simplesight.co
-    username: text('username').notNull(),
+    // Reserves username.simplesight.co (assigned during onboarding, null until then)
+    username: text('username'),
     status: text('status').notNull().default('purchased'),
     buildFeePaidAt: timestamp('build_fee_paid_at', { withTimezone: true }),
     refundDeadlineAt: timestamp('refund_deadline_at', { withTimezone: true }),
