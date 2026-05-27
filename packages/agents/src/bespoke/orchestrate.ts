@@ -189,13 +189,18 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     return { value: true };
   });
 
-  // 6) Foundation (skip if all files already on disk)
-  await stage<boolean>('foundation', null, async () => {
-    const res = await generateFoundation({ profile, brief, design: design as ResolvedDesign, ia, assets, model });
-    writeGeneratedFiles(args.dir, res.files);
-    save(args.dir, 'foundation-files.json', res.files.map((f) => f.path));
-    return { value: true, costCents: res.costCents, note: res.missing.length ? `missing: ${res.missing.join(', ')}` : undefined };
-  });
+  // 6) Foundation (skip on resume if already generated)
+  await stage<boolean>(
+    'foundation',
+    null,
+    async () => {
+      const res = await generateFoundation({ profile, brief, design: design as ResolvedDesign, ia, assets, model });
+      writeGeneratedFiles(args.dir, res.files);
+      save(args.dir, 'foundation-files.json', res.files.map((f) => f.path));
+      return { value: true, costCents: res.costCents, note: res.missing.length ? `missing: ${res.missing.join(', ')}` : undefined };
+    },
+    () => (existsSync(join(args.dir, '.simplesight', 'foundation-files.json')) ? true : undefined),
+  );
   if (overBudget()) return hold(`cost ceiling exceeded after foundation (${run.costCents}¢)`);
 
   // 7) Pages (sequential, save-as-you-go, skip existing)
@@ -266,6 +271,7 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
   }
 
   run.status = 'succeeded';
+  run.escalation = undefined; // clear any stale hold message from a prior attempt
   persist();
   return run;
 }
