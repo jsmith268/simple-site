@@ -165,6 +165,14 @@ export const fleetSettings = pgTable('fleet_settings', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Operator-edited skill bodies — override the built-in expertise at runtime. */
+export const skillOverrides = pgTable('skill_overrides', {
+  name: text('name').primaryKey(),
+  body: text('body').notNull(),
+  updatedBy: text('updated_by'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const escalations = pgTable('escalations', {
   id: uuid('id').primaryKey().defaultRandom(),
   projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }),

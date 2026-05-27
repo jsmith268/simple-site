@@ -84,6 +84,9 @@ importers:
       '@simplesight/provisioning':
         specifier: workspace:*
         version: link:../../packages/provisioning
+      '@simplesight/skills':
+        specifier: workspace:*
+        version: link:../../packages/skills
       '@simplesight/ui':
         specifier: workspace:*
         version: link:../../packages/ui

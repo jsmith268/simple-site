@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     "@simplesight/env",
     "@simplesight/observability",
     "@simplesight/provisioning",
+    "@simplesight/skills",
     "@simplesight/theme",
     "@simplesight/ui",
   ],

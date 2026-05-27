@@ -4,6 +4,7 @@ import {
   finishRun,
   getFleetSettings,
   getIntake,
+  getSkillOverrides,
   getTodaySpendCents,
   markSitePreviewReady,
   openCampaign,
@@ -85,13 +86,14 @@ export async function runBuildPipeline(projectId: string): Promise<BuildResult> 
   const campaignId = await openCampaign(projectId, 'initial_build');
   const runId = await openRun(campaignId, projectId, 1);
   const resume = await completedStepKeys(runId);
+  const skillOverrides = await getSkillOverrides();
   await setProjectStatus(projectId, 'building');
 
   let cost = 0;
   const onCost = (c: number) => {
     cost += c;
   };
-  const common = { runId, projectId, offline, resume, onCost };
+  const common = { runId, projectId, offline, resume, skillOverrides, onCost };
 
   logger.info('pipeline.start', { projectId, runId, offline });
 

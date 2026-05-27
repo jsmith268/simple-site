@@ -25,6 +25,8 @@ export interface AgentContext {
   critiqueFromLastAttempt?: string;
   /** Operator/learning prompt augmentations to append to the system prompt. */
   promptAugmentations?: string[];
+  /** Operator-edited skill bodies (skill name → body), applied at runtime. */
+  skillOverrides?: Record<string, string>;
   abortSignal?: AbortSignal;
   /** Record a single LLM call for the operator inspector + cost tracking. */
   recordCall?: (call: InvocationRecord) => void;

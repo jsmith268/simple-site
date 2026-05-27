@@ -6,12 +6,13 @@ import { runStructured } from './llm-runner';
 
 export const DEFAULT_BUDGET: AgentBudget = { maxTokens: 4000, maxMs: 90_000, maxRetries: 2 };
 
-/** Build the expertise block from the skills attached to this agent. */
-function skillsBlock(agentName: string): { text: string; names: string[] } {
+/** Build the expertise block from the skills attached to this agent, applying
+ * any operator-edited skill-body overrides. */
+function skillsBlock(agentName: string, overrides?: Record<string, string>): { text: string; names: string[] } {
   const skills = skillsForAgent(agentName);
   if (!skills.length) return { text: '', names: [] };
   const text = `\n\n# Expertise you must apply\n${skills
-    .map((s) => `## ${s.name} — ${s.summary}\n${s.body}`)
+    .map((s) => `## ${s.name} — ${s.summary}\n${overrides?.[s.name] ?? s.body}`)
     .join('\n\n')}`;
   return { text, names: skills.map((s) => s.name) };
 }
@@ -42,7 +43,7 @@ export function defineAgent<I, O>(cfg: AgentConfig<I, O>): Agent<I, O> {
     model: TIERS.mid,
     budget,
     async invoke(input, ctx) {
-      const skills = skillsBlock(cfg.name);
+      const skills = skillsBlock(cfg.name, ctx.skillOverrides);
       const system = `${cfg.system(input, ctx)}${skills.text}`;
       let prompt = cfg.prompt(input, ctx);
       if (ctx.critiqueFromLastAttempt) {

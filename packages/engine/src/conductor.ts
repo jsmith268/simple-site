@@ -22,6 +22,8 @@ export interface RunStepParams<I, O> {
   /** Idempotency keys completed on a prior attempt — skip + reload (resume). */
   resume?: Set<string>;
   promptAugmentations?: string[];
+  /** Operator-edited skill bodies applied at runtime. */
+  skillOverrides?: Record<string, string>;
   abortSignal?: AbortSignal;
   /** Deterministic value used if the producer fails — guarantees the step yields. */
   fallback?: () => O | Promise<O>;
@@ -63,6 +65,7 @@ export async function runStep<I, O>(p: RunStepParams<I, O>): Promise<O> {
         offline: p.offline,
         critiqueFromLastAttempt: critique,
         promptAugmentations: p.promptAugmentations,
+        skillOverrides: p.skillOverrides,
         abortSignal: p.abortSignal,
         recordCall: (call) => {
           void recordInvocation({

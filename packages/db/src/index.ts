@@ -7,4 +7,5 @@ export * from './repos/intake';
 export * from './repos/pipeline';
 export * from './repos/observe';
 export * from './repos/hosting';
+export * from './repos/skills';
 export * as offlineStore from './offline-store';
