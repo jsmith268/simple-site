@@ -162,6 +162,32 @@ export const presets: Record<string, ThemeTokens> = {
     density: 'airy',
     mood: 'warm',
   },
+  stone: {
+    palette: {
+      background: '#fbfaf8',
+      foreground: '#2a2724',
+      primary: '#211d18',
+      primaryForeground: '#ffffff',
+      accent: '#a9823f',
+      muted: '#f0ece5',
+      mutedForeground: '#6b6258',
+      border: '#e4ddd2',
+      card: '#ffffff',
+      cardForeground: '#2a2724',
+    },
+    typography: {
+      headingFamily: "'Fraunces', Georgia, serif",
+      bodyFamily: "'Source Sans 3', system-ui, sans-serif",
+      baseSizePx: 17,
+      scaleRatio: 1.27,
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    spacing: { unitPx: 8, sectionPaddingY: 100, contentMaxWidthPx: 1200 },
+    radius: { smPx: 2, mdPx: 6, lgPx: 12 },
+    density: 'comfortable',
+    mood: 'classic',
+  },
 };
 
 export const defaultTheme: ThemeTokens = presets.slate as ThemeTokens;
@@ -189,9 +215,11 @@ export function presetByFamily(family: string): ThemeTokens {
 const CATEGORY_PALETTE: { kws: string[]; family: keyof typeof presets }[] = [
   { kws: ['bak', 'pastry', 'cake', 'cafe', 'coffee', 'restaurant', 'food', 'bistro', 'eatery', 'bar', 'brew'], family: 'warmth' },
   { kws: ['salon', 'spa', 'hair', 'beauty', 'nail', 'barber', 'shop', 'boutique', 'retail', 'craft', 'florist'], family: 'clay' },
+  { kws: ['yoga', 'pilates', 'meditation', 'wellness studio'], family: 'sage' },
   { kws: ['dental', 'dentist', 'ortho', 'clinic', 'medical', 'doctor', 'health', 'wellness', 'therap', 'chiro', 'vet'], family: 'sage' },
-  { kws: ['law', 'legal', 'attorney', 'account', 'financ', 'consult', 'advis', 'insurance', 'real estate', 'realty'], family: 'navy' },
-  { kws: ['gym', 'fitness', 'yoga', 'pilates', 'train', 'crossfit', 'studio', 'martial', 'dance'], family: 'ink' },
+  { kws: ['real estate', 'realty', 'realtor', 'property', 'properties', 'homes', 'broker'], family: 'stone' },
+  { kws: ['law', 'legal', 'attorney', 'account', 'financ', 'consult', 'advis', 'insurance'], family: 'navy' },
+  { kws: ['gym', 'fitness', 'train', 'crossfit', 'martial', 'dance'], family: 'ink' },
 ];
 
 /** Category-aware preset selection (falls back to mood, then slate). */
