@@ -20,3 +20,10 @@ export {
   type ResolvedDesign,
   type ResolvedFonts,
 } from './bespoke/validate';
+export {
+  ONBOARDING_QUESTIONS,
+  profileFromIntake,
+  generateBusinessProfile,
+  profileToBriefInput,
+  type OnboardingQuestion,
+} from './bespoke/profile';
