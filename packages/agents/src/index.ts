@@ -58,3 +58,5 @@ export {
   type Screenshot,
 } from './bespoke/screenshot';
 export { runVisualCritic, type VisualCriticArgs, type VisualCriticResult } from './bespoke/critic-visual';
+export { readBuildArtifacts, summarizeRun, type BuildArtifacts } from './bespoke/observe';
+export { aggregateFindings, proposeSkillUpdate, SkillProposal, type SkillProposal as SkillProposalType } from './bespoke/learn';
