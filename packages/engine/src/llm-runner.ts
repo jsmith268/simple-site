@@ -1,8 +1,23 @@
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { gateway } from '@ai-sdk/gateway';
 import type { AgentBudget, AgentContext, ModelRef } from '@simplesight/contracts';
-import { generateText, Output } from 'ai';
+import { generateText, type LanguageModel, Output } from 'ai';
 import type { z } from 'zod';
 import { estimateCostCents } from './cost';
+
+/**
+ * Resolve a "provider/model" ref to a LanguageModel. Anthropic models route
+ * through a DIRECT Anthropic key when present (ANTHROPIC_API_KEY) because the
+ * free-tier AI Gateway blocks Sonnet/Opus even via BYOK; everything else goes
+ * through the gateway.
+ */
+function resolveModel(model: ModelRef): LanguageModel {
+  if (model.startsWith('anthropic/') && process.env.ANTHROPIC_API_KEY) {
+    const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    return anthropic(model.replace('anthropic/', '').replace('.', '-')); // claude-opus-4.7 → claude-opus-4-7
+  }
+  return gateway(model);
+}
 
 export interface RunStructuredOpts<T> {
   agent: string;
@@ -44,7 +59,7 @@ export async function runStructured<T>(
     const start = Date.now();
     try {
       const result = await generateText({
-        model: gateway(opts.model),
+        model: resolveModel(opts.model),
         system: opts.system,
         prompt: opts.prompt,
         output: Output.object({ schema: opts.schema }),
@@ -91,7 +106,7 @@ export async function generateStructured<T>(opts: {
   temperature?: number;
 }): Promise<{ output: T; tokensIn: number; tokensOut: number }> {
   const result = await generateText({
-    model: gateway(opts.model),
+    model: resolveModel(opts.model),
     system: opts.system,
     prompt: opts.prompt,
     output: Output.object({ schema: opts.schema }),
