@@ -119,3 +119,42 @@ export async function generateStructured<T>(opts: {
     tokensOut: result.usage?.outputTokens ?? 0,
   };
 }
+
+/**
+ * Structured generation via TEXT + JSON parse (no tool-mode Output.object).
+ * This sidesteps the Anthropic + AI-SDK-v6 empty-`{}` tool_use bug on complex
+ * nested schemas. Validates with the Zod schema; retries on parse/validation fail.
+ */
+export async function generateJson<T>(opts: {
+  model: ModelRef;
+  schema: z.ZodType<T, z.ZodTypeDef, any>;
+  system: string;
+  prompt: string;
+  maxOutputTokens?: number;
+  retries?: number;
+}): Promise<T> {
+  const system = `${opts.system}\n\nOUTPUT FORMAT: respond with ONLY one valid JSON object — no markdown, no code fences, no commentary before or after.`;
+  let lastErr: unknown;
+  for (let i = 0; i <= (opts.retries ?? 2); i++) {
+    const r = await generateText({
+      model: resolveModel(opts.model),
+      system,
+      prompt: opts.prompt,
+      maxOutputTokens: opts.maxOutputTokens ?? 8000,
+    });
+    try {
+      let txt = (r.text ?? '').trim();
+      txt = txt.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+      const s = txt.indexOf('{');
+      const e = txt.lastIndexOf('}');
+      if (s < 0 || e < 0) throw new Error('no JSON object in output');
+      const obj = JSON.parse(txt.slice(s, e + 1));
+      const parsed = opts.schema.safeParse(obj);
+      if (parsed.success) return parsed.data;
+      lastErr = new Error(`schema validation failed: ${JSON.stringify(parsed.error.issues.slice(0, 4))}`);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('generateJson failed');
+}
