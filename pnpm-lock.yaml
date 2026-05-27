@@ -294,6 +294,9 @@ importers:
       '@simplesight/observability':
         specifier: workspace:*
         version: link:../observability
+      '@simplesight/skills':
+        specifier: workspace:*
+        version: link:../skills
       ai:
         specifier: ^6.0.0
         version: 6.0.191(zod@3.25.76)

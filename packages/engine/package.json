@@ -15,6 +15,7 @@
     "@simplesight/db": "workspace:*",
     "@simplesight/observability": "workspace:*",
     "@simplesight/env": "workspace:*",
+    "@simplesight/skills": "workspace:*",
     "ai": "^6.0.0",
     "@ai-sdk/gateway": "^3.0.0",
     "@ai-sdk/anthropic": "^2.0.0",
