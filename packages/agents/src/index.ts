@@ -40,3 +40,4 @@ export {
 } from './bespoke/catalog';
 export { generateFoundation, type FoundationArgs, type FoundationResult } from './bespoke/foundation';
 export { generatePage, pageFilePath, type PageArgs, type PageResult } from './bespoke/page';
+export { buildAssetManifest, reverifyManifest, deriveImageNeeds, verifyImage } from './bespoke/assets';
