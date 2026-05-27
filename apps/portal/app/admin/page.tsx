@@ -32,6 +32,7 @@ export default async function FleetOverviewPage() {
           Operator console — every project, run, and autonomous build control.
         </p>
         <nav style={{ marginTop: 10, display: 'flex', gap: 16, fontSize: 13 }}>
+          <Link href="/admin/builds">Bespoke builds</Link>
           <Link href="/admin/skills">Skills</Link>
         </nav>
       </header>

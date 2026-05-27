@@ -38,9 +38,14 @@ The orchestrator is **checkpointed/resumable** (re-running skips completed stage
 | 9 | Visual critic | `agents/src/bespoke/{screenshot,critic-visual}.ts` (`runVisualCritic`, thum.io default provider, `generateVision`) |
 | 10 | Observability + learning loop | `agents/src/bespoke/{observe,learn}.ts` (`readBuildArtifacts`, `summarizeRun`, `aggregateFindings`, `proposeSkillUpdate`) |
 
-## Known remaining work (honest)
+## Admin UI + learning loop (DONE 2026-05-27)
 
-- **Admin UI wiring**: the read-model (`readBuildArtifacts`/`summarizeRun`) and learning-loop agent exist; rendering them in the portal `/admin` (and registering external build dirs so the dashboard can find runs) is the remaining surface.
+Wired into the portal at `/admin/builds`:
+- **List** (`apps/portal/app/admin/builds/page.tsx`) — every build under `BESPOKE_BUILDS_ROOT` (default `~/Projects`, scans `*/.simplesight/run.json`): status, direction, pages, files, visual score, cost.
+- **Detail** (`.../builds/[slug]/page.tsx`) — stage trace + cost, brief (direction + palette swatches + fonts + devices + validator warnings), IA pages table, code-critic report, visual-critic score + per-dimension bars + findings, and the generated-file list.
+- **Learning loop** (`.../builds/propose-skill.tsx` + `builds-actions.ts`) — "Propose skill update from findings" runs `aggregateFindings` → `proposeSkillUpdate` (Opus), shows the editable proposal, and "Apply fleet-wide" persists it via `setSkillOverride` so every future build injects it. Validated end-to-end against the real Holdfast visual-critic findings.
+
+## Known remaining work (honest)
 - **Vercel Sandbox runner**: `SandboxBuildRunner` is a stubbed interface; the code-critic runs via `LocalBuildRunner` today. Visual screenshots use thum.io (keyless) — swap in Sandbox + a headless browser for hermetic capture.
 - **Cost accounting** currently sums the dominant generators (foundation/pages/critic via `resilientGenerateText`) + flat estimates for the small JSON agents (brief/IA/profile go through `generateJson`, which doesn't yet surface usage). Wire usage out of `generateJson` for exact totals.
 - **Embeds backends**: lead-form has no persistence; social-feed is curated stock (not the live IG API). Fine for preview; productizing needs a form endpoint + optional IG integration.
