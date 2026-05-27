@@ -3,6 +3,7 @@ import type { AssetManifest, BusinessProfile, GeneratedFile, SiteIA } from '@sim
 import type { DesignBrief } from './brief';
 import type { ResolvedDesign } from './validate';
 import { COMPONENT_SPECS, componentNameFor, foundationComponents } from './catalog';
+import { capabilityRules } from './capabilities';
 import { parseDelimitedFiles } from './parse';
 
 export interface FoundationArgs {
@@ -66,13 +67,15 @@ export async function generateFoundation(args: FoundationArgs): Promise<Foundati
 
   const system = `You are an award-winning front-end designer/developer building the SHARED FOUNDATION (global CSS, layout, and reusable components) for a BESPOKE, premium multi-page website in Next.js 16 (App Router) + Tailwind v4. Implement the committed Design Brief faithfully — distinctive, never a template, never generic.
 
+${capabilityRules(profile.capabilities)}
+
 NON-NEGOTIABLE buildability constraints:
 - Tailwind v4 utilities + the palette/font CSS variables. No external libraries. No next/image (use plain <img>). No next/font (fonts load via the <link> in layout).
 - Inline SVG for ALL icons/marks. No emoji.
 - Components using useState/onClick/onSubmit/onChange MUST start with 'use client' as the literal first line; non-interactive components MUST NOT.
 - Every component is a proper default export: export default function Name(props) { ... }. Type all props with interfaces and event handlers (React.FormEvent/ChangeEvent).
 - Style with Tailwind utilities + the CSS vars: bg-[var(--bg)] text-[var(--fg)] text-[var(--primary)] etc.; fonts via style={{ fontFamily: 'var(--font-display)' }} or font-[family-name:var(--font-display)].
-- Escape apostrophes/quotes in JSX text (&apos; or curly strings) so the build never fails on react/no-unescaped-entities.
+- Escape apostrophes/quotes in JSX text (&apos; or curly strings) so the build never fails on react/no-unescaped-entities. Write punctuation as REAL characters (– — · " ') — NEVER literal \\u2013 / \\u00b7 escapes in JSX text (they render literally).
 - Use ONLY the verified image URLs provided (never invent photo IDs).
 
 DESIGN to implement:

@@ -46,6 +46,25 @@ export const EmbedFlags = z.object({
 });
 export type EmbedFlags = z.infer<typeof EmbedFlags>;
 
+/**
+ * Operator/plan-controlled capability gates. A hard allowlist for what a
+ * generated site may contain — independent of what a pitch asks for. Features
+ * not yet ready default OFF and can be enabled later per build/plan. The site
+ * is an INFORMATIONAL website; transactional features stay gated.
+ */
+export const SiteCapabilities = z.object({
+  leadForm: z.boolean().default(true), // contact / inquiry capture
+  socialFeed: z.boolean().default(true), // Instagram-style feed
+  map: z.boolean().default(true), // location embed
+  pricingDisplay: z.boolean().default(true), // SHOW prices (informational), no purchase
+  events: z.boolean().default(true),
+  newsletter: z.boolean().default(false), // email subscribe — OFF for now
+  ecommerce: z.boolean().default(false), // cart/checkout/buy — OFF for now
+  booking: z.boolean().default(false), // reservation engine — OFF for now
+  blog: z.boolean().default(false),
+});
+export type SiteCapabilities = z.infer<typeof SiteCapabilities>;
+
 /* ── BusinessProfile — normalized onboarding ─────────────────────────────── */
 
 export const GeoLocation = z.object({
@@ -98,6 +117,8 @@ export const BusinessProfile = z.object({
   }),
   /** Customer-supplied brand assets (logo, photos). */
   brandAssets: z.array(z.object({ url: z.string(), kind: z.enum(['logo', 'photo']), alt: z.string().optional() })).default([]),
+  /** Operator/plan-controlled feature gates (default: newsletter/ecommerce/booking OFF). */
+  capabilities: SiteCapabilities.default({}),
 });
 export type BusinessProfile = z.infer<typeof BusinessProfile>;
 
@@ -202,6 +223,26 @@ export const CriticReport = z.object({
   summary: z.string().default(''),
 });
 export type CriticReport = z.infer<typeof CriticReport>;
+
+/* ── Site review — per-page design + content critique ────────────────────── */
+
+export const PageReview = z.object({
+  slug: z.string(),
+  name: z.string(),
+  design: CriticReport,
+  content: CriticReport,
+});
+export type PageReview = z.infer<typeof PageReview>;
+
+export const SiteReview = z.object({
+  pages: z.array(PageReview).default([]),
+  designScore: z.number().default(0), // min across pages
+  contentScore: z.number().default(0),
+  verdict: z.enum(['pass', 'revise', 'reject']),
+  blocking: z.array(CriticFinding).default([]), // all blocking findings across pages
+  summary: z.string().default(''),
+});
+export type SiteReview = z.infer<typeof SiteReview>;
 
 /* ── BuildRun — the orchestrated, checkpointed run record ─────────────────── */
 

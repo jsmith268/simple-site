@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import type { AssetManifest, BuildReport, BuildRun, BusinessProfile, CriticReport, SiteIA } from '@simplesight/contracts';
+import type { AssetManifest, BuildReport, BuildRun, BusinessProfile, CriticReport, SiteIA, SiteReview } from '@simplesight/contracts';
 import type { DesignBrief } from './brief';
 import type { ResolvedDesign } from './validate';
 
@@ -17,6 +17,7 @@ export interface BuildArtifacts {
   assets?: AssetManifest;
   buildReport?: BuildReport;
   visualReport?: CriticReport;
+  siteReview?: SiteReview;
   generatedFiles: { path: string; bytes: number }[];
 }
 
@@ -52,6 +53,7 @@ export function readBuildArtifacts(dir: string): BuildArtifacts {
     assets: readJson<AssetManifest>(dir, 'assets.json'),
     buildReport: readJson<BuildReport>(dir, 'build-report.json'),
     visualReport: readJson<CriticReport>(dir, 'visual-report.json'),
+    siteReview: readJson<SiteReview>(dir, 'review-report.json'),
     generatedFiles: walkApp(dir),
   };
 }
@@ -70,6 +72,7 @@ export function summarizeRun(a: BuildArtifacts): string {
   if (a.ia) lines.push(`Pages: ${a.ia.pages.map((p) => p.slug).join(', ')}`);
   lines.push(`Generated files: ${a.generatedFiles.length}`);
   if (a.buildReport) lines.push(`Build: ${a.buildReport.ok ? 'passed' : 'FAILED'} in ${a.buildReport.attempts} attempt(s)${a.buildReport.filesFixed.length ? `, fixed ${a.buildReport.filesFixed.join(', ')}` : ''}`);
-  if (a.visualReport) lines.push(`Visual critic: ${a.visualReport.score} (${a.visualReport.verdict}) — ${a.visualReport.findings.filter((f) => f.severity === 'block').length} blocking`);
+  if (a.siteReview) lines.push(`Site review: design ${a.siteReview.designScore} / content ${a.siteReview.contentScore} (${a.siteReview.verdict}) — ${a.siteReview.blocking.length} blocking across ${a.siteReview.pages.length} pages`);
+  else if (a.visualReport) lines.push(`Visual critic: ${a.visualReport.score} (${a.visualReport.verdict}) — ${a.visualReport.findings.filter((f) => f.severity === 'block').length} blocking`);
   return lines.join('\n');
 }

@@ -6,8 +6,10 @@ import {
   type BuildStage,
   type BuildStageName,
   type BusinessProfile,
+  type SiteCapabilities,
   type SiteIA,
 } from '@simplesight/contracts';
+import { resolveCapabilities } from './capabilities';
 import { type DesignBrief, generateDesignBrief } from './brief';
 import { generateBusinessProfile, profileToBriefInput } from './profile';
 import { type ResolvedDesign, validateDesignBrief } from './validate';
@@ -19,7 +21,7 @@ import { generatePage, pageFilePath } from './page';
 import { runCodeCritic } from './critic-code';
 import { LocalBuildRunner, type BuildRunner } from './runner';
 import { deploySite } from './deploy';
-import { runVisualCritic } from './critic-visual';
+import { reviewSite, siteReviewToCriticReport } from './review';
 
 const DEFAULT_MODEL = 'anthropic/claude-opus-4.7';
 
@@ -37,8 +39,10 @@ export interface BespokeBuildArgs {
   skipCodeCritic?: boolean;
   /** When provided, deploy the built site to Vercel (outward-facing — opt-in). */
   deploy?: { scope?: string };
-  /** Run the visual critic against the deployed home page (advisory; needs a deploy). */
+  /** Run the multi-page design+content review against the deployment (needs a deploy). */
   visualCritic?: boolean;
+  /** Operator capability overrides (governs the pitch). Defaults: newsletter/ecommerce/booking OFF. */
+  capabilities?: Partial<SiteCapabilities>;
 }
 
 /* Filesystem artifact store under <dir>/.simplesight — gives resumability
@@ -137,6 +141,9 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     },
     () => load<BusinessProfile>(args.dir, 'profile.json'),
   );
+  // Capabilities are operator/plan-governed, not pitch-inferred — applied every run.
+  profile.capabilities = resolveCapabilities(args.capabilities);
+  save(args.dir, 'profile.json', profile);
 
   // 2) Brief (+ resolved design)
   const brief = await stage<DesignBrief>(
@@ -251,23 +258,34 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     if (!res.ok) return hold('deploy failed; built artifact is ready locally');
   }
 
-  // 10) Visual critic (advisory; needs a live URL)
+  // 10) Full-site review — design + content, EVERY page (verification gate)
   if (args.visualCritic && run.previewUrl) {
     const vs = stageRec('visual_critic');
     vs.status = 'running';
     persist();
     const t0 = Date.now();
     try {
-      const { report } = await runVisualCritic({ url: run.previewUrl, brief, pageName: 'Home', model });
-      save(args.dir, 'visual-report.json', report);
+      const review = await reviewSite({
+        baseUrl: run.previewUrl,
+        pages: ia.pages.map((p) => ({ name: p.name, slug: p.slug })),
+        brief,
+        model,
+      });
+      save(args.dir, 'review-report.json', review);
+      // Flatten for the admin per-build panel + learning loop.
+      save(args.dir, 'visual-report.json', siteReviewToCriticReport(review));
       vs.ms += Date.now() - t0;
-      vs.status = 'completed';
-      vs.note = `score ${report.score} (${report.verdict})`;
+      vs.status = review.blocking.length ? 'failed' : 'completed';
+      vs.note = `design ${review.designScore} / content ${review.contentScore} (${review.verdict}), ${review.blocking.length} blocking`;
+      persist();
+      if (review.blocking.length) {
+        return hold(`site review found ${review.blocking.length} blocking issue(s): ${review.blocking.slice(0, 3).map((f) => `${f.area}: ${f.message}`).join(' | ')}`);
+      }
     } catch (err) {
       vs.status = 'failed';
       vs.note = String((err as Error)?.message ?? err);
+      persist();
     }
-    persist();
   }
 
   run.status = 'succeeded';

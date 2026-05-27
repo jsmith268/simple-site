@@ -6,6 +6,7 @@ import {
   SiteIA,
 } from '@simplesight/contracts';
 import type { DesignBrief } from './brief';
+import { allowedComponents, capabilityRules, forbiddenComponents } from './capabilities';
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Phase 3 — Information-Architecture agent (the central unlock).
@@ -46,7 +47,14 @@ export async function generateSiteIA(
   if (profile.embeds.leadForm || profile.embeds.booking) embedReqs.push('a "lead-form" on Home (CTA) and a full one on the visit/contact page (anchorId "book")');
   if (profile.embeds.reviews) embedReqs.push('a "testimonials" section');
 
+  const caps = profile.capabilities;
+  const allowed = allowedComponents(caps);
+
   const system = `You are an expert information architect + content strategist for BESPOKE premium websites. Given a business profile and a committed design brief, produce the complete SiteIA for a MULTI-PAGE site.
+
+${capabilityRules(caps)}
+ALLOWED component types (use ONLY these; never a disabled one): ${allowed.join(', ')}.
+${caps.newsletter ? '' : 'Set chrome.footer.showNewsletter = false.'}
 
 Principles:
 - Home + the requested/typical pages for this business. Every page must be RICH: 6-10 sections, varied compositions — not a stack of generic blocks.
@@ -89,6 +97,15 @@ export function componentsUsed(ia: SiteIA): ComponentType[] {
 export function validateSiteIA(ia: SiteIA, profile: BusinessProfile): { ok: boolean; findings: CriticFinding[] } {
   const findings: CriticFinding[] = [];
   const used = componentsUsed(ia);
+
+  // Capability gates — disabled features must not appear.
+  const forbidden = new Set(forbiddenComponents(profile.capabilities));
+  for (const t of used) {
+    if (forbidden.has(t)) findings.push({ severity: 'block', area: 'capability', message: `Disabled feature "${t}" is present.`, fix: `Remove all "${t}" usage (capability is off).` });
+  }
+  if (!profile.capabilities.newsletter && ia.chrome.footer.showNewsletter) {
+    findings.push({ severity: 'block', area: 'capability', message: 'Footer newsletter present but newsletter is disabled.', fix: 'Set footer.showNewsletter=false.' });
+  }
 
   if (ia.pages.length < 2) findings.push({ severity: 'block', area: 'structure', message: 'Site is not multi-page (need ≥2 pages).' });
   if (!ia.pages.some((p) => p.slug === '/')) findings.push({ severity: 'block', area: 'structure', message: 'No Home page (slug "/").' });

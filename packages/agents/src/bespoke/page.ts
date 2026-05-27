@@ -3,6 +3,7 @@ import type { AssetManifest, BusinessProfile, GeneratedFile, PagePlan, SiteIA } 
 import type { DesignBrief } from './brief';
 import type { ResolvedDesign } from './validate';
 import { sharedImportMap } from './catalog';
+import { capabilityRules } from './capabilities';
 import { parseSingleFile } from './parse';
 
 export interface PageArgs {
@@ -41,6 +42,8 @@ export async function generatePage(args: PageArgs): Promise<PageResult> {
 
   const system = `You are an award-winning front-end designer/developer building ONE bespoke, premium PAGE of a multi-page website in Next.js 16 (App Router) + Tailwind v4. Implement the committed Design Brief faithfully — never a template, never generic AI filler.
 
+${capabilityRules(profile.capabilities)}
+
 This page is a SERVER COMPONENT (no 'use client', no hooks, no event handlers). All interactivity lives in the prebuilt client components you import (they already exist — do NOT redefine them).
 
 Prebuilt components you MAY import (only the ones this page needs):
@@ -55,6 +58,7 @@ NON-NEGOTIABLE buildability constraints:
 - Only the imports listed above (those you use) + 'next/link'. NO other libraries. NO next/image (use plain <img>). NO next/font. NO React hooks. NO 'use client'.
 - When passing props to an imported component, match its prop types EXACTLY as shown above — never pass a string where an array/object is typed (a type mismatch fails the build).
 - Inline SVG for icons. No emoji. Escape JSX apostrophes/quotes (&apos;/curly strings).
+- Write punctuation as REAL characters (– — · " " ' ') in copy — NEVER literal escape sequences like \\u2013 or \\u00b7 in JSX text (they render literally on the page). Use correct English idiom (e.g. "roasted in Portland", not "roasted on Portland").
 - Style with Tailwind v4 utilities + palette/font CSS vars (bg-[var(--bg)], text-[var(--primary)], font via style={{fontFamily:'var(--font-display)'}}); use the globals.css helper classes (.reveal, .grain, .numeral, .duotone, etc.).
 - Author the non-shared sections (hero, feature grids, stats, pricing, testimonials, schedule, cta bands, etc.) INLINE as rich composition implementing the brief's signature devices.
 - Use ONLY the verified image URLs provided (never invent photo IDs). Always alt text + loading="lazy" on non-hero images.

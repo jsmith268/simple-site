@@ -58,5 +58,14 @@ export {
   type Screenshot,
 } from './bespoke/screenshot';
 export { runVisualCritic, type VisualCriticArgs, type VisualCriticResult } from './bespoke/critic-visual';
+export { runContentCritic } from './bespoke/critic-content';
+export { reviewSite, extractText, siteReviewToCriticReport, type ReviewArgs } from './bespoke/review';
+export {
+  DEFAULT_CAPABILITIES,
+  resolveCapabilities,
+  allowedComponents,
+  forbiddenComponents,
+  capabilityRules,
+} from './bespoke/capabilities';
 export { readBuildArtifacts, summarizeRun, type BuildArtifacts } from './bespoke/observe';
 export { aggregateFindings, proposeSkillUpdate, SkillProposal, type SkillProposal as SkillProposalType } from './bespoke/learn';
