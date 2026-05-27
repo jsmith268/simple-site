@@ -17,18 +17,11 @@ import {
 import { isOffline } from '@simplesight/env';
 import { runStep } from '@simplesight/engine';
 import { pickPlaybook } from '@simplesight/skills';
-import { pickPresetForCategory } from '@simplesight/theme';
+import { presetByFamily } from '@simplesight/theme';
 import { logger } from '@simplesight/observability';
 import { assembleSite } from './assemble';
 import { renderVerify } from './render-verify';
-import {
-  copyAgent,
-  discoveryAgent,
-  discoveryCritic,
-  seoAgent,
-  themeAgent,
-  themeCritic,
-} from './stages';
+import { copyAgent, discoveryAgent, discoveryCritic, seoAgent } from './stages';
 
 export interface BuildResult {
   status: 'preview' | 'failed';
@@ -108,18 +101,11 @@ export async function runBuildPipeline(projectId: string): Promise<BuildResult> 
       fallback: () => business,
     });
 
-    // Stage 2 — theme (deterministic WCAG critic; category-aware fallback)
-    const theme = await runStep({
-      ...common,
-      stepName: 'theme',
-      producer: themeAgent,
-      critic: themeCritic,
-      input: { business: profile, style: intake?.style },
-      fallback: () => pickPresetForCategory(profile.category, intake?.style?.mood),
-    });
+    // Stage 2 — theme: use the matched playbook's deliberate palette family
+    const playbook = pickPlaybook(profile.category);
+    const theme = await deterministicStep(runId, 'theme', () => presetByFamily(playbook.paletteFamily));
 
     // Stage 3 — assembly: multi-page, image-rich site from the category playbook
-    const playbook = pickPlaybook(profile.category);
     const assembled = await deterministicStep(runId, 'assemble', () => assembleSite(profile, playbook, theme));
 
     // Stage 4 — copy polish
@@ -162,8 +148,9 @@ export async function runBuildPipeline(projectId: string): Promise<BuildResult> 
       projectId,
       error: err instanceof Error ? err.message : String(err),
     });
+    const fbPlaybook = pickPlaybook(business.category);
     const safe = renderVerify(
-      assembleSite(business, pickPlaybook(business.category), pickPresetForCategory(business.category, intake?.style?.mood)),
+      assembleSite(business, fbPlaybook, presetByFamily(fbPlaybook.paletteFamily)),
     ).spec;
     const siteId = await saveSiteSpec(projectId, safe);
     await markSitePreviewReady(projectId);
