@@ -27,3 +27,4 @@ export {
   profileToBriefInput,
   type OnboardingQuestion,
 } from './bespoke/profile';
+export { generateSiteIA, validateSiteIA, componentsUsed } from './bespoke/ia';
