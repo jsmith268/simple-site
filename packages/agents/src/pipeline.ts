@@ -15,9 +15,10 @@ import {
 } from '@simplesight/db';
 import { isOffline } from '@simplesight/env';
 import { runStep } from '@simplesight/engine';
-import { buildBaseline } from '@simplesight/blocks';
-import { pickPreset } from '@simplesight/theme';
+import { pickPlaybook } from '@simplesight/skills';
+import { pickPresetForCategory } from '@simplesight/theme';
 import { logger } from '@simplesight/observability';
+import { assembleSite } from './assemble';
 import { renderVerify } from './render-verify';
 import {
   copyAgent,
@@ -105,26 +106,27 @@ export async function runBuildPipeline(projectId: string): Promise<BuildResult> 
       fallback: () => business,
     });
 
-    // Stage 2 — theme (deterministic WCAG critic; falls back to a safe preset)
+    // Stage 2 — theme (deterministic WCAG critic; category-aware fallback)
     const theme = await runStep({
       ...common,
       stepName: 'theme',
       producer: themeAgent,
       critic: themeCritic,
       input: { business: profile, style: intake?.style },
-      fallback: () => pickPreset(intake?.style?.mood),
+      fallback: () => pickPresetForCategory(profile.category, intake?.style?.mood),
     });
 
-    // Stage 3 — baseline assembly (the floor: a complete, valid site)
-    const baseline = await deterministicStep(runId, 'assemble', () => buildBaseline(profile, theme));
+    // Stage 3 — assembly: multi-page, image-rich site from the category playbook
+    const playbook = pickPlaybook(profile.category);
+    const assembled = await deterministicStep(runId, 'assemble', () => assembleSite(profile, playbook, theme));
 
     // Stage 4 — copy polish
     const copied = await runStep<SiteSpec, SiteSpec>({
       ...common,
       stepName: 'copy',
       producer: copyAgent,
-      input: baseline,
-      fallback: () => baseline,
+      input: assembled,
+      fallback: () => assembled,
     });
 
     // Stage 5 — SEO
@@ -158,7 +160,9 @@ export async function runBuildPipeline(projectId: string): Promise<BuildResult> 
       projectId,
       error: err instanceof Error ? err.message : String(err),
     });
-    const safe = renderVerify(buildBaseline(business, pickPreset(intake?.style?.mood))).spec;
+    const safe = renderVerify(
+      assembleSite(business, pickPlaybook(business.category), pickPresetForCategory(business.category, intake?.style?.mood)),
+    ).spec;
     const siteId = await saveSiteSpec(projectId, safe);
     await markSitePreviewReady(projectId);
     await finishRun(runId, 'completed_with_fallback', Math.round(cost));

@@ -13,6 +13,21 @@ export const navSchema = z.object({
 });
 export type NavProps = z.infer<typeof navSchema>;
 
+// CSS-only responsive menu: a media query hides the desktop links on narrow
+// screens and reveals a <details> disclosure. No JS, no 'use client'.
+const RESPONSIVE_CSS = `
+.ss-nav-desktop { display: flex; }
+.ss-nav-mobile { display: none; }
+@media (max-width: 720px) {
+  .ss-nav-desktop { display: none !important; }
+  .ss-nav-mobile { display: block !important; }
+}
+.ss-nav-mobile > summary { list-style: none; cursor: pointer; }
+.ss-nav-mobile > summary::-webkit-details-marker { display: none; }
+.ss-nav-mobile[open] .ss-nav-burger-open { display: none; }
+.ss-nav-mobile:not([open]) .ss-nav-burger-close { display: none; }
+`;
+
 function Nav({ props, variant }: { props: NavProps; variant: string }) {
   const centered = variant === 'centered';
 
@@ -42,6 +57,13 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
     </a>
   );
 
+  const linkStyle = {
+    ...body({ fontSize: t.textSm }),
+    color: t.fg,
+    textDecoration: 'none',
+    fontWeight: 500,
+  };
+
   const Links = (
     <ul
       style={{
@@ -56,20 +78,103 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
     >
       {props.items.map((item) => (
         <li key={`${item.label}-${item.href}`}>
-          <a
-            href={item.href}
-            style={{
-              ...body({ fontSize: t.textSm }),
-              color: t.fg,
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
+          <a href={item.href} style={linkStyle}>
             {item.label}
           </a>
         </li>
       ))}
     </ul>
+  );
+
+  const DesktopActions = (
+    <div
+      className="ss-nav-desktop"
+      style={{ alignItems: 'center', gap: 'clamp(16px, 3vw, 28px)', flexWrap: 'wrap' }}
+    >
+      {Links}
+      {props.cta && (
+        <a href={props.cta.href} style={button('primary')}>
+          {props.cta.label}
+        </a>
+      )}
+    </div>
+  );
+
+  const MobileMenu = (
+    <details className="ss-nav-mobile" style={{ position: 'relative' }}>
+      <summary
+        aria-label="Toggle navigation menu"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 42,
+          height: 42,
+          borderRadius: t.radiusMd,
+          border: `1px solid ${t.border}`,
+          color: t.fg,
+        }}
+      >
+        <svg
+          className="ss-nav-burger-open"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+        <svg
+          className="ss-nav-burger-close"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </summary>
+      <div
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 'calc(100% + 10px)',
+          minWidth: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          background: t.card,
+          border: `1px solid ${t.border}`,
+          borderRadius: t.radiusMd,
+          boxShadow: t.shadowLg,
+          padding: 12,
+          zIndex: 60,
+        }}
+      >
+        {props.items.map((item) => (
+          <a
+            key={`${item.label}-${item.href}`}
+            href={item.href}
+            style={{ ...linkStyle, padding: '8px 10px', borderRadius: t.radiusSm }}
+          >
+            {item.label}
+          </a>
+        ))}
+        {props.cta && (
+          <a href={props.cta.href} style={{ ...button('primary'), marginTop: 6, width: '100%' }}>
+            {props.cta.label}
+          </a>
+        )}
+      </div>
+    </details>
   );
 
   return (
@@ -82,6 +187,8 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
         borderBottom: `1px solid ${t.border}`,
       }}
     >
+      {/** biome-ignore lint/security/noDangerouslySetInnerHtml: static responsive CSS, no user input */}
+      <style dangerouslySetInnerHTML={{ __html: RESPONSIVE_CSS }} />
       <nav
         aria-label="Primary"
         style={container({
@@ -89,7 +196,6 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
           alignItems: 'center',
           justifyContent: centered ? 'center' : 'space-between',
           gap: 24,
-          flexWrap: 'wrap',
           paddingBlock: 14,
         })}
       >
@@ -104,15 +210,7 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
             }}
           >
             {Brand}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 24,
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="ss-nav-desktop" style={{ alignItems: 'center', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
               {Links}
               {props.cta && (
                 <a href={props.cta.href} style={button('primary')}>
@@ -120,25 +218,13 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
                 </a>
               )}
             </div>
+            {MobileMenu}
           </div>
         ) : (
           <>
             {Brand}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'clamp(16px, 3vw, 28px)',
-                flexWrap: 'wrap',
-              }}
-            >
-              {Links}
-              {props.cta && (
-                <a href={props.cta.href} style={button('primary')}>
-                  {props.cta.label}
-                </a>
-              )}
-            </div>
+            {DesktopActions}
+            {MobileMenu}
           </>
         )}
       </nav>

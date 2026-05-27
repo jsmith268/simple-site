@@ -1,6 +1,6 @@
 import type { ThemeTokens } from '@simplesight/contracts';
 
-export { presets, defaultTheme, pickPreset } from './presets';
+export { presets, defaultTheme, pickPreset, pickPresetForCategory, presetByFamily } from './presets';
 
 /**
  * Convert design tokens into a flat map of CSS custom properties. The renderer
@@ -33,6 +33,11 @@ export function tokensToCssVars(t: ThemeTokens): Record<string, string> {
     '--ss-radius-sm': `${t.radius.smPx}px`,
     '--ss-radius-md': `${t.radius.mdPx}px`,
     '--ss-radius-lg': `${t.radius.lgPx}px`,
+
+    // Soft shadows for card depth (tuned to feel premium, not heavy).
+    '--ss-shadow-sm': '0 1px 2px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.06)',
+    '--ss-shadow-md': '0 4px 12px rgba(15,23,42,0.06), 0 2px 4px rgba(15,23,42,0.05)',
+    '--ss-shadow-lg': '0 12px 32px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.06)',
   };
 
   // Modular type scale derived from base size + ratio.
@@ -43,6 +48,9 @@ export function tokensToCssVars(t: ThemeTokens): Record<string, string> {
   vars['--ss-text-2xl'] = `${(baseSizePx * scaleRatio ** 3).toFixed(2)}px`;
   vars['--ss-text-3xl'] = `${(baseSizePx * scaleRatio ** 4).toFixed(2)}px`;
   vars['--ss-text-4xl'] = `${(baseSizePx * scaleRatio ** 5).toFixed(2)}px`;
+  // Display tier for hero headlines — visibly larger than section headings.
+  vars['--ss-text-5xl'] = `${(baseSizePx * scaleRatio ** 6).toFixed(2)}px`;
+  vars['--ss-text-6xl'] = `${(baseSizePx * scaleRatio ** 7).toFixed(2)}px`;
 
   return vars;
 }

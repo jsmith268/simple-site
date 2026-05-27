@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { body, container, heading, section, t } from '../stylekit';
+import { body, card, container, heading, section, t } from '../stylekit';
 import type { BlockModule } from '../types';
 
 const HoursRow = z.object({ days: z.string(), open: z.string(), close: z.string() });
@@ -8,11 +8,19 @@ export const hoursSchema = z.object({
   headline: z.string().optional(),
   rows: z.array(HoursRow),
   note: z.string().optional(),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type HoursProps = z.infer<typeof hoursSchema>;
 
 function Hours({ props, variant }: { props: HoursProps; variant: string }) {
-  const card = variant === 'card';
+  const carded = variant === 'card';
+  const inverted = props.tone === 'inverted';
+  const headColor = inverted ? t.primaryFg : t.fg;
+  const bodyColor = inverted ? t.primaryFg : t.mutedFg;
+
+  // Inside the card the surface is t.card, so default text colors apply.
+  const cellHead = carded ? t.fg : headColor;
+  const cellBody = carded ? t.mutedFg : bodyColor;
 
   const Table = (
     <table
@@ -39,7 +47,7 @@ function Hours({ props, variant }: { props: HoursProps; variant: string }) {
             scope="col"
             style={{
               ...body({ fontSize: t.textSm }),
-              color: t.fg,
+              color: cellHead,
               fontWeight: 600,
               textAlign: 'left',
               paddingBottom: 12,
@@ -51,7 +59,7 @@ function Hours({ props, variant }: { props: HoursProps; variant: string }) {
             scope="col"
             style={{
               ...body({ fontSize: t.textSm }),
-              color: t.fg,
+              color: cellHead,
               fontWeight: 600,
               textAlign: 'right',
               paddingBottom: 12,
@@ -68,7 +76,7 @@ function Hours({ props, variant }: { props: HoursProps; variant: string }) {
               scope="row"
               style={{
                 ...body(),
-                color: t.fg,
+                color: cellHead,
                 fontWeight: 500,
                 textAlign: 'left',
                 paddingBlock: 14,
@@ -76,7 +84,7 @@ function Hours({ props, variant }: { props: HoursProps; variant: string }) {
             >
               {row.days}
             </th>
-            <td style={{ ...body(), textAlign: 'right', paddingBlock: 14 }}>
+            <td style={{ ...body({ color: cellBody }), textAlign: 'right', paddingBlock: 14 }}>
               {row.open} – {row.close}
             </td>
           </tr>
@@ -86,28 +94,23 @@ function Hours({ props, variant }: { props: HoursProps; variant: string }) {
   );
 
   return (
-    <section id="hours" style={section({ background: t.bg })}>
+    <section id="hours" style={section(props.tone ?? 'default')}>
       <div style={container()}>
         <div style={{ maxWidth: 560, marginInline: 'auto', textAlign: 'center', marginBottom: 36 }}>
-          <h2 style={heading(2)}>{props.headline ?? 'Opening hours'}</h2>
+          <h2 style={heading(2, { color: headColor })}>{props.headline ?? 'Opening hours'}</h2>
         </div>
         <div
           style={{
             maxWidth: 560,
             marginInline: 'auto',
-            ...(card
-              ? {
-                  background: t.card,
-                  border: `1px solid ${t.border}`,
-                  borderRadius: t.radiusLg,
-                  padding: 'clamp(20px, 4vw, 36px)',
-                }
+            ...(carded
+              ? card({ padding: 'clamp(20px, 4vw, 36px)' })
               : {}),
           }}
         >
           {Table}
           {props.note && (
-            <p style={body({ fontSize: t.textSm, marginTop: 20, textAlign: 'center' })}>
+            <p style={body({ fontSize: t.textSm, marginTop: 20, textAlign: 'center', color: carded ? t.mutedFg : bodyColor })}>
               {props.note}
             </p>
           )}

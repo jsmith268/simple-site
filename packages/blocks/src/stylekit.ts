@@ -32,7 +32,29 @@ export const t = {
   text2xl: 'var(--ss-text-2xl)',
   text3xl: 'var(--ss-text-3xl)',
   text4xl: 'var(--ss-text-4xl)',
+  text5xl: 'var(--ss-text-5xl)',
+  text6xl: 'var(--ss-text-6xl)',
+  shadowSm: 'var(--ss-shadow-sm)',
+  shadowMd: 'var(--ss-shadow-md)',
+  shadowLg: 'var(--ss-shadow-lg)',
 } as const;
+
+export type SectionTone = 'default' | 'muted' | 'inverted';
+
+/**
+ * Background/foreground for a section tone. Alternating tones down a page give
+ * visual rhythm instead of one flat white column. `inverted` is a dark band.
+ */
+export function toneStyle(tone: SectionTone = 'default'): CSSProperties {
+  switch (tone) {
+    case 'muted':
+      return { background: t.muted, color: t.fg };
+    case 'inverted':
+      return { background: t.primary, color: t.primaryFg };
+    default:
+      return { background: t.bg, color: t.fg };
+  }
+}
 
 /** A centered content container respecting the theme's max width. */
 export function container(extra?: CSSProperties): CSSProperties {
@@ -45,10 +67,39 @@ export function container(extra?: CSSProperties): CSSProperties {
   };
 }
 
-/** Standard vertical section padding. */
-export function section(extra?: CSSProperties): CSSProperties {
+/** Standard vertical section padding. Pass a tone for alternating backgrounds. */
+export function section(toneOrExtra?: SectionTone | CSSProperties, extra?: CSSProperties): CSSProperties {
+  const isTone = typeof toneOrExtra === 'string';
+  const toneCss = isTone ? toneStyle(toneOrExtra) : {};
+  const extraCss = isTone ? extra : (toneOrExtra ?? {});
   return {
     paddingBlock: t.sectionPy,
+    ...toneCss,
+    ...extraCss,
+  };
+}
+
+/** Soft card surface with border + shadow for depth. */
+export function card(extra?: CSSProperties): CSSProperties {
+  return {
+    background: t.card,
+    color: t.cardFg,
+    border: `1px solid ${t.border}`,
+    borderRadius: t.radiusLg,
+    boxShadow: t.shadowSm,
+    ...extra,
+  };
+}
+
+/** Display-tier heading for hero headlines (larger than section headings). */
+export function display(extra?: CSSProperties): CSSProperties {
+  return {
+    fontFamily: t.fontHeading,
+    fontWeight: t.weightHeading as unknown as number,
+    fontSize: 'clamp(2.2rem, 5.5vw, var(--ss-text-6xl))',
+    lineHeight: 1.05,
+    letterSpacing: '-0.03em',
+    margin: 0,
     ...extra,
   };
 }

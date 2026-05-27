@@ -15,6 +15,7 @@
     "@simplesight/db": "workspace:*",
     "@simplesight/engine": "workspace:*",
     "@simplesight/blocks": "workspace:*",
+    "@simplesight/skills": "workspace:*",
     "@simplesight/theme": "workspace:*",
     "@simplesight/extractors": "workspace:*",
     "@simplesight/env": "workspace:*",

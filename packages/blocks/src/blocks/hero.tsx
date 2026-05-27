@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { BlockModule } from '../types';
-import { body, button, container, heading, section, t } from '../stylekit';
+import { body, button, container, display, section, t } from '../stylekit';
 
 const Cta = z.object({ label: z.string(), href: z.string() });
 
@@ -12,11 +12,19 @@ export const heroSchema = z.object({
   secondaryCta: Cta.optional(),
   imageUrl: z.string().optional(),
   imageAlt: z.string().optional(),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type HeroProps = z.infer<typeof heroSchema>;
 
 function Hero({ props, variant }: { props: HeroProps; variant: string }) {
+  const overlay = variant === 'overlay' && !!props.imageUrl;
   const split = variant === 'split' && !!props.imageUrl;
+  // On overlay, text is always light regardless of tone.
+  const onDark = overlay || props.tone === 'inverted';
+  const headlineColor = onDark ? t.primaryFg : t.fg;
+  const bodyColor = onDark ? t.primaryFg : t.mutedFg;
+  const eyebrowColor = overlay ? t.primaryFg : t.primary;
+
   const Ctas = (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 28 }}>
       {props.primaryCta && (
@@ -32,41 +40,60 @@ function Hero({ props, variant }: { props: HeroProps; variant: string }) {
     </div>
   );
 
+  const align = split || overlay ? 'left' : 'center';
+
   const Text = (
-    <div style={{ maxWidth: split ? 560 : 760, marginInline: split ? 0 : 'auto' }}>
+    <div style={{ maxWidth: split ? 560 : 760, marginInline: align === 'center' ? 'auto' : 0 }}>
       {props.eyebrow && (
         <p
           style={{
             ...body(),
-            color: t.primary,
+            color: eyebrowColor,
             fontWeight: 600,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             fontSize: t.textSm,
             marginBottom: 14,
+            opacity: overlay ? 0.92 : 1,
           }}
         >
           {props.eyebrow}
         </p>
       )}
-      <h1 style={heading(1, { textAlign: split ? 'left' : 'center', fontSize: t.text4xl })}>
-        {props.headline}
-      </h1>
+      <h1 style={display({ textAlign: align, color: headlineColor })}>{props.headline}</h1>
       {props.subheadline && (
-        <p
-          style={{
-            ...body({ fontSize: t.textLg, marginTop: 18, textAlign: split ? 'left' : 'center' }),
-          }}
-        >
+        <p style={body({ fontSize: t.textLg, marginTop: 18, textAlign: align, color: bodyColor })}>
           {props.subheadline}
         </p>
       )}
-      <div style={{ display: 'flex', justifyContent: split ? 'flex-start' : 'center' }}>{Ctas}</div>
+      <div style={{ display: 'flex', justifyContent: align === 'center' ? 'center' : 'flex-start' }}>
+        {Ctas}
+      </div>
     </div>
   );
 
+  if (overlay) {
+    return (
+      <section
+        style={{
+          position: 'relative',
+          minHeight: 'clamp(520px, 72vh, 760px)',
+          display: 'flex',
+          alignItems: 'center',
+          paddingBlock: t.sectionPy,
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url("${props.imageUrl}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          color: t.primaryFg,
+        }}
+      >
+        <div style={container()}>{Text}</div>
+      </section>
+    );
+  }
+
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div
         style={container({
           display: split ? 'grid' : 'block',
@@ -85,9 +112,11 @@ function Hero({ props, variant }: { props: HeroProps; variant: string }) {
               width: '100%',
               height: '100%',
               maxHeight: 480,
+              aspectRatio: '4 / 3',
               objectFit: 'cover',
               borderRadius: t.radiusLg,
               border: `1px solid ${t.border}`,
+              boxShadow: t.shadowMd,
             }}
           />
         )}
@@ -99,7 +128,7 @@ function Hero({ props, variant }: { props: HeroProps; variant: string }) {
 export const hero: BlockModule<HeroProps> = {
   type: 'hero',
   schema: heroSchema,
-  variants: ['default', 'split'],
+  variants: ['default', 'split', 'overlay'],
   Component: Hero,
   sample: (ctx) => ({
     eyebrow: ctx.category,

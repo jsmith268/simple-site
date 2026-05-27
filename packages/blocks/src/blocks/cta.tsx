@@ -9,11 +9,15 @@ export const ctaSchema = z.object({
   subtext: z.string().optional(),
   primaryCta: CtaLink,
   secondaryCta: CtaLink.optional(),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type CtaProps = z.infer<typeof ctaSchema>;
 
 function Cta({ props, variant }: { props: CtaProps; variant: string }) {
   const boxed = variant === 'boxed';
+  const inverted = props.tone === 'inverted';
+  const headColor = inverted ? t.primaryFg : t.fg;
+  const bodyColor = inverted ? t.primaryFg : t.mutedFg;
 
   const Inner = (
     <div
@@ -28,12 +32,15 @@ function Cta({ props, variant }: { props: CtaProps; variant: string }) {
               background: t.accent,
               borderRadius: t.radiusLg,
               padding: 'clamp(32px, 6vw, 64px)',
+              boxShadow: t.shadowSm,
             }
           : {}),
       }}
     >
-      <h2 style={heading(2, { maxWidth: 720 })}>{props.headline}</h2>
-      {props.subtext && <p style={body({ fontSize: t.textLg, maxWidth: 640 })}>{props.subtext}</p>}
+      <h2 style={heading(2, { maxWidth: 720, color: headColor })}>{props.headline}</h2>
+      {props.subtext && (
+        <p style={body({ fontSize: t.textLg, maxWidth: 640, color: bodyColor })}>{props.subtext}</p>
+      )}
       <div
         style={{
           display: 'flex',
@@ -56,7 +63,7 @@ function Cta({ props, variant }: { props: CtaProps; variant: string }) {
   );
 
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div style={container()}>{Inner}</div>
     </section>
   );

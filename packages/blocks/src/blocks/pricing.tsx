@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { BlockModule } from '../types';
-import { body, button, container, heading, section, t } from '../stylekit';
+import { body, button, card, container, heading, section, t } from '../stylekit';
 
 const Cta = z.object({ label: z.string(), href: z.string() });
 
@@ -17,17 +17,22 @@ export const pricingSchema = z.object({
   headline: z.string().optional(),
   intro: z.string().optional(),
   tiers: z.array(Tier),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type PricingProps = z.infer<typeof pricingSchema>;
 
 function Pricing({ props }: { props: PricingProps; variant: string }) {
+  const headColor = props.tone === 'inverted' ? t.primaryFg : t.fg;
+  const introColor = props.tone === 'inverted' ? t.primaryFg : t.mutedFg;
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div style={container()}>
         {(props.headline || props.intro) && (
           <div style={{ maxWidth: 720, marginInline: 'auto', textAlign: 'center', marginBottom: 44 }}>
-            {props.headline && <h2 style={heading(2)}>{props.headline}</h2>}
-            {props.intro && <p style={body({ fontSize: t.textLg, marginTop: 16 })}>{props.intro}</p>}
+            {props.headline && <h2 style={heading(2, { color: headColor })}>{props.headline}</h2>}
+            {props.intro && (
+              <p style={body({ fontSize: t.textLg, marginTop: 16, color: introColor })}>{props.intro}</p>
+            )}
           </div>
         )}
         <div
@@ -41,15 +46,13 @@ function Pricing({ props }: { props: PricingProps; variant: string }) {
           {props.tiers.map((tier, i) => (
             <div
               key={i}
-              style={{
+              style={card({
                 display: 'flex',
                 flexDirection: 'column',
-                background: t.card,
-                color: t.cardFg,
                 border: `${tier.highlighted ? 2 : 1}px solid ${tier.highlighted ? t.accent : t.border}`,
-                borderRadius: t.radiusLg,
+                boxShadow: tier.highlighted ? t.shadowLg : t.shadowSm,
                 padding: 28,
-              }}
+              })}
             >
               {tier.highlighted && (
                 <span

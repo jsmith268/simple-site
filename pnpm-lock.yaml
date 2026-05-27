@@ -194,6 +194,9 @@ importers:
       '@simplesight/observability':
         specifier: workspace:*
         version: link:../observability
+      '@simplesight/skills':
+        specifier: workspace:*
+        version: link:../skills
       '@simplesight/theme':
         specifier: workspace:*
         version: link:../theme
@@ -356,6 +359,16 @@ importers:
         version: 5.9.3
 
   packages/seo:
+    dependencies:
+      '@simplesight/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/skills:
     dependencies:
       '@simplesight/contracts':
         specifier: workspace:*

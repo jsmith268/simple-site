@@ -10,17 +10,21 @@ const GalleryImage = z.object({
 export const gallerySchema = z.object({
   headline: z.string().optional(),
   images: z.array(GalleryImage),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type GalleryProps = z.infer<typeof gallerySchema>;
 
 function Gallery({ props, variant }: { props: GalleryProps; variant: string }) {
   const masonry = variant === 'masonry';
+  const headColor = props.tone === 'inverted' ? t.primaryFg : t.fg;
 
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div style={container()}>
         {props.headline && (
-          <h2 style={heading(2, { textAlign: 'center', marginBottom: 40 })}>{props.headline}</h2>
+          <h2 style={heading(2, { textAlign: 'center', marginBottom: 40, color: headColor })}>
+            {props.headline}
+          </h2>
         )}
         {masonry ? (
           <div
@@ -38,8 +42,9 @@ function Gallery({ props, variant }: { props: GalleryProps; variant: string }) {
                   width: '100%',
                   display: 'block',
                   marginBottom: 16,
-                  borderRadius: t.radiusMd,
+                  borderRadius: t.radiusLg,
                   border: `1px solid ${t.border}`,
+                  boxShadow: t.shadowSm,
                   breakInside: 'avoid',
                 }}
               />
@@ -61,10 +66,12 @@ function Gallery({ props, variant }: { props: GalleryProps; variant: string }) {
                 style={{
                   width: '100%',
                   height: 220,
+                  aspectRatio: '4 / 3',
                   objectFit: 'cover',
                   display: 'block',
-                  borderRadius: t.radiusMd,
+                  borderRadius: t.radiusLg,
                   border: `1px solid ${t.border}`,
+                  boxShadow: t.shadowSm,
                 }}
               />
             ))}

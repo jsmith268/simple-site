@@ -1,24 +1,26 @@
 import { z } from 'zod';
 import type { BlockModule } from '../types';
-import { body, container, heading, section, t } from '../stylekit';
+import { body, card, container, heading, section, t } from '../stylekit';
 
 const Item = z.object({ question: z.string(), answer: z.string() });
 
 export const faqSchema = z.object({
   headline: z.string().optional(),
   items: z.array(Item),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type FaqProps = z.infer<typeof faqSchema>;
 
 function Faq({ props, variant }: { props: FaqProps; variant: string }) {
   const twoColumn = variant === 'twoColumn';
+  const headColor = props.tone === 'inverted' ? t.primaryFg : t.fg;
 
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div style={container()}>
         {props.headline && (
           <div style={{ maxWidth: 720, marginInline: 'auto', textAlign: 'center', marginBottom: 44 }}>
-            <h2 style={heading(2)}>{props.headline}</h2>
+            <h2 style={heading(2, { color: headColor })}>{props.headline}</h2>
           </div>
         )}
         <div
@@ -33,13 +35,9 @@ function Faq({ props, variant }: { props: FaqProps; variant: string }) {
           {props.items.map((item, i) => (
             <details
               key={i}
-              style={{
-                background: t.card,
-                color: t.cardFg,
-                border: `1px solid ${t.border}`,
-                borderRadius: t.radiusMd,
+              style={card({
                 padding: '16px 20px',
-              }}
+              })}
             >
               <summary
                 style={{

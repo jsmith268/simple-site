@@ -10,6 +10,7 @@ export const contactSchema = z.object({
   address: z.string().optional(),
   mapEmbedUrl: z.string().optional(),
   showForm: z.boolean().optional(),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type ContactProps = z.infer<typeof contactSchema>;
 
@@ -36,27 +37,30 @@ function inputStyle() {
 
 function Contact({ props, variant }: { props: ContactProps; variant: string }) {
   const split = variant === 'split';
+  const inverted = props.tone === 'inverted';
+  const headColor = inverted ? t.primaryFg : t.fg;
+  const bodyColor = inverted ? t.primaryFg : t.mutedFg;
 
   const Details = (
     <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
       {props.email && (
         <div>
-          <p style={{ ...body({ fontSize: t.textSm }), fontWeight: 600, color: t.fg, margin: 0 }}>
+          <p style={{ ...body({ fontSize: t.textSm }), fontWeight: 600, color: headColor, margin: 0 }}>
             Email
           </p>
-          <a href={`mailto:${props.email}`} style={{ ...body(), textDecoration: 'none' }}>
+          <a href={`mailto:${props.email}`} style={{ ...body({ color: bodyColor }), textDecoration: 'none' }}>
             {props.email}
           </a>
         </div>
       )}
       {props.phone && (
         <div>
-          <p style={{ ...body({ fontSize: t.textSm }), fontWeight: 600, color: t.fg, margin: 0 }}>
+          <p style={{ ...body({ fontSize: t.textSm }), fontWeight: 600, color: headColor, margin: 0 }}>
             Phone
           </p>
           <a
             href={`tel:${props.phone.replace(/\s+/g, '')}`}
-            style={{ ...body(), textDecoration: 'none' }}
+            style={{ ...body({ color: bodyColor }), textDecoration: 'none' }}
           >
             {props.phone}
           </a>
@@ -64,10 +68,10 @@ function Contact({ props, variant }: { props: ContactProps; variant: string }) {
       )}
       {props.address && (
         <div>
-          <p style={{ ...body({ fontSize: t.textSm }), fontWeight: 600, color: t.fg, margin: 0 }}>
+          <p style={{ ...body({ fontSize: t.textSm }), fontWeight: 600, color: headColor, margin: 0 }}>
             Address
           </p>
-          <address style={{ ...body(), fontStyle: 'normal' }}>{props.address}</address>
+          <address style={{ ...body({ color: bodyColor }), fontStyle: 'normal' }}>{props.address}</address>
         </div>
       )}
       {props.mapEmbedUrl && (
@@ -80,6 +84,7 @@ function Contact({ props, variant }: { props: ContactProps; variant: string }) {
             height: 260,
             border: `1px solid ${t.border}`,
             borderRadius: t.radiusLg,
+            boxShadow: t.shadowSm,
           }}
         />
       )}
@@ -133,13 +138,15 @@ function Contact({ props, variant }: { props: ContactProps; variant: string }) {
         textAlign: split ? 'left' : 'center',
       }}
     >
-      <h2 style={heading(2)}>{props.headline ?? 'Get in touch'}</h2>
-      {props.intro && <p style={body({ fontSize: t.textLg, marginTop: 14 })}>{props.intro}</p>}
+      <h2 style={heading(2, { color: headColor })}>{props.headline ?? 'Get in touch'}</h2>
+      {props.intro && (
+        <p style={body({ fontSize: t.textLg, marginTop: 14, color: bodyColor })}>{props.intro}</p>
+      )}
     </div>
   );
 
   return (
-    <section id="contact" style={section({ background: t.bg })}>
+    <section id="contact" style={section(props.tone ?? 'default')}>
       <div style={container()}>
         {Header}
         <div

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { body, container, heading, section, t } from '../stylekit';
+import { body, card, container, heading, section, t } from '../stylekit';
 import type { BlockModule } from '../types';
 
 const Testimonial = z.object({
@@ -12,6 +12,7 @@ const Testimonial = z.object({
 export const testimonialsSchema = z.object({
   headline: z.string().optional(),
   items: z.array(Testimonial),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type TestimonialsProps = z.infer<typeof testimonialsSchema>;
 
@@ -64,19 +65,15 @@ function Avatar({ url, name }: { url?: string; name: string }) {
 function Card({ item }: { item: TestimonialsProps['items'][number] }) {
   return (
     <figure
-      style={{
+      style={card({
         margin: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: 20,
-        background: t.card,
-        color: t.cardFg,
-        border: `1px solid ${t.border}`,
-        borderRadius: t.radiusLg,
         padding: 28,
         height: '100%',
         boxSizing: 'border-box',
-      }}
+      })}
     >
       <blockquote style={{ ...body({ color: t.cardFg, fontSize: t.textLg }), flex: 1 }}>
         “{item.quote}”
@@ -96,12 +93,15 @@ function Card({ item }: { item: TestimonialsProps['items'][number] }) {
 
 function Testimonials({ props, variant }: { props: TestimonialsProps; variant: string }) {
   const single = variant === 'single';
+  const headColor = props.tone === 'inverted' ? t.primaryFg : t.fg;
 
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div style={container()}>
         {props.headline && (
-          <h2 style={heading(2, { textAlign: 'center', marginBottom: 40 })}>{props.headline}</h2>
+          <h2 style={heading(2, { textAlign: 'center', marginBottom: 40, color: headColor })}>
+            {props.headline}
+          </h2>
         )}
         <div
           style={{

@@ -10,17 +10,24 @@ const Stat = z.object({
 export const statsSchema = z.object({
   headline: z.string().optional(),
   items: z.array(Stat),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type StatsProps = z.infer<typeof statsSchema>;
 
 function Stats({ props, variant }: { props: StatsProps; variant: string }) {
   const bordered = variant === 'bordered';
+  const inverted = props.tone === 'inverted';
+  const headColor = inverted ? t.primaryFg : t.fg;
+  const valueColor = inverted ? t.primaryFg : t.primary;
+  const labelColor = inverted ? t.primaryFg : t.mutedFg;
 
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div style={container()}>
         {props.headline && (
-          <h2 style={heading(2, { textAlign: 'center', marginBottom: 40 })}>{props.headline}</h2>
+          <h2 style={heading(2, { textAlign: 'center', marginBottom: 40, color: headColor })}>
+            {props.headline}
+          </h2>
         )}
         <dl
           style={{
@@ -49,12 +56,14 @@ function Stats({ props, variant }: { props: StatsProps; variant: string }) {
                   fontSize: t.text4xl,
                   lineHeight: 1.05,
                   letterSpacing: '-0.02em',
-                  color: t.primary,
+                  color: valueColor,
                 }}
               >
                 {item.value}
               </dt>
-              <dd style={{ ...body({ marginTop: 8 }), marginInlineStart: 0 }}>{item.label}</dd>
+              <dd style={{ ...body({ marginTop: 8, color: labelColor }), marginInlineStart: 0 }}>
+                {item.label}
+              </dd>
             </div>
           ))}
         </dl>

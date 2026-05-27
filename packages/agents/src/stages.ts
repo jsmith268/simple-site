@@ -7,7 +7,7 @@ import {
   ThemeTokens,
 } from '@simplesight/contracts';
 import { buildLlmCritic, defineAgent } from '@simplesight/engine';
-import { contrastRatio, pickPreset } from '@simplesight/theme';
+import { contrastRatio, pickPresetForCategory } from '@simplesight/theme';
 
 // ── Stage 1: Discovery — clean/enrich the business profile ──────────────────
 
@@ -36,7 +36,7 @@ export const themeAgent = defineAgent<{ business: BusinessInfo; style?: IntakeSt
     'You are a brand designer. Produce a complete, accessible ThemeTokens object (WCAG AA contrast between background and foreground). Match the requested mood and the nature of the business.',
   prompt: ({ business, style }) =>
     `Business: ${business.name} (${business.category}). Mood: ${style?.mood ?? 'classic'}. Color preference: ${style?.colorPreference ?? 'none'}.`,
-  offline: ({ style }) => pickPreset(style?.mood),
+  offline: ({ business, style }) => pickPresetForCategory(business.category, style?.mood),
 });
 
 /** Deterministic WCAG gate — runs in every mode, not just live. */

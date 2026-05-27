@@ -84,6 +84,84 @@ export const presets: Record<string, ThemeTokens> = {
     density: 'comfortable',
     mood: 'modern',
   },
+  sage: {
+    palette: {
+      background: '#f6faf7',
+      foreground: '#1c2b24',
+      primary: '#2f6f57',
+      primaryForeground: '#ffffff',
+      accent: '#7fb89c',
+      muted: '#e8f1ec',
+      mutedForeground: '#4a5d54',
+      border: '#d6e5dd',
+      card: '#ffffff',
+      cardForeground: '#1c2b24',
+    },
+    typography: {
+      headingFamily: "'Fraunces', Georgia, serif",
+      bodyFamily: "'Nunito Sans', system-ui, sans-serif",
+      baseSizePx: 17,
+      scaleRatio: 1.24,
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    spacing: { unitPx: 8, sectionPaddingY: 96, contentMaxWidthPx: 1100 },
+    radius: { smPx: 8, mdPx: 14, lgPx: 22 },
+    density: 'airy',
+    mood: 'warm',
+  },
+  navy: {
+    palette: {
+      background: '#ffffff',
+      foreground: '#0f1d33',
+      primary: '#13294b',
+      primaryForeground: '#ffffff',
+      accent: '#b6892f',
+      muted: '#eef2f7',
+      mutedForeground: '#475569',
+      border: '#dde4ee',
+      card: '#ffffff',
+      cardForeground: '#0f1d33',
+    },
+    typography: {
+      headingFamily: "'Libre Baskerville', Georgia, serif",
+      bodyFamily: "'Source Sans 3', system-ui, sans-serif",
+      baseSizePx: 17,
+      scaleRatio: 1.25,
+      headingWeight: 700,
+      bodyWeight: 400,
+    },
+    spacing: { unitPx: 8, sectionPaddingY: 88, contentMaxWidthPx: 1120 },
+    radius: { smPx: 4, mdPx: 8, lgPx: 14 },
+    density: 'comfortable',
+    mood: 'classic',
+  },
+  clay: {
+    palette: {
+      background: '#fbf6f1',
+      foreground: '#2c211a',
+      primary: '#a9572f',
+      primaryForeground: '#ffffff',
+      accent: '#d99a6c',
+      muted: '#f3e7dc',
+      mutedForeground: '#6b574a',
+      border: '#e8d8c9',
+      card: '#ffffff',
+      cardForeground: '#2c211a',
+    },
+    typography: {
+      headingFamily: "'Poppins', system-ui, sans-serif",
+      bodyFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+      baseSizePx: 17,
+      scaleRatio: 1.22,
+      headingWeight: 600,
+      bodyWeight: 400,
+    },
+    spacing: { unitPx: 8, sectionPaddingY: 96, contentMaxWidthPx: 1080 },
+    radius: { smPx: 8, mdPx: 14, lgPx: 24 },
+    density: 'airy',
+    mood: 'warm',
+  },
 };
 
 export const defaultTheme: ThemeTokens = presets.slate as ThemeTokens;
@@ -101,4 +179,26 @@ export function pickPreset(mood?: string): ThemeTokens {
     default:
       return presets.slate as ThemeTokens;
   }
+}
+
+/** Resolve a preset by family key (what a playbook's paletteFamily holds). */
+export function presetByFamily(family: string): ThemeTokens {
+  return (presets[family] as ThemeTokens) ?? defaultTheme;
+}
+
+const CATEGORY_PALETTE: { kws: string[]; family: keyof typeof presets }[] = [
+  { kws: ['bak', 'pastry', 'cake', 'cafe', 'coffee', 'restaurant', 'food', 'bistro', 'eatery', 'bar', 'brew'], family: 'warmth' },
+  { kws: ['salon', 'spa', 'hair', 'beauty', 'nail', 'barber', 'shop', 'boutique', 'retail', 'craft', 'florist'], family: 'clay' },
+  { kws: ['dental', 'dentist', 'ortho', 'clinic', 'medical', 'doctor', 'health', 'wellness', 'therap', 'chiro', 'vet'], family: 'sage' },
+  { kws: ['law', 'legal', 'attorney', 'account', 'financ', 'consult', 'advis', 'insurance', 'real estate', 'realty'], family: 'navy' },
+  { kws: ['gym', 'fitness', 'yoga', 'pilates', 'train', 'crossfit', 'studio', 'martial', 'dance'], family: 'ink' },
+];
+
+/** Category-aware preset selection (falls back to mood, then slate). */
+export function pickPresetForCategory(category?: string, mood?: string): ThemeTokens {
+  const c = (category ?? '').toLowerCase();
+  for (const { kws, family } of CATEGORY_PALETTE) {
+    if (kws.some((k) => c.includes(k))) return presets[family] as ThemeTokens;
+  }
+  return pickPreset(mood);
 }

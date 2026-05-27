@@ -12,12 +12,17 @@ export const featureSchema = z.object({
   imageUrl: z.string().optional(),
   imageAlt: z.string().optional(),
   cta: Cta.optional(),
+  tone: z.enum(['default', 'muted', 'inverted']).optional(),
 });
 export type FeatureProps = z.infer<typeof featureSchema>;
 
 function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
   const hasImage = !!props.imageUrl;
   const reverse = variant === 'reverse';
+  const inverted = props.tone === 'inverted';
+  const headColor = inverted ? t.primaryFg : t.fg;
+  const bodyColor = inverted ? t.primaryFg : t.mutedFg;
+  const accentColor = inverted ? t.primaryFg : t.primary;
 
   const Image = hasImage && (
     // biome-ignore lint/a11y/useAltText: alt provided via imageAlt
@@ -28,9 +33,11 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
         width: '100%',
         height: '100%',
         maxHeight: 460,
+        aspectRatio: '4 / 3',
         objectFit: 'cover',
         borderRadius: t.radiusLg,
         border: `1px solid ${t.border}`,
+        boxShadow: t.shadowMd,
       }}
     />
   );
@@ -40,7 +47,7 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
       {props.eyebrow && (
         <p
           style={body({
-            color: t.primary,
+            color: accentColor,
             fontWeight: 600,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
@@ -51,8 +58,10 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
           {props.eyebrow}
         </p>
       )}
-      <h2 style={heading(2, { textAlign: hasImage ? 'left' : 'center' })}>{props.headline}</h2>
-      <p style={body({ fontSize: t.textLg, marginTop: 18, textAlign: hasImage ? 'left' : 'center' })}>
+      <h2 style={heading(2, { textAlign: hasImage ? 'left' : 'center', color: headColor })}>
+        {props.headline}
+      </h2>
+      <p style={body({ fontSize: t.textLg, marginTop: 18, textAlign: hasImage ? 'left' : 'center', color: bodyColor })}>
         {props.body}
       </p>
       {props.bullets && props.bullets.length > 0 && (
@@ -61,14 +70,14 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
             <li
               key={i}
               style={{
-                ...body(),
+                ...body({ color: bodyColor }),
                 display: 'flex',
                 gap: 10,
                 alignItems: 'flex-start',
                 justifyContent: hasImage ? 'flex-start' : 'center',
               }}
             >
-              <span aria-hidden="true" style={{ color: t.primary, fontWeight: 700 }}>
+              <span aria-hidden="true" style={{ color: accentColor, fontWeight: 700 }}>
                 ✓
               </span>
               <span>{bullet}</span>
@@ -87,7 +96,7 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
   );
 
   return (
-    <section style={section({ background: t.bg })}>
+    <section style={section(props.tone ?? 'default')}>
       <div
         style={container({
           display: hasImage ? 'grid' : 'block',

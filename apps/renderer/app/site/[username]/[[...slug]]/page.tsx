@@ -1,6 +1,7 @@
 import { SitePage } from "@simplesight/blocks";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { prefixLinks } from "@/lib/links";
 import { loadSiteSpec } from "@/lib/tenant";
 
 type Params = { username: string; slug?: string[] };
@@ -25,7 +26,9 @@ export default async function TenantPage({
   params: Promise<Params>;
 }) {
   const { username, slug } = await params;
-  const spec = await loadSiteSpec(username);
-  if (!spec) notFound();
+  const raw = await loadSiteSpec(username);
+  if (!raw) notFound();
+  // Make internal nav work under the tenant base path (works via subdomain or preview URL).
+  const spec = prefixLinks(raw, `/site/${encodeURIComponent(username)}`);
   return <SitePage spec={spec} slug={(slug ?? []).join("/")} />;
 }
