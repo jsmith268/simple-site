@@ -53,6 +53,7 @@ The '@/' alias maps to the app/ directory.
 NON-NEGOTIABLE buildability constraints:
 - EXACTLY one file. export default function Page() { return (<main>…</main>) }. You MAY also export const metadata.
 - Only the imports listed above (those you use) + 'next/link'. NO other libraries. NO next/image (use plain <img>). NO next/font. NO React hooks. NO 'use client'.
+- When passing props to an imported component, match its prop types EXACTLY as shown above — never pass a string where an array/object is typed (a type mismatch fails the build).
 - Inline SVG for icons. No emoji. Escape JSX apostrophes/quotes (&apos;/curly strings).
 - Style with Tailwind v4 utilities + palette/font CSS vars (bg-[var(--bg)], text-[var(--primary)], font via style={{fontFamily:'var(--font-display)'}}); use the globals.css helper classes (.reveal, .grain, .numeral, .duotone, etc.).
 - Author the non-shared sections (hero, feature grids, stats, pricing, testimonials, schedule, cta bands, etc.) INLINE as rich composition implementing the brief's signature devices.

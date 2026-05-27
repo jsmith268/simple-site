@@ -56,7 +56,7 @@ export const COMPONENT_SPECS: Partial<Record<ComponentType, { interactive: boole
   },
   map: {
     interactive: false,
-    spec: `LocationMap — a styled card containing an <iframe src="https://www.google.com/maps?q=<urlencoded address>&output=embed" loading="lazy" title=...> ~360–420px tall, plus an address block, hours, and a "Get Directions" link to https://www.google.com/maps?q=<address>. Props: { address: string; hours?: { days: string; open: string; close: string }[] }.`,
+    spec: `LocationMap — a styled card containing an <iframe src="https://www.google.com/maps?q=<urlencoded address>&output=embed" loading="lazy" title=...> ~360–420px tall, plus an address block, hours, and a "Get Directions" link to https://www.google.com/maps?q=<address>. Props: { address: string; hours?: string | { days: string; open: string; close: string }[] }. The hours prop is TOLERANT — accept EITHER a plain formatted string (e.g. "Mon–Sun · 6:30a–6p") OR an array; detect with Array.isArray and render whichever is passed. This keeps pages that pass a string from breaking the build.`,
   },
   'lead-form': {
     interactive: true,
@@ -96,13 +96,13 @@ export function sharedImportMap(ia: SiteIA): { type: ComponentType; name: string
         t === 'lead-form'
           ? '{ id?: string }'
           : t === 'faq-accordion'
-            ? '{ items: {question,answer}[] }'
+            ? '{ items: { question: string; answer: string }[] }'
             : t === 'social-feed'
-              ? '{ handle, profileUrl, items[] }'
+              ? '{ handle: string; profileUrl: string; items: { img: string; alt: string; likes: string; caption: string }[] }'
               : t === 'map'
-                ? '{ address, hours? }'
+                ? '{ address: string; hours?: string | { days: string; open: string; close: string }[] }'
                 : t === 'gallery'
-                  ? '{ images: {src,alt}[] }'
+                  ? '{ images: { src: string; alt: string }[] }'
                   : '{}',
     }));
 }

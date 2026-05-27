@@ -22,6 +22,24 @@ function referencedFiles(output: string): string[] {
   return [...set];
 }
 
+/** Shared component files imported by a page (so cross-file prop mismatches can be
+ *  fixed AT the component — resolving every page that uses it at once). */
+function importedComponents(dir: string, pagePath: string): string[] {
+  try {
+    const src = readFileSync(join(dir, pagePath), 'utf8');
+    const out: string[] = [];
+    const re = /from\s+['"]@\/components\/([\w-]+)['"]/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+      const p = `app/components/${m[1]}.tsx`;
+      if (existsSync(join(dir, p))) out.push(p);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Code-critic: install + build the generated app, and on failure reprompt Opus
  * to repair the offending files, bounded. The reliability gate that makes
@@ -30,7 +48,7 @@ function referencedFiles(output: string): string[] {
  */
 export async function runCodeCritic(args: CodeCriticArgs): Promise<BuildReport> {
   const { dir, model, runner } = args;
-  const maxAttempts = args.maxAttempts ?? 6;
+  const maxAttempts = args.maxAttempts ?? 8;
   const start = Date.now();
   const filesFixed = new Set<string>();
   const errors: string[] = [];
@@ -55,7 +73,11 @@ export async function runCodeCritic(args: CodeCriticArgs): Promise<BuildReport> 
     if (paths.length === 0) {
       paths = ['app/page.tsx', 'app/layout.tsx', 'app/globals.css'].filter((p) => existsSync(join(dir, p)));
     }
-    paths = paths.slice(0, 4); // keep the reprompt focused
+    // Also include shared components imported by the offending page(s) so a
+    // prop-type mismatch can be fixed AT the component (fixes all callers at once).
+    const withComponents = new Set(paths);
+    for (const p of paths) if (p.endsWith('page.tsx')) for (const c of importedComponents(dir, p)) withComponents.add(c);
+    paths = [...withComponents].slice(0, 5);
     const blocks = paths
       .map((p) => `=== FILE: ${p} ===\n${readFileSync(join(dir, p), 'utf8')}`)
       .join('\n\n');
@@ -64,7 +86,9 @@ export async function runCodeCritic(args: CodeCriticArgs): Promise<BuildReport> 
 === FILE: <path> ===
 <code>
 
-Rules: keep the design/markup intact; fix only what breaks the build. Components using useState/onClick/onSubmit/onChange need 'use client' as the first line; pages must not. No next/image, no next/font, no extra libraries. Escape JSX entities. Fix import/prop mismatches.`;
+Rules: keep the design/markup intact; fix only what breaks the build. Components using useState/onClick/onSubmit/onChange need 'use client' as the first line; pages must not. No next/image, no next/font, no extra libraries. Escape JSX entities. Fix import/prop mismatches.
+
+IMPORTANT: if the error is a prop-TYPE mismatch between a page and an imported component (e.g. a page passes a string where the component types an array), prefer fixing it AT THE COMPONENT by widening its prop type (e.g. \`hours?: string | Hours[]\`) and handling both with Array.isArray — this resolves every page that uses it at once. Return the corrected component file (and any pages you also changed).`;
     const prompt = `The build failed with:\n\n${build.output.slice(-6000)}\n\nHere are the current files to correct:\n\n${blocks}\n\nReturn the corrected complete file(s) now.`;
 
     try {
