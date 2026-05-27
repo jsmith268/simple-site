@@ -8,14 +8,12 @@ import type {
 } from '@simplesight/contracts';
 import { getBlock } from '@simplesight/blocks';
 import type { BlockPlanItem, CategoryPlaybook } from '@simplesight/skills';
+import type { ContentBundle } from './content';
 
 let counter = 0;
 const nextId = () => `b${(counter++).toString(36)}_${Date.now().toString(36)}`;
 
 const SERVICE_ICONS = ['star', 'leaf', 'clock', 'heart', 'shield', 'sparkle', 'tool', 'check'];
-
-/** Blocks we never fabricate in the deterministic floor (no real numbers/faces). */
-const ALWAYS_SKIP = new Set(['stats', 'team']);
 
 function addressOf(business: BusinessInfo): string | undefined {
   const l = business.locations[0];
@@ -29,29 +27,38 @@ function clean(obj: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+/** Wrap the emphasis substring in *…* so the hero gradient-clips it. */
+function markEmphasis(headline: string, emphasis?: string): string {
+  if (emphasis && headline.includes(emphasis)) return headline.replace(emphasis, `*${emphasis}*`);
+  return headline;
+}
+
 /**
  * Build a complete, multi-page, image-rich SiteSpec from a category playbook +
- * the customer's real business info. Each block starts from its schema-valid
- * sample() and is overridden with real content, so blocks can never fail
- * validation. Blocks that would require fabricated data are skipped honestly.
+ * the customer's business info. When an AI `content` bundle is supplied, blocks
+ * are filled with that rich content (incl. real testimonials/stats); otherwise
+ * the deterministic floor (playbook samples, honest skips) is used.
  */
 export function assembleSite(
   business: BusinessInfo,
   playbook: CategoryPlaybook,
   theme: ThemeTokens,
+  content?: ContentBundle,
 ): SiteSpec {
   const ctx = { businessName: business.name, category: business.category, tagline: business.tagline };
   const nav: NavItem[] = playbook.pages.map((p) => ({ label: p.title, href: p.slug ? `/${p.slug}` : '/' }));
   const services =
-    business.services && business.services.length
+    content?.services.items.map((s) => ({ name: s.name, description: s.description })) ??
+    (business.services?.length
       ? business.services.map((s) => ({ name: s.name, description: s.description ?? '' }))
-      : playbook.services.map((s) => ({ name: s.name, description: s.description ?? '' }));
+      : playbook.services.map((s) => ({ name: s.name, description: s.description ?? '' })));
   const address = addressOf(business);
-  const servicesSlug =
-    playbook.pages.find((p) => ['menu', 'services', 'treatments', 'pricing'].includes(p.slug))?.slug;
-  const secondaryCta = servicesSlug
-    ? { label: servicesSlug === 'menu' ? 'See the menu' : 'Our services', href: `/${servicesSlug}` }
-    : undefined;
+  const servicesSlug = playbook.pages.find((p) =>
+    ['menu', 'services', 'treatments', 'pricing', 'product'].includes(p.slug),
+  )?.slug;
+
+  // With AI content we can honestly fill stats/testimonials; without, skip them.
+  const skip = new Set<string>(content ? ['team'] : ['stats', 'team']);
 
   function overridesFor(item: BlockPlanItem): Record<string, unknown> | null {
     switch (item.type) {
@@ -63,17 +70,20 @@ export function assembleSite(
         };
       case 'hero':
         return {
-          eyebrow: playbook.hero.eyebrow,
-          headline: playbook.hero.headline,
-          subheadline: playbook.hero.subheadline,
+          eyebrow: content?.hero.eyebrow ?? playbook.hero.eyebrow,
+          headline: content ? markEmphasis(content.hero.headline, content.hero.emphasis) : playbook.hero.headline,
+          subheadline: content?.hero.subheadline ?? playbook.hero.subheadline,
           imageUrl: playbook.images.hero,
-          imageAlt: `${business.name}`,
-          primaryCta: { label: 'Get in touch', href: '/contact' },
-          secondaryCta,
+          imageAlt: business.name,
+          primaryCta: { label: content?.hero.primaryCta ?? 'Get in touch', href: '/contact' },
+          secondaryCta: servicesSlug
+            ? { label: content?.hero.secondaryCta ?? 'Our services', href: `/${servicesSlug}` }
+            : undefined,
         };
       case 'services':
         return {
-          headline: 'What we offer',
+          headline: content?.services.headline ?? 'What we offer',
+          intro: content?.services.intro,
           items: services.map((s, i) => ({
             title: s.name,
             description: s.description,
@@ -81,20 +91,29 @@ export function assembleSite(
           })),
         };
       case 'feature':
-        return {
-          eyebrow: playbook.hero.eyebrow,
-          headline: playbook.hero.headline,
-          body: business.description,
-          bullets: services.slice(0, 3).map((s) => s.name),
-          imageUrl: playbook.images.feature,
-          imageAlt: `${business.name}`,
-        };
+        return content
+          ? {
+              eyebrow: content.feature.eyebrow,
+              headline: content.feature.headline,
+              body: content.feature.body,
+              bullets: content.feature.bullets,
+              imageUrl: playbook.images.feature,
+              imageAlt: business.name,
+            }
+          : {
+              eyebrow: playbook.hero.eyebrow,
+              headline: playbook.hero.headline,
+              body: business.description,
+              bullets: services.slice(0, 3).map((s) => s.name),
+              imageUrl: playbook.images.feature,
+              imageAlt: business.name,
+            };
       case 'about':
         return {
-          headline: `About ${business.name}`,
-          body: business.description,
+          headline: content?.about.headline ?? `About ${business.name}`,
+          body: content?.about.paragraphs ?? business.description,
           imageUrl: playbook.images.about,
-          imageAlt: `${business.name}`,
+          imageAlt: business.name,
         };
       case 'gallery':
         return {
@@ -102,12 +121,16 @@ export function assembleSite(
           images: (playbook.images.gallery ?? []).map((url, i) => ({ url, alt: `${business.name} ${i + 1}` })),
         };
       case 'faq':
-        return { headline: 'Common questions', items: playbook.faqs };
+        return { headline: 'Common questions', items: content?.faqs ?? playbook.faqs };
+      case 'testimonials':
+        return content ? { headline: 'What clients say', items: content.testimonials } : {};
+      case 'stats':
+        return content ? { items: content.stats } : null;
       case 'cta':
         return {
-          headline: `Ready when you are`,
-          subtext: business.tagline,
-          primaryCta: { label: 'Get in touch', href: '/contact' },
+          headline: content?.cta.headline ?? 'Ready when you are',
+          subtext: content?.cta.subtext ?? business.tagline,
+          primaryCta: { label: content?.hero.primaryCta ?? 'Get in touch', href: '/contact' },
         };
       case 'contact':
         return {
@@ -118,9 +141,9 @@ export function assembleSite(
           showForm: true,
         };
       case 'hours':
-        return business.hours.length ? { headline: 'Hours', rows: business.hours } : null; // skip if no real hours
+        return business.hours.length ? { headline: 'Hours', rows: business.hours } : null;
       case 'map':
-        return address ? { headline: 'Find us', address } : null; // skip if no location
+        return address ? { headline: 'Find us', address } : null;
       case 'footer':
         return {
           brandName: business.name,
@@ -128,7 +151,7 @@ export function assembleSite(
           socials: business.contact.socials.length ? business.contact.socials : undefined,
         };
       default:
-        return {}; // testimonials etc. keep sample content
+        return {};
     }
   }
 
@@ -136,11 +159,11 @@ export function assembleSite(
     const blocks: BlockInstance[] = [];
     let order = 0;
     for (const item of pg.blocks) {
-      if (ALWAYS_SKIP.has(item.type)) continue;
+      if (skip.has(item.type)) continue;
       const mod = getBlock(item.type);
       if (!mod) continue;
       const ov = overridesFor(item);
-      if (ov === null) continue; // honest skip (no data)
+      if (ov === null) continue;
       const base = mod.sample(ctx) as Record<string, unknown>;
       const merged = { ...base, ...clean(ov), ...(item.tone ? { tone: item.tone } : {}) };
       const variant =
@@ -153,7 +176,10 @@ export function assembleSite(
     return {
       slug: pg.slug,
       title: pg.slug === '' ? business.name : pg.title,
-      seo: { title: pg.slug === '' ? business.name : `${pg.title} — ${business.name}`, description: business.description },
+      seo: {
+        title: pg.slug === '' ? (content?.seo.title ?? business.name) : `${pg.title} — ${business.name}`,
+        description: content?.seo.description ?? business.description,
+      },
       order: pageIdx,
       blocks,
     };
@@ -165,8 +191,8 @@ export function assembleSite(
     nav,
     pages,
     seo: {
-      defaultTitle: business.tagline ? `${business.name} — ${business.tagline}` : business.name,
-      defaultDescription: business.description,
+      defaultTitle: content?.seo.title ?? (business.tagline ? `${business.name} — ${business.tagline}` : business.name),
+      defaultDescription: content?.seo.description ?? business.description,
     },
   };
 }

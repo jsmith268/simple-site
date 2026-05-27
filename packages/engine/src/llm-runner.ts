@@ -77,3 +77,30 @@ export async function runStructured<T>(
   }
   throw lastErr instanceof Error ? lastErr : new Error('runStructured failed');
 }
+
+/**
+ * One-shot structured generation (no conductor/context) — used by the AI
+ * content generator. Returns the validated output + token usage.
+ */
+export async function generateStructured<T>(opts: {
+  model: ModelRef;
+  schema: z.ZodType<T, z.ZodTypeDef, any>;
+  system: string;
+  prompt: string;
+  maxOutputTokens?: number;
+  temperature?: number;
+}): Promise<{ output: T; tokensIn: number; tokensOut: number }> {
+  const result = await generateText({
+    model: gateway(opts.model),
+    system: opts.system,
+    prompt: opts.prompt,
+    output: Output.object({ schema: opts.schema }),
+    maxOutputTokens: opts.maxOutputTokens ?? 8000,
+    temperature: opts.temperature ?? 0.7,
+  });
+  return {
+    output: result.output as T,
+    tokensIn: result.usage?.inputTokens ?? 0,
+    tokensOut: result.usage?.outputTokens ?? 0,
+  };
+}

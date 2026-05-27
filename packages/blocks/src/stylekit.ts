@@ -46,14 +46,26 @@ export type SectionTone = 'default' | 'muted' | 'inverted';
  * visual rhythm instead of one flat white column. `inverted` is a dark band.
  */
 export function toneStyle(tone: SectionTone = 'default'): CSSProperties {
-  switch (tone) {
-    case 'muted':
-      return { background: t.muted, color: t.fg };
-    case 'inverted':
-      return { background: t.primary, color: t.primaryFg };
-    default:
-      return { background: t.bg, color: t.fg };
+  if (tone === 'muted') {
+    return { background: 'var(--ss-muted-raw)', color: t.fg } as CSSProperties;
   }
+  if (tone === 'inverted') {
+    // Dark band: bg = the raw primary (untouched), then remap every working var
+    // so all inner text/buttons/cards/eyebrows flip to a legible light scheme.
+    return {
+      background: 'var(--ss-primary-raw)',
+      color: 'var(--ss-primary-fg-raw)',
+      '--ss-fg': 'var(--ss-primary-fg-raw)',
+      '--ss-muted-fg': 'color-mix(in oklch, var(--ss-primary-fg-raw) 75%, transparent)',
+      '--ss-border': 'color-mix(in oklch, var(--ss-primary-fg-raw) 24%, transparent)',
+      '--ss-card': 'color-mix(in oklch, var(--ss-primary-fg-raw) 10%, transparent)',
+      '--ss-card-fg': 'var(--ss-primary-fg-raw)',
+      // Primary CTA flips to a light button (light bg + dark text) so it shows.
+      '--ss-primary': 'var(--ss-primary-fg-raw)',
+      '--ss-primary-fg': 'var(--ss-primary-raw)',
+    } as CSSProperties;
+  }
+  return { background: t.bg, color: t.fg } as CSSProperties;
 }
 
 /** A centered content container respecting the theme's max width. */

@@ -41,28 +41,14 @@ html {
   -webkit-text-fill-color: transparent;
 }
 
-/* Primary CTA: fill-from-bottom + colored glow on hover. */
+/* Primary CTA: subtle lift + colored glow on hover (no overlay, always legible). */
 .ss-cta {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  transition: box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease;
-}
-.ss-cta::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--ss-grad-signature);
-  transform: translateY(101%);
-  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease, filter 0.2s ease;
 }
 .ss-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 18px 48px -16px color-mix(in oklch, var(--ss-primary) 55%, transparent);
-}
-.ss-cta:hover::before {
-  transform: translateY(0);
+  filter: brightness(1.06);
+  box-shadow: 0 18px 48px -16px color-mix(in oklch, var(--ss-primary-raw) 55%, transparent);
 }
 
 /* Cards lift on hover. */

@@ -19,6 +19,11 @@ export function tokensToCssVars(t: ThemeTokens): Record<string, string> {
     '--ss-border': t.palette.border,
     '--ss-card': t.palette.card,
     '--ss-card-fg': t.palette.cardForeground,
+    // Raw copies that tone overrides never touch (used as section backgrounds
+    // so an inverted section can remap --ss-* without recoloring its own bg).
+    '--ss-primary-raw': t.palette.primary,
+    '--ss-primary-fg-raw': t.palette.primaryForeground,
+    '--ss-muted-raw': t.palette.muted,
 
     '--ss-font-heading': t.typography.headingFamily,
     '--ss-font-body': t.typography.bodyFamily,
