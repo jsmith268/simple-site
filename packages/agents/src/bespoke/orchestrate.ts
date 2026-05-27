@@ -18,6 +18,7 @@ import { generateFoundation } from './foundation';
 import { generatePage, pageFilePath } from './page';
 import { runCodeCritic } from './critic-code';
 import { LocalBuildRunner, type BuildRunner } from './runner';
+import { deploySite } from './deploy';
 
 const DEFAULT_MODEL = 'anthropic/claude-opus-4.7';
 
@@ -33,6 +34,8 @@ export interface BespokeBuildArgs {
   runner?: BuildRunner;
   /** Skip the install+build code-critic (e.g. when only regenerating content). */
   skipCodeCritic?: boolean;
+  /** When provided, deploy the built site to Vercel (outward-facing — opt-in). */
+  deploy?: { scope?: string };
 }
 
 /* Filesystem artifact store under <dir>/.simplesight — gives resumability
@@ -223,6 +226,21 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     save(args.dir, 'build-report.json', report);
     persist();
     if (!report.ok) return hold(`code-critic could not produce a passing build after ${report.attempts} attempts`);
+  }
+
+  // 9) Deploy (opt-in, outward-facing)
+  if (args.deploy) {
+    const ds = stageRec('deploy');
+    ds.status = 'running';
+    persist();
+    const t0 = Date.now();
+    const res = await deploySite({ dir: args.dir, scope: args.deploy.scope });
+    ds.ms += Date.now() - t0;
+    ds.status = res.ok ? 'completed' : 'failed';
+    ds.note = res.ok ? res.url : res.output.slice(-300);
+    if (res.url) run.previewUrl = res.url;
+    persist();
+    if (!res.ok) return hold('deploy failed; built artifact is ready locally');
   }
 
   run.status = 'succeeded';

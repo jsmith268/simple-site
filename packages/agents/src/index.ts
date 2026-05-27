@@ -49,3 +49,4 @@ export {
 } from './bespoke/runner';
 export { runCodeCritic, type CodeCriticArgs } from './bespoke/critic-code';
 export { runBespokeBuild, type BespokeBuildArgs } from './bespoke/orchestrate';
+export { deploySite, type DeployResult, type DeployOptions } from './bespoke/deploy';
