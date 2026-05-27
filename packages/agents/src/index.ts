@@ -50,3 +50,11 @@ export {
 export { runCodeCritic, type CodeCriticArgs } from './bespoke/critic-code';
 export { runBespokeBuild, type BespokeBuildArgs } from './bespoke/orchestrate';
 export { deploySite, type DeployResult, type DeployOptions } from './bespoke/deploy';
+export {
+  ThumIoScreenshot,
+  ApiScreenshot,
+  defaultScreenshotProvider,
+  type ScreenshotProvider,
+  type Screenshot,
+} from './bespoke/screenshot';
+export { runVisualCritic, type VisualCriticArgs, type VisualCriticResult } from './bespoke/critic-visual';

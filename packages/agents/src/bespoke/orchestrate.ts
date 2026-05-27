@@ -19,6 +19,7 @@ import { generatePage, pageFilePath } from './page';
 import { runCodeCritic } from './critic-code';
 import { LocalBuildRunner, type BuildRunner } from './runner';
 import { deploySite } from './deploy';
+import { runVisualCritic } from './critic-visual';
 
 const DEFAULT_MODEL = 'anthropic/claude-opus-4.7';
 
@@ -36,6 +37,8 @@ export interface BespokeBuildArgs {
   skipCodeCritic?: boolean;
   /** When provided, deploy the built site to Vercel (outward-facing — opt-in). */
   deploy?: { scope?: string };
+  /** Run the visual critic against the deployed home page (advisory; needs a deploy). */
+  visualCritic?: boolean;
 }
 
 /* Filesystem artifact store under <dir>/.simplesight — gives resumability
@@ -241,6 +244,25 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     if (res.url) run.previewUrl = res.url;
     persist();
     if (!res.ok) return hold('deploy failed; built artifact is ready locally');
+  }
+
+  // 10) Visual critic (advisory; needs a live URL)
+  if (args.visualCritic && run.previewUrl) {
+    const vs = stageRec('visual_critic');
+    vs.status = 'running';
+    persist();
+    const t0 = Date.now();
+    try {
+      const { report } = await runVisualCritic({ url: run.previewUrl, brief, pageName: 'Home', model });
+      save(args.dir, 'visual-report.json', report);
+      vs.ms += Date.now() - t0;
+      vs.status = 'completed';
+      vs.note = `score ${report.score} (${report.verdict})`;
+    } catch (err) {
+      vs.status = 'failed';
+      vs.note = String((err as Error)?.message ?? err);
+    }
+    persist();
   }
 
   run.status = 'succeeded';

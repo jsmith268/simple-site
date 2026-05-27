@@ -131,3 +131,47 @@ export async function resilientGenerateText(opts: {
     attempts,
   };
 }
+
+/**
+ * Multimodal generation: a text prompt + one image (e.g. a page screenshot) →
+ * text. Same routing/retry/cost as resilientGenerateText. Used by the visual
+ * critic. The image must be raw bytes + a media type.
+ */
+export async function generateVision(opts: {
+  model: ModelRef;
+  system: string;
+  text: string;
+  image: { bytes: Uint8Array; mediaType: string };
+  maxOutputTokens?: number;
+  retry?: RetryOptions;
+}): Promise<ResilientTextResult> {
+  const start = Date.now();
+  let attempts = 0;
+  const result = await withRetry(async () => {
+    attempts++;
+    return generateText({
+      model: resolveModel(opts.model),
+      system: opts.system,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: opts.text },
+            { type: 'image', image: opts.image.bytes, mediaType: opts.image.mediaType },
+          ],
+        },
+      ],
+      maxOutputTokens: opts.maxOutputTokens ?? 3000,
+    });
+  }, { label: 'vision', ...opts.retry });
+  const tokensIn = result.usage?.inputTokens ?? 0;
+  const tokensOut = result.usage?.outputTokens ?? 0;
+  return {
+    text: result.text ?? '',
+    tokensIn,
+    tokensOut,
+    costCents: estimateCostCents(opts.model, tokensIn, tokensOut),
+    ms: Date.now() - start,
+    attempts,
+  };
+}

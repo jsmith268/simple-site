@@ -6,6 +6,7 @@ export {
   withRetry,
   isTransient,
   resilientGenerateText,
+  generateVision,
   type RetryOptions,
   type ResilientTextResult,
 } from './resilient';
