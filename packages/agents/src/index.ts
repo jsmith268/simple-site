@@ -41,3 +41,10 @@ export {
 export { generateFoundation, type FoundationArgs, type FoundationResult } from './bespoke/foundation';
 export { generatePage, pageFilePath, type PageArgs, type PageResult } from './bespoke/page';
 export { buildAssetManifest, reverifyManifest, deriveImageNeeds, verifyImage } from './bespoke/assets';
+export {
+  LocalBuildRunner,
+  SandboxBuildRunner,
+  type BuildRunner,
+  type BuildOutcome,
+} from './bespoke/runner';
+export { runCodeCritic, type CodeCriticArgs } from './bespoke/critic-code';
