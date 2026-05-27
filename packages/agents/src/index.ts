@@ -60,6 +60,8 @@ export {
 export { runVisualCritic, type VisualCriticArgs, type VisualCriticResult } from './bespoke/critic-visual';
 export { runContentCritic } from './bespoke/critic-content';
 export { reviewSite, extractText, siteReviewToCriticReport, type ReviewArgs } from './bespoke/review';
+export { revisePage, type ReviseArgs, type ReviseResult } from './bespoke/reviser';
+export { runConvergence, type ConvergeArgs, type ConvergeResult } from './bespoke/converge';
 export {
   DEFAULT_CAPABILITIES,
   resolveCapabilities,

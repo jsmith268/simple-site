@@ -76,7 +76,7 @@ NON-NEGOTIABLE buildability constraints:
 - Every component is a proper default export: export default function Name(props) { ... }. Type all props with interfaces and event handlers (React.FormEvent/ChangeEvent).
 - Style with Tailwind utilities + the CSS vars: bg-[var(--bg)] text-[var(--fg)] text-[var(--primary)] etc.; fonts via style={{ fontFamily: 'var(--font-display)' }} or font-[family-name:var(--font-display)].
 - Escape apostrophes/quotes in JSX text (&apos; or curly strings) so the build never fails on react/no-unescaped-entities. Write punctuation as REAL characters (– — · " ') — NEVER literal \\u2013 / \\u00b7 escapes in JSX text (they render literally).
-- Use ONLY the verified image URLs provided (never invent photo IDs).
+- Use ONLY the verified image URLs provided (never invent photo IDs). Use real photos PROMINENTLY (don't replace them with CSS/SVG); apply ONE consistent brand treatment (subtle duotone via CSS filter + faint grain) so the set looks cohesive and non-stocky.
 
 DESIGN to implement:
 - Direction: ${brief.direction}

@@ -61,7 +61,7 @@ NON-NEGOTIABLE buildability constraints:
 - Write punctuation as REAL characters (– — · " " ' ') in copy — NEVER literal escape sequences like \\u2013 or \\u00b7 in JSX text (they render literally on the page). Use correct English idiom (e.g. "roasted in Portland", not "roasted on Portland").
 - Style with Tailwind v4 utilities + palette/font CSS vars (bg-[var(--bg)], text-[var(--primary)], font via style={{fontFamily:'var(--font-display)'}}); use the globals.css helper classes (.reveal, .grain, .numeral, .duotone, etc.).
 - Author the non-shared sections (hero, feature grids, stats, pricing, testimonials, schedule, cta bands, etc.) INLINE as rich composition implementing the brief's signature devices.
-- Use ONLY the verified image URLs provided (never invent photo IDs). Always alt text + loading="lazy" on non-hero images.
+- IMAGERY (important — past builds were marked down for too little real photography): USE the verified image URLs PROMINENTLY — a real photo in the hero and in most major sections. Do NOT substitute CSS gradients/SVG where a real photograph belongs. Apply ONE consistent brand treatment to every photo (e.g. a subtle duotone via CSS filter: grayscale()/contrast()/sepia() toward the palette, + a faint grain overlay) so disparate stock reads as one cohesive, premium, non-stocky set. Use ONLY the provided URLs (never invent photo IDs); always alt text + loading="lazy" on non-hero images; crop tight/off-center for editorial feel.
 - RICH page: implement every section below as a distinct, well-composed block. Real, specific copy in the brand voice — concrete names, numbers, places. ZERO filler.
 
 DESIGN:

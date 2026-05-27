@@ -179,7 +179,7 @@ export const ManifestImage = z.object({
   width: z.number().optional(),
   height: z.number().optional(),
   status: z.number().default(200), // last verified HTTP status
-  source: z.enum(['unsplash', 'picsum', 'upload', 'generated']),
+  source: z.enum(['unsplash', 'pexels', 'picsum', 'upload', 'generated']),
 });
 export type ManifestImage = z.infer<typeof ManifestImage>;
 

@@ -14,30 +14,40 @@ import { componentsUsed } from './ia';
  * (always-200) so the pipeline still runs end-to-end without a key.
  * ────────────────────────────────────────────────────────────────────────── */
 
+type Orientation = 'landscape' | 'portrait' | 'squarish';
 interface ImageNeed {
   role: string;
   count: number;
   query: string;
+  orientation: Orientation;
 }
 
-/** Derive how many images of each role this site needs, with search queries. */
-export function deriveImageNeeds(profile: BusinessProfile, ia: SiteIA): ImageNeed[] {
+// Authenticity bias (research): prefer candid/real over staged/corporate stock.
+const AUTHENTIC = 'candid documentary natural light real';
+
+/**
+ * Derive image needs with ART-DIRECTION-FIRST queries: lead with the brief's
+ * imagery direction, then category + mood, plus authenticity modifiers and a
+ * role-appropriate orientation.
+ */
+export function deriveImageNeeds(profile: BusinessProfile, ia: SiteIA, imageryDirection?: string): ImageNeed[] {
   const used = componentsUsed(ia);
-  const base = [profile.category, ...profile.visual.moodWords].filter(Boolean).join(' ').trim() || profile.category;
-  const needs: ImageNeed[] = [{ role: 'hero', count: Math.max(2, ia.pages.length), query: base }];
-  if (used.includes('social-feed')) needs.push({ role: 'feed', count: 8, query: `${profile.category} candid` });
-  if (used.includes('gallery')) needs.push({ role: 'gallery', count: 10, query: `${profile.category} interior` });
-  if (used.includes('team-cards')) needs.push({ role: 'portrait', count: 4, query: 'professional portrait person' });
-  if (used.includes('feature-grid') || used.includes('content-prose')) needs.push({ role: 'feature', count: 4, query: base });
-  if (used.includes('testimonials')) needs.push({ role: 'avatar', count: 3, query: 'portrait headshot' });
+  const dir = (imageryDirection ?? '').replace(/[^a-z0-9 ]/gi, ' ').split(/\s+/).filter(Boolean).slice(0, 8).join(' ');
+  const base = [profile.category, dir, ...profile.visual.moodWords].filter(Boolean).join(' ').trim() || profile.category;
+  const needs: ImageNeed[] = [{ role: 'hero', count: Math.max(2, ia.pages.length), query: `${base} ${AUTHENTIC}`, orientation: 'landscape' }];
+  if (used.includes('social-feed')) needs.push({ role: 'feed', count: 8, query: `${profile.category} ${AUTHENTIC}`, orientation: 'squarish' });
+  if (used.includes('gallery')) needs.push({ role: 'gallery', count: 10, query: `${profile.category} interior ${AUTHENTIC}`, orientation: 'landscape' });
+  if (used.includes('team-cards')) needs.push({ role: 'portrait', count: 4, query: `${profile.category} team person portrait natural`, orientation: 'portrait' });
+  if (used.includes('feature-grid') || used.includes('content-prose')) needs.push({ role: 'feature', count: 4, query: `${base} ${AUTHENTIC}`, orientation: 'landscape' });
+  if (used.includes('testimonials')) needs.push({ role: 'avatar', count: 3, query: 'portrait headshot natural', orientation: 'squarish' });
   return needs;
 }
 
 const picsum = (seed: string, w = 1600, h = 1100) =>
   `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
 
-async function unsplashSearch(query: string, count: number, key: string): Promise<string[]> {
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${Math.min(30, count)}&orientation=landscape&content_filter=high`;
+async function unsplashSearch(query: string, count: number, key: string, orientation: Orientation): Promise<string[]> {
+  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${Math.min(30, count)}&orientation=${orientation}&order_by=relevant&content_filter=high`;
   const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}`, 'Accept-Version': 'v1' } });
   if (!res.ok) return [];
   const json = (await res.json()) as { results?: { urls?: { raw?: string; regular?: string } }[] };
@@ -45,6 +55,17 @@ async function unsplashSearch(query: string, count: number, key: string): Promis
     .map((r) => r.urls?.raw ?? r.urls?.regular)
     .filter((u): u is string => !!u)
     .map((u) => `${u}${u.includes('?') ? '&' : '?'}auto=format&fit=crop&w=1600&q=80`);
+}
+
+async function pexelsSearch(query: string, count: number, key: string, orientation: Orientation): Promise<string[]> {
+  const o = orientation === 'squarish' ? 'square' : orientation; // Pexels uses "square"
+  const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${Math.min(40, count)}&orientation=${o}&size=large`;
+  const res = await fetch(url, { headers: { Authorization: key } });
+  if (!res.ok) return [];
+  const json = (await res.json()) as { photos?: { src?: { large2x?: string; large?: string; landscape?: string; portrait?: string } }[] };
+  return (json.photos ?? [])
+    .map((p) => p.src?.large2x ?? p.src?.large ?? p.src?.landscape ?? p.src?.portrait)
+    .filter((u): u is string => !!u);
 }
 
 /** HEAD-check a URL is live (200). Falls back to a tiny GET if HEAD is unsupported. */
@@ -66,40 +87,41 @@ export async function verifyImage(url: string, timeoutMs = 8000): Promise<number
  * Build a verified AssetManifest for a site. Sources per-role images, verifies
  * each is live, and swaps any non-200 for a seeded picsum fallback (re-verified).
  */
-export async function buildAssetManifest(profile: BusinessProfile, ia: SiteIA): Promise<AssetManifest> {
-  const key = process.env.UNSPLASH_ACCESS_KEY;
-  const needs = deriveImageNeeds(profile, ia);
+export async function buildAssetManifest(
+  profile: BusinessProfile,
+  ia: SiteIA,
+  opts?: { imageryDirection?: string },
+): Promise<AssetManifest> {
+  const unsplashKey = process.env.UNSPLASH_ACCESS_KEY;
+  const pexelsKey = process.env.PEXELS_API_KEY;
+  const needs = deriveImageNeeds(profile, ia, opts?.imageryDirection);
   const images: ManifestImage[] = [];
   let idx = 0;
 
   for (const need of needs) {
-    let urls: string[] = [];
-    if (key) {
-      try {
-        urls = await unsplashSearch(need.query, need.count, key);
-      } catch {
-        urls = [];
-      }
-    }
+    // Source from BOTH Unsplash and Pexels (more + better options), then fall back.
+    const [u, p] = await Promise.all([
+      unsplashKey ? unsplashSearch(need.query, need.count, unsplashKey, need.orientation).catch(() => []) : Promise.resolve([]),
+      pexelsKey ? pexelsSearch(need.query, need.count, pexelsKey, need.orientation).catch(() => []) : Promise.resolve([]),
+    ]);
+    const pool: { url: string; source: ManifestImage['source'] }[] = [
+      ...u.map((url) => ({ url, source: 'unsplash' as const })),
+      ...p.map((url) => ({ url, source: 'pexels' as const })),
+    ];
+    const small = need.role === 'portrait' || need.role === 'avatar';
+
     for (let i = 0; i < need.count; i++) {
-      const fromApi = urls[i];
-      const fallback = picsum(`${profile.name}-${need.role}-${i}`, need.role === 'portrait' || need.role === 'avatar' ? 600 : 1600, need.role === 'portrait' || need.role === 'avatar' ? 600 : 1100);
-      let url = fromApi ?? fallback;
-      let source: ManifestImage['source'] = fromApi ? 'unsplash' : 'picsum';
+      const pick = pool[i]; // interleave-ish: u then p; good enough for variety
+      const fallback = picsum(`${profile.name}-${need.role}-${i}`, small ? 600 : 1600, small ? 600 : 1100);
+      let url = pick?.url ?? fallback;
+      let source: ManifestImage['source'] = pick?.source ?? 'picsum';
       let status = await verifyImage(url);
       if (status !== 200) {
         url = fallback;
         source = 'picsum';
         status = await verifyImage(url);
       }
-      images.push({
-        id: `img-${idx++}`,
-        role: need.role,
-        url,
-        alt: `${profile.name} — ${need.role}`,
-        status,
-        source,
-      });
+      images.push({ id: `img-${idx++}`, role: need.role, url, alt: `${profile.name} — ${need.role}`, status, source });
     }
   }
   return { images };

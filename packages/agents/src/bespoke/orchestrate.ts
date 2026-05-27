@@ -21,7 +21,8 @@ import { generatePage, pageFilePath } from './page';
 import { runCodeCritic } from './critic-code';
 import { LocalBuildRunner, type BuildRunner } from './runner';
 import { deploySite } from './deploy';
-import { reviewSite, siteReviewToCriticReport } from './review';
+import { siteReviewToCriticReport } from './review';
+import { runConvergence } from './converge';
 
 const DEFAULT_MODEL = 'anthropic/claude-opus-4.7';
 
@@ -186,7 +187,7 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
   const assets = await stage<AssetManifest>(
     'assets',
     'assets.json',
-    async () => ({ value: await buildAssetManifest(profile, ia) }),
+    async () => ({ value: await buildAssetManifest(profile, ia, { imageryDirection: `${brief.imagery?.direction ?? ''} ${brief.imagery?.treatment ?? ''}`.trim() }) }),
     () => load<AssetManifest>(args.dir, 'assets.json'),
   );
 
@@ -243,44 +244,62 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     if (!report.ok) return hold(`code-critic could not produce a passing build after ${report.attempts} attempts`);
   }
 
-  // 9) Deploy (opt-in, outward-facing)
+  // 9) Deploy. When a review+converge pass is coming, deploy a PREVIEW first
+  //    and only promote to production once the site is clean.
+  const willConverge = !!(args.deploy && args.visualCritic);
   if (args.deploy) {
     const ds = stageRec('deploy');
     ds.status = 'running';
     persist();
     const t0 = Date.now();
-    const res = await deploySite({ dir: args.dir, scope: args.deploy.scope });
+    const res = await deploySite({ dir: args.dir, scope: args.deploy.scope, prod: !willConverge });
     ds.ms += Date.now() - t0;
     ds.status = res.ok ? 'completed' : 'failed';
-    ds.note = res.ok ? res.url : res.output.slice(-300);
+    ds.note = res.ok ? `${willConverge ? 'preview ' : ''}${res.url}` : res.output.slice(-300);
     if (res.url) run.previewUrl = res.url;
     persist();
     if (!res.ok) return hold('deploy failed; built artifact is ready locally');
   }
 
-  // 10) Full-site review — design + content, EVERY page (verification gate)
-  if (args.visualCritic && run.previewUrl) {
+  // 10) Review → REVISE → re-review convergence loop (design + content, every page).
+  //     Fixes blocking findings with the reviser, bounded; promotes to prod when clean.
+  if (willConverge && run.previewUrl) {
     const vs = stageRec('visual_critic');
     vs.status = 'running';
     persist();
     const t0 = Date.now();
     try {
-      const review = await reviewSite({
+      const conv = await runConvergence({
+        dir: args.dir,
         baseUrl: run.previewUrl,
-        pages: ia.pages.map((p) => ({ name: p.name, slug: p.slug })),
+        profile,
         brief,
+        design: design as ResolvedDesign,
+        ia,
+        runner,
         model,
+        maxPasses: 3,
+        redeploy: async () => {
+          const r = await deploySite({ dir: args.dir, scope: args.deploy?.scope, prod: false });
+          return r.url ?? (run.previewUrl as string);
+        },
       });
-      save(args.dir, 'review-report.json', review);
-      // Flatten for the admin per-build panel + learning loop.
-      save(args.dir, 'visual-report.json', siteReviewToCriticReport(review));
+      addCost(conv.costCents, vs);
+      save(args.dir, 'review-report.json', conv.review);
+      save(args.dir, 'visual-report.json', siteReviewToCriticReport(conv.review));
+      run.previewUrl = conv.deployUrl;
       vs.ms += Date.now() - t0;
-      vs.status = review.blocking.length ? 'failed' : 'completed';
-      vs.note = `design ${review.designScore} / content ${review.contentScore} (${review.verdict}), ${review.blocking.length} blocking`;
+      vs.attempts = conv.passes;
+      vs.status = conv.converged ? 'completed' : 'failed';
+      vs.note = `${conv.passes} revise pass(es), ${conv.revised.length} page(s) fixed → design ${conv.review.designScore}/content ${conv.review.contentScore} (${conv.review.verdict}), ${conv.review.blocking.length} blocking`;
       persist();
-      if (review.blocking.length) {
-        return hold(`site review found ${review.blocking.length} blocking issue(s): ${review.blocking.slice(0, 3).map((f) => `${f.area}: ${f.message}`).join(' | ')}`);
+      if (!conv.converged) {
+        return hold(`could not converge after ${conv.passes} revise pass(es); ${conv.review.blocking.length} blocking left: ${conv.review.blocking.slice(0, 3).map((f) => `${f.area}: ${f.message}`).join(' | ')}`);
       }
+      // Clean → promote to production.
+      const promo = await deploySite({ dir: args.dir, scope: args.deploy?.scope, prod: true });
+      if (promo.url) run.previewUrl = promo.url;
+      persist();
     } catch (err) {
       vs.status = 'failed';
       vs.note = String((err as Error)?.message ?? err);

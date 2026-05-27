@@ -12,7 +12,7 @@ export function resolveCapabilities(overrides?: Partial<SiteCapabilities>): Site
 }
 
 /** Catalog component types forbidden by the current capabilities. */
-export function forbiddenComponents(caps: SiteCapabilities): ComponentType[] {
+export function forbiddenComponents(caps: SiteCapabilities = DEFAULT_CAPABILITIES): ComponentType[] {
   const out: ComponentType[] = [];
   if (!caps.newsletter) out.push('newsletter');
   if (!caps.socialFeed) out.push('social-feed');
@@ -23,7 +23,7 @@ export function forbiddenComponents(caps: SiteCapabilities): ComponentType[] {
 }
 
 /** The component types a site MAY use, given its capabilities. */
-export function allowedComponents(caps: SiteCapabilities): ComponentType[] {
+export function allowedComponents(caps: SiteCapabilities = DEFAULT_CAPABILITIES): ComponentType[] {
   const forbidden = new Set(forbiddenComponents(caps));
   return (
     [
@@ -35,7 +35,7 @@ export function allowedComponents(caps: SiteCapabilities): ComponentType[] {
 }
 
 /** Hard-constraint rules block injected into IA + foundation + page prompts. */
-export function capabilityRules(caps: SiteCapabilities): string {
+export function capabilityRules(caps: SiteCapabilities = DEFAULT_CAPABILITIES): string {
   const lines: string[] = [
     'CAPABILITY GATES — this is an INFORMATIONAL website. Honor these HARD constraints:',
     caps.newsletter

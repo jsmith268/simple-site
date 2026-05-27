@@ -7,8 +7,20 @@
 import { readFileSync } from 'node:fs';
 
 const env = readFileSync('/Users/pranayramash/Projects/simple-site/.env', 'utf8');
-const ak = env.match(/ANT(?:H)?ROPIC_KEY\s*=\s*["']?([^"'\n\r]+)/) || env.match(/ANTHROPIC_API_KEY\s*=\s*["']?([^"'\n\r]+)/);
-if (ak) process.env.ANTHROPIC_API_KEY = ak[1].trim();
+const pick = (...names: string[]): string | undefined => {
+  for (const n of names) {
+    const m = env.match(new RegExp(`^${n}\\s*=\\s*["']?([^"'\\n\\r]+)`, 'm'));
+    if (m) return m[1].trim();
+  }
+  return undefined;
+};
+const anthropic = pick('ANTHROPIC_API_KEY', 'ANTROPIC_KEY', 'ANTHROPIC_KEY');
+if (anthropic) process.env.ANTHROPIC_API_KEY = anthropic;
+const unsplash = pick('UNSPLASH_ACCESS_KEY', 'UNSPLASH_KEY', 'UNSPLASH_API_KEY');
+if (unsplash) process.env.UNSPLASH_ACCESS_KEY = unsplash;
+const pexels = pick('PEXELS_API_KEY', 'PEXELS_KEY');
+if (pexels) process.env.PEXELS_API_KEY = pexels;
+console.log('keys loaded:', { anthropic: !!anthropic, unsplash: !!unsplash, pexels: !!pexels });
 
 const { runBespokeBuild } = await import('../src/index');
 
