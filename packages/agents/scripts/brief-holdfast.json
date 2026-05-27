@@ -1,0 +1,178 @@
+{
+  "direction": "Chalk & Concrete Brutalism — an editorial gym manifesto",
+  "rationale": "Holdfast lives inside a RiNo warehouse where art, sweat, and concrete already coexist. Most climbing gym sites default to either moody adventure photography or chirpy SaaS-fitness. We split the difference with an editorial, almost zine-like brutalism: hand-scrawled chalk marks over slab-serif typography, route-tape color accents, and warm concrete neutrals. It signals 'serious climbing culture, zero attitude' — bold and a little irreverent like the voice, but warm enough that a first-timer feels invited, not gatekept.",
+  "palette": {
+    "mode": "light",
+    "background": "#EFE9DF",
+    "foreground": "#1A1814",
+    "primary": "#E2522B",
+    "accent": "#D9C25B",
+    "muted": "#B8AE9F",
+    "note": "Warm concrete-canvas base (oklch ~0.92 0.02 80) with a route-tape orange primary (oklch ~0.66 0.18 38) and a chalk-yellow accent (oklch ~0.82 0.13 92). Tinted near-black foreground avoids the flat-digital tell. Mesh hero interpolates orange→clay→chalk in OKLCH so midpoints stay warm, never muddy."
+  },
+  "fonts": {
+    "display": "Fraunces (variable, opsz pushed to 144, SOFT axis dialed down for slab edge)",
+    "body": "Söhne Mono for eyebrows + Newsreader for paragraph",
+    "pairingNote": "Fraunces at display sizes reads like a climbing magazine cover — slabby, confident, a little weird in its terminals. Newsreader keeps long-form readable and editorial; mono eyebrows nod to belay logs and route cards."
+  },
+  "type": {
+    "displayTreatment": "Headlines set in Fraunces at clamp(3rem, 7.5vw, 7.25rem), line-height 0.94, tracking -0.04em. One word per hero headline gets a hand-drawn SVG chalk circle or underline (not a gradient). Eyebrows in mono UPPERCASE, 0.22em tracked, paired with a 40px hairline rule.",
+    "scaleNote": "Aggressive 1.333 modular scale on desktop, compressed to 1.2 on mobile. Section numerals (01 / 02 / 03) set oversized in Fraunces italic at 8rem, bleeding off the left margin."
+  },
+  "spacing": {
+    "density": "airy",
+    "rhythmNote": "Tone-band sections alternate concrete (#EFE9DF), chalk (#F6F1E7), and inverted slate (#1A1814). 160px vertical section padding on desktop, 96px mobile. Generous left-margin gutters echo a printed climbing zine."
+  },
+  "motion": {
+    "level": "subtle",
+    "note": "Section reveals fade + 24px rise, staggered 60ms, cubic-bezier(0.22,1,0.36,1). The chalk-mark SVG underlines draw on with a 600ms stroke-dashoffset. Route-color tape strips slide in horizontally on the bento. Honors prefers-reduced-motion fully."
+  },
+  "signatureDevices": [
+    "OKLCH chalk-dust mesh hero: warm radial wash + one blurred clay orb + a single hairline horizontal rule at the baseline, overlaid with SVG fractalNoise grain at 0.04",
+    "Hand-drawn SVG chalk annotations (circles, underlines, arrows) layered over one word per headline — feels like a coach marking up a topo",
+    "Hairline-bento route-grade wall: 12-cell grid with 1px gaps on a foreground-tinted background, each cell tagged with a V-grade or YDS color stripe down the left edge",
+    "Oversized italic Fraunces section numerals (01–05) bleeding off the gutter, paired with mono eyebrows",
+    "Route-tape accent strips: 6px colored bars (the actual tape colors gyms use to mark routes) used as section dividers and CTA underlines instead of generic lines"
+  ],
+  "imagery": {
+    "direction": "Real Holdfast members and staff — beginners chalking up, a kid topping out, a 50-ft lead climber mid-clip, the yoga studio at golden hour. Mix wide architectural shots of the warehouse bones (exposed brick, trusses, RiNo murals visible through the bay doors) with tight detail crops: chalked fingertips, taped knuckles, a shoe edging a foothold.",
+    "treatment": "Duotone wash in concrete + clay (foreground/primary) for editorial sections; full-color reserved for the community/gallery wall where the RiNo personality earns it. Subtle film grain (0.03) over every image to match the page noise overlay."
+  },
+  "voice": "Direct, warm, a little smart-mouthed. Short declarative sentences. We say 'first climb's on us' not 'complimentary trial session.' We say 'you'll be sore tomorrow — in a good way' not 'transform your fitness journey.' We name things plainly: bouldering, ropes, auto-belays, the mezzanine, the yoga room. We never call climbers 'athletes' unprompted and we never, ever say 'crush it.'",
+  "pages": [
+    {
+      "name": "Home",
+      "slug": "/",
+      "sections": [
+        {
+          "kind": "hero",
+          "intent": "OKLCH chalk-dust mesh background. Headline: 'Pull harder. Think less.' with a hand-drawn chalk circle around 'harder'. Mono eyebrow: 'RINO ART DISTRICT — EST. 2019'. Two CTAs: primary 'Book your free first climb' (orange with colored glow on hover), ghost 'Tour the gym'. Hours strip pinned bottom-left."
+        },
+        {
+          "kind": "proof-rail",
+          "intent": "Asymmetric 2fr/1fr split: left holds a single declarative paragraph ('22,000 sq ft. 50-ft walls. 200+ routes reset every week. One very forgiving staff.'); right holds a hairline-bordered stat rail with four numbers (2,500+ members, 200+ routes/week, 50 ft of rope, 22k sq ft)."
+        },
+        {
+          "kind": "what-you-can-do",
+          "intent": "Hairline-bento of five tiles — Bouldering, Ropes & Lead, Auto-Belays, Fitness Mezzanine, Yoga & Movement — each with a route-tape color stripe and a 1-sentence plain-English description. Numbered 01–05 in oversized italic Fraunces."
+        },
+        {
+          "kind": "first-climb-walkthrough",
+          "intent": "Three-step horizontal sequence ('Show up', 'We hand you shoes', 'You climb something') with chalk-arrow SVGs connecting them. Sells the no-experience-needed promise without condescension."
+        },
+        {
+          "kind": "community-gallery",
+          "intent": "Full-color (not duotone) masonry strip of member photos with first names and route names handwritten as captions. Links to Instagram."
+        },
+        {
+          "kind": "membership-teaser",
+          "intent": "Inverted slate tone band. Two-card comparison: Day Pass vs Membership, with the membership card carrying the orange accent and a 'most climbers pick this' chalk-circle tag."
+        },
+        {
+          "kind": "footer-cta",
+          "intent": "Oversized Fraunces sign-off: 'First climb's on us.' with email capture and address/hours."
+        }
+      ]
+    },
+    {
+      "name": "Memberships & Pricing",
+      "slug": "/membership",
+      "sections": [
+        {
+          "kind": "page-hero",
+          "intent": "Eyebrow 'PRICING — NO TRICKS'. Headline 'Pay once a month. Climb whenever the doors are open.' Subhead names the freeze policy and no-initiation-fee thing up front."
+        },
+        {
+          "kind": "plan-grid",
+          "intent": "Three plan cards (Adult, Student/Youth, Family) on hairline borders, each with route-tape color stripe. Feature list uses checkmarks drawn as small chalk ticks."
+        },
+        {
+          "kind": "day-pass-rail",
+          "intent": "Secondary horizontal rail for Day Pass, 10-Punch, and Gear Rental — smaller type, mono pricing, signals these are options not the main path."
+        },
+        {
+          "kind": "faq",
+          "intent": "Accordion of the real questions: freezing, guest passes, cancellation, kids' age minimums. Answers in plain voice — 'Yeah, you can freeze for up to 3 months. Email us.'"
+        },
+        {
+          "kind": "conversion-cta",
+          "intent": "Full-width inverted band: 'Still not sure? Climb free first.' with the free-first-climb booking link."
+        }
+      ]
+    },
+    {
+      "name": "Classes & Programs",
+      "slug": "/classes",
+      "sections": [
+        {
+          "kind": "page-hero",
+          "intent": "Headline 'Learn the ropes. Literally.' with chalk-underline on 'ropes'. Intro paragraph names the three tracks: Intro, Skills, Youth."
+        },
+        {
+          "kind": "track-bento",
+          "intent": "Three large bento cells — Intro to Climbing, Lead & Belay, Youth Team & Camps — each with a duotone photo, schedule snippet, and 'See dates' link."
+        },
+        {
+          "kind": "weekly-schedule",
+          "intent": "Hairline-grid weekly calendar (Mon–Sun columns) showing recurring classes, yoga, leagues. Route-tape color codes by program type."
+        },
+        {
+          "kind": "coaches",
+          "intent": "Coach roster as editorial cards: portrait (duotone), name, one-line bio in their own voice, favorite route grade."
+        },
+        {
+          "kind": "competitions-leagues",
+          "intent": "Tone band promoting the seasonal league and monthly comps. Big italic numeral '04', short copy, RSVP link."
+        }
+      ]
+    },
+    {
+      "name": "The Gym",
+      "slug": "/gym",
+      "sections": [
+        {
+          "kind": "page-hero",
+          "intent": "Architectural wide shot of the warehouse with headline 'A 22,000 sq ft playground inside a RiNo warehouse.' Eyebrow: '2500 LARIMER ST'."
+        },
+        {
+          "kind": "spaces-walkthrough",
+          "intent": "Five stacked editorial spreads (one per space: Bouldering, Ropes, Auto-Belays, Mezzanine, Yoga Studio). Each spread is an asymmetric 7/5 split: oversized italic numeral + duotone photo on one side, plain-spoken description + stats on the other."
+        },
+        {
+          "kind": "route-setting",
+          "intent": "Story section about the setting crew — '200+ routes, fresh every week.' Includes a small calendar showing what got reset this week."
+        },
+        {
+          "kind": "amenities-rail",
+          "intent": "Hairline strip of practical stuff: showers, lockers, rental gear, coffee, kid-friendly hours, parking, transit."
+        },
+        {
+          "kind": "visit-cta",
+          "intent": "Map embed styled in concrete tones + hours table + 'Book your free first climb' primary CTA."
+        }
+      ]
+    },
+    {
+      "name": "Visit / Contact",
+      "slug": "/visit",
+      "sections": [
+        {
+          "kind": "hero-address",
+          "intent": "Big Fraunces address block: '2500 Larimer St / Denver, CO'. Hours rendered as a hairline-bordered table, today's hours highlighted with the orange route-tape stripe."
+        },
+        {
+          "kind": "getting-here",
+          "intent": "Three short blurbs: driving + parking, light rail (38th & Blake), bike (the gym has racks). Honest, local, no fluff."
+        },
+        {
+          "kind": "first-visit-checklist",
+          "intent": "Plain-language checklist of what to bring and wear, plus what's included free (shoes on your first climb). Chalk-tick bullets."
+        },
+        {
+          "kind": "contact-form",
+          "intent": "Two-column: form on left (name, email, what's up), direct contact on right (hello@holdfast.demo, Instagram handle, a note that says 'a human responds within a day, usually faster')."
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { generateJson } from '@simplesight/engine';
 import { getSkill } from '@simplesight/skills';
 import { z } from 'zod';
+import { fontWhitelistForPrompt } from './fonts';
 
 /**
  * The committed art direction for ONE bespoke site — the artifact that makes
@@ -64,7 +65,8 @@ ${skillText('premium-design', 'design-standards', 'marketing-voice')}
 Hard rules:
 - Commit to one clear direction and justify it. Avoid the default SaaS look.
 - Palette in OKLCH thinking, tinted neutrals, never pure gray/black, never the default blue-on-white. WCAG AA.
-- Choose real variable display fonts with character (NOT Inter/Roboto/Open Sans/Lato/Montserrat as the display face).
+- Fonts: choose ONLY from this whitelist (these are guaranteed available on Google Fonts). Name them EXACTLY as written. Pick a distinctive DISPLAY face + a readable BODY face (+ the accent serif handles one italic clause per headline; mono handles kickers):
+${fontWhitelistForPrompt()}
 - signatureDevices must be 3-5 SPECIFIC, buildable devices (e.g. "asymmetric 8/4 hero with a bordered stat rail", "OKLCH aurora-mesh hero", "hairline-bento metrics", "oversized serif section numerals", "duotone-treated photography").
 - pages: a real sitemap (Home + the most common pages for this business) where each section has a clear intent — described as compositions, not generic block names.
 - Voice per marketing-voice: human, specific, no AI-tell filler.`;

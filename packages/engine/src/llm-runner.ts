@@ -1,23 +1,8 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { gateway } from '@ai-sdk/gateway';
 import type { AgentBudget, AgentContext, ModelRef } from '@simplesight/contracts';
-import { generateText, type LanguageModel, Output } from 'ai';
+import { generateText, Output } from 'ai';
 import type { z } from 'zod';
 import { estimateCostCents } from './cost';
-
-/**
- * Resolve a "provider/model" ref to a LanguageModel. Anthropic models route
- * through a DIRECT Anthropic key when present (ANTHROPIC_API_KEY) because the
- * free-tier AI Gateway blocks Sonnet/Opus even via BYOK; everything else goes
- * through the gateway.
- */
-function resolveModel(model: ModelRef): LanguageModel {
-  if (model.startsWith('anthropic/') && process.env.ANTHROPIC_API_KEY) {
-    const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    return anthropic(model.replace('anthropic/', '').replace('.', '-')); // claude-opus-4.7 → claude-opus-4-7
-  }
-  return gateway(model);
-}
+import { resilientGenerateText, resolveModel } from './resilient';
 
 export interface RunStructuredOpts<T> {
   agent: string;
@@ -136,8 +121,10 @@ export async function generateJson<T>(opts: {
   const system = `${opts.system}\n\nOUTPUT FORMAT: respond with ONLY one valid JSON object — no markdown, no code fences, no commentary before or after.`;
   let lastErr: unknown;
   for (let i = 0; i <= (opts.retries ?? 2); i++) {
-    const r = await generateText({
-      model: resolveModel(opts.model),
+    // resilientGenerateText absorbs transient (529/timeout) failures with backoff;
+    // this outer loop only re-rolls on parse/validation failure.
+    const r = await resilientGenerateText({
+      model: opts.model,
       system,
       prompt: opts.prompt,
       maxOutputTokens: opts.maxOutputTokens ?? 8000,

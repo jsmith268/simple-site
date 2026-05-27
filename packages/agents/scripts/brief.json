@@ -1,0 +1,148 @@
+{
+  "direction": "Candlelit Cellar Editorial — a moody, dark-mode wine journal where deep oxblood meets tallow-cream typography, set on a warm aubergine-black canvas with hand-drawn marginalia energy.",
+  "rationale": "Vespera is candlelit, earthy, and conversational — the opposite of the cold-white sommelier websites. We lean into a dark, warm, almost zine-like editorial feel: oversized italic serif headlines like a wine label, mono kickers like cellar tags, and a single deep-red glow that mimics candlelight on a bottle. It reads warm and human, not curated-to-death.",
+  "palette": {
+    "mode": "dark",
+    "background": "#1a1012",
+    "foreground": "#f1e3d0",
+    "primary": "#7a1623",
+    "accent": "#e0a05a",
+    "muted": "#3a2a2c",
+    "note": "OKLCH-thought palette: aubergine-black base (oklch ~0.2 0.02 25), tallow cream text (oklch ~0.92 0.03 75), oxblood primary (oklch ~0.38 0.14 20), beeswax accent (oklch ~0.78 0.12 65). Interpolated in oklch so the red-to-amber candle glow stays warm, never muddy."
+  },
+  "fonts": {
+    "display": "Fraunces",
+    "body": "Inter Tight",
+    "pairingNote": "Fraunces with opsz pushed to 144 and a soft italic axis for headlines — gives a hand-set wine-label warmth. Inter Tight (NOT default Inter) for body sits quietly underneath. JetBrains Mono for tiny kicker tags and vintage years."
+  },
+  "type": {
+    "displayTreatment": "Oversized Fraunces italic at clamp(3rem, 7.5vw, 7rem), line-height 0.94, letter-spacing -0.04em. One word per headline gets a true italic swash accent (e.g., 'natural wine, *honestly*'). Mono UPPERCASE kickers at 0.72rem, tracking 0.24em, preceded by a 32px beeswax hairline.",
+    "scaleNote": "Editorial scale: huge display, generous mid-size pull quotes at ~1.5rem italic, body at 1.0625rem with 1.6 leading. Numerals (vintages, bottle counts) get tabular-nums and oversized serif treatment as section markers — '01 / pour', '02 / shop'."
+  },
+  "spacing": {
+    "density": "airy",
+    "rhythmNote": "Sections breathe — 8rem vertical rhythm on desktop. Tone bands alternate aubergine-black, slightly warmer plum, and a near-black inverted band for the tasting CTA. Content columns capped at 62ch so paragraphs feel like a letter, not a brochure."
+  },
+  "motion": {
+    "level": "subtle",
+    "note": "Candle-flicker: a single hero glow gently shifts opacity 0.85↔1 over 6s. Section reveals fade + 20px rise, staggered 80ms, cubic-bezier(0.22,1,0.36,1). Bottle cards tilt 1.5° on hover with a warm amber glow. Honors prefers-reduced-motion fully."
+  },
+  "signatureDevices": [
+    "OKLCH candle-glow hero: single oxblood-to-beeswax radial wash in the lower-left, one blurred amber orb top-right, hairline rule across the fold — restraint over blob fields",
+    "Hairline-bento bottle grid: 1px-gap grid on border color, each cell a bottle with vintage as oversized serif numeral, producer in mono kicker, tasting note in italic body",
+    "Oversized section numerals ('01 — pour', '02 — shop', '03 — gather') set in Fraunces italic at 8rem, half-bleeding off the left margin like a manuscript folio",
+    "Handwritten-style SVG marginalia: small ink-drawn grape, cork, or flame motifs as section accents (1px stroke, beeswax color), never as bullets",
+    "Fractal-noise grain overlay at 0.04 opacity across the whole site to give a warm film-photograph texture, killing the flat-digital sheen"
+  ],
+  "imagery": {
+    "direction": "Low-light, available-candlelight photography only: hands pouring, half-full glasses catching flame, cork detail, the bar at golden hour. No stock, no overhead flat-lays of cheese boards, no people-laughing-with-perfect-teeth.",
+    "treatment": "Duotone in oxblood/beeswax for editorial moments; full-color but grain-overlaid for bottle hero shots. All images get a soft inner vignette and sit inside hairline 1px frames the color of the muted plum, never rounded more than 4px."
+  },
+  "voice": "Warm, candid, a little poetic. Talks about wine the way you'd describe a record you love — 'it's funky, kind of like cider's weirder cousin' — not 'notes of brett and volatile acidity.' Short sentences. Specific producers, specific villages. Never uses 'curated,' 'elevated,' or 'experience.' Will admit when a bottle is weird.",
+  "pages": [
+    {
+      "name": "Home",
+      "slug": "/",
+      "sections": [
+        {
+          "kind": "candlelit hero",
+          "intent": "Oversized italic headline ('natural wine, *honestly*'), one-line subhead, mono kicker with hours + neighborhood, two CTAs (Reserve a tasting / See what's open tonight). Single oxblood candle-glow gradient."
+        },
+        {
+          "kind": "tonight's pours strip",
+          "intent": "Horizontal hairline-bento of 4–6 bottles currently open by the glass, with vintage numerals, producer, one-line plain-English tasting note. Updates weekly."
+        },
+        {
+          "kind": "the place, in plain words",
+          "intent": "Two-column editorial: left is a 62ch letter explaining what natural wine is and isn't, right is a duotone photo of the bar. No jargon."
+        },
+        {
+          "kind": "weekly tasting teaser",
+          "intent": "Inverted tone band, oversized numeral '02', this Thursday's theme, a paragraph from the host, and a Reserve button with amber glow on hover."
+        },
+        {
+          "kind": "small plates, rotating kitchens",
+          "intent": "Names the current resident kitchen, links to their IG, lists three dishes in italic. Changes monthly, signals we're community-rooted."
+        },
+        {
+          "kind": "press + regulars",
+          "intent": "Two real pull-quotes: one from SF press naming us best new wine bar, one from a regular. Set as oversized italic pull quotes, attributed in mono."
+        },
+        {
+          "kind": "visit footer",
+          "intent": "Address, hours grid (Tue–Sun evenings), map link, IG handle @vespera, email, a single line: 'walk-ins welcome, candle seats fill up.'"
+        }
+      ]
+    },
+    {
+      "name": "Bottle Shop",
+      "slug": "/shop",
+      "sections": [
+        {
+          "kind": "shop intro",
+          "intent": "Headline ('~120 bottles, all worth opening'), kicker explaining we rotate constantly and you can take any of them home at retail."
+        },
+        {
+          "kind": "filter rail + bento grid",
+          "intent": "Left sticky rail with plain-language filters (orange, pet-nat, 'weird and worth it', under $30, splurge). Right is a hairline-bento grid of bottles with vintage as serif numeral, producer mono kicker, region, and a one-sentence note in our voice."
+        },
+        {
+          "kind": "staff picks this week",
+          "intent": "Three featured bottles with a longer paragraph each — written by name, from whoever picked it. Photo in duotone, signed at the bottom."
+        },
+        {
+          "kind": "ask us anything",
+          "intent": "Soft CTA card: 'tell us what you had and liked, we'll pick something' — opens a short email form, very low-friction."
+        }
+      ]
+    },
+    {
+      "name": "Tastings",
+      "slug": "/tastings",
+      "sections": [
+        {
+          "kind": "tastings hero",
+          "intent": "Oversized italic 'gather around something open' with kicker 'thursdays, 7pm, eight seats.' One candle-glow accent."
+        },
+        {
+          "kind": "upcoming schedule",
+          "intent": "Vertical list of next 4 tastings: oversized serif date numeral on left, theme + host paragraph on right, Reserve button per row. Sold-out states use a soft strikethrough in plum."
+        },
+        {
+          "kind": "what it's actually like",
+          "intent": "Three-up: 'eight people', 'six pours', 'two hours' — set as hairline-bento with oversized numerals. Below, a paragraph from the host explaining the vibe in plain words."
+        },
+        {
+          "kind": "private bookings",
+          "intent": "Inverted band, short pitch for buying out the bar (birthdays, anniversaries, small teams), single email CTA."
+        }
+      ]
+    },
+    {
+      "name": "Our Story",
+      "slug": "/story",
+      "sections": [
+        {
+          "kind": "letter from the owners",
+          "intent": "Single column, 62ch, signed and dated. Opens with why we started in 2021, what 'low-intervention' means to us, who we want in the room."
+        },
+        {
+          "kind": "what we mean by natural",
+          "intent": "Three short stacked definitions in editorial style: 'farmed without chemicals', 'fermented with what's there', 'bottled without makeup.' Each with a one-line caveat — we're honest about the messy edges."
+        },
+        {
+          "kind": "the people",
+          "intent": "Portraits in duotone of the small team — two or three people — with handwritten-style captions about what each of them drinks at home."
+        },
+        {
+          "kind": "the room",
+          "intent": "Three photographs of the bar at different hours, full-color with grain. No copy. Just the space."
+        },
+        {
+          "kind": "visit + contact",
+          "intent": "Repeat of visit footer with hello@vespera.demo, @vespera, hours, and the line 'come say hi.'"
+        }
+      ]
+    }
+  ]
+}
