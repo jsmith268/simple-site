@@ -48,3 +48,4 @@ export {
   type BuildOutcome,
 } from './bespoke/runner';
 export { runCodeCritic, type CodeCriticArgs } from './bespoke/critic-code';
+export { runBespokeBuild, type BespokeBuildArgs } from './bespoke/orchestrate';
