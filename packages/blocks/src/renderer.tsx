@@ -38,7 +38,7 @@ export function SitePage({ spec, slug = '' }: { spec: SiteSpec; slug?: string })
   const blocks = page ? [...page.blocks].sort((a, b) => a.order - b.order) : [];
 
   return (
-    <div style={wrapper}>
+    <div className="ss-site" style={wrapper}>
       {blocks.map((b) => (
         <BlockRenderer key={b.id} instance={b} />
       ))}

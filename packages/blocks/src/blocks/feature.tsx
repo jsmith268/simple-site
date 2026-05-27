@@ -1,6 +1,6 @@
 import { z } from 'zod';
+import { body, button, card, container, eyebrow, heading, section, t } from '../stylekit';
 import type { BlockModule } from '../types';
-import { body, button, container, heading, section, t } from '../stylekit';
 
 const Cta = z.object({ label: z.string(), href: z.string() });
 
@@ -46,11 +46,9 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
     <div style={{ maxWidth: hasImage ? 560 : 760, marginInline: hasImage ? 0 : 'auto' }}>
       {props.eyebrow && (
         <p
-          style={body({
+          className="ss-eyebrow"
+          style={eyebrow({
             color: accentColor,
-            fontWeight: 600,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
             fontSize: t.textSm,
             marginBottom: 14,
           })}
@@ -61,11 +59,27 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
       <h2 style={heading(2, { textAlign: hasImage ? 'left' : 'center', color: headColor })}>
         {props.headline}
       </h2>
-      <p style={body({ fontSize: t.textLg, marginTop: 18, textAlign: hasImage ? 'left' : 'center', color: bodyColor })}>
+      <p
+        style={body({
+          fontSize: t.textLg,
+          marginTop: 18,
+          textAlign: hasImage ? 'left' : 'center',
+          color: bodyColor,
+        })}
+      >
         {props.body}
       </p>
       {props.bullets && props.bullets.length > 0 && (
-        <ul style={{ listStyle: 'none', margin: '24px 0 0', padding: 0, display: 'grid', gap: 12 }}>
+        <ul
+          className="ss-card"
+          style={card({
+            listStyle: 'none',
+            margin: '24px 0 0',
+            padding: 20,
+            display: 'grid',
+            gap: 12,
+          })}
+        >
           {props.bullets.map((bullet, i) => (
             <li
               key={i}
@@ -86,8 +100,14 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
         </ul>
       )}
       {props.cta && (
-        <div style={{ display: 'flex', justifyContent: hasImage ? 'flex-start' : 'center', marginTop: 28 }}>
-          <a href={props.cta.href} style={button('primary')}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: hasImage ? 'flex-start' : 'center',
+            marginTop: 28,
+          }}
+        >
+          <a href={props.cta.href} className="ss-cta" style={button('primary')}>
             {props.cta.label}
           </a>
         </div>
@@ -122,7 +142,11 @@ export const feature: BlockModule<FeatureProps> = {
     eyebrow: 'Why us',
     headline: `Built for ${ctx.category} done right`,
     body: `${ctx.businessName} pairs experienced people with a no-shortcuts process, so the result holds up long after we leave.`,
-    bullets: ['Upfront, itemised quotes', 'Work guaranteed in writing', 'Local team you can actually reach'],
+    bullets: [
+      'Upfront, itemised quotes',
+      'Work guaranteed in writing',
+      'Local team you can actually reach',
+    ],
     cta: { label: 'Get a quote', href: '#contact' },
   }),
 };

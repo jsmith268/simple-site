@@ -46,6 +46,7 @@ function Pricing({ props }: { props: PricingProps; variant: string }) {
           {props.tiers.map((tier, i) => (
             <div
               key={i}
+              className="ss-card"
               style={card({
                 display: 'flex',
                 flexDirection: 'column',
@@ -102,6 +103,7 @@ function Pricing({ props }: { props: PricingProps; variant: string }) {
               {tier.cta && (
                 <a
                   href={tier.cta.href}
+                  className={tier.highlighted ? 'ss-cta' : undefined}
                   style={{ ...button(tier.highlighted ? 'primary' : 'outline'), marginTop: 28, width: '100%' }}
                 >
                   {tier.cta.label}

@@ -69,6 +69,7 @@ function Services({ props, variant }: { props: ServicesProps; variant: string })
   const Card = (item: ServicesProps['items'][number], i: number) => (
     <div
       key={i}
+      className="ss-card"
       style={card({
         display: list ? 'flex' : 'block',
         gap: list ? 16 : undefined,

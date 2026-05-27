@@ -14,8 +14,7 @@ export const statsSchema = z.object({
 });
 export type StatsProps = z.infer<typeof statsSchema>;
 
-function Stats({ props, variant }: { props: StatsProps; variant: string }) {
-  const bordered = variant === 'bordered';
+function Stats({ props }: { props: StatsProps; variant: string }) {
   const inverted = props.tone === 'inverted';
   const headColor = inverted ? t.primaryFg : t.fg;
   const valueColor = inverted ? t.primaryFg : t.primary;
@@ -34,19 +33,23 @@ function Stats({ props, variant }: { props: StatsProps; variant: string }) {
             margin: 0,
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: bordered ? 0 : 24,
-            border: bordered ? `1px solid ${t.border}` : undefined,
-            borderRadius: bordered ? t.radiusLg : undefined,
-            overflow: bordered ? 'hidden' : undefined,
+            // Hairline-bento: a 1px gap on a border-coloured grid renders crisp
+            // dividers between cells that each paint the section background.
+            gap: 1,
+            background: t.border,
+            border: `1px solid ${t.border}`,
+            borderRadius: t.radiusLg,
+            overflow: 'hidden',
           }}
         >
-          {props.items.map((item, i) => (
+          {props.items.map((item) => (
             <div
               key={`${item.label}:${item.value}`}
+              className="ss-card"
               style={{
                 textAlign: 'center',
-                padding: bordered ? 32 : '8px 16px',
-                borderLeft: bordered && i > 0 ? `1px solid ${t.border}` : undefined,
+                padding: 32,
+                background: inverted ? t.primary : t.bg,
               }}
             >
               <dt

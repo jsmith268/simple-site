@@ -1,1 +1,108 @@
 @import "tailwindcss";
+
+/* ── Premium polish for rendered tenant sites ─────────────────────────────
+   Class hooks (ss-*) are applied by the block library; this stylesheet powers
+   the :hover, motion, and texture effects that inline styles can't express. */
+
+html {
+  scroll-behavior: smooth;
+}
+.ss-site ::selection {
+  background: var(--ss-accent);
+  color: var(--ss-bg);
+}
+
+/* Film grain — kills the flat-digital look (SVG fractalNoise, very low opacity). */
+.ss-site::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Eyebrow / kicker — mono, uppercase, wide tracking (the cheapest "designed" signal). */
+.ss-eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* Gradient-clipped emphasis text. */
+.ss-grad {
+  background: var(--ss-grad-signature);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Primary CTA: fill-from-bottom + colored glow on hover. */
+.ss-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease;
+}
+.ss-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ss-grad-signature);
+  transform: translateY(101%);
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ss-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 48px -16px color-mix(in oklch, var(--ss-primary) 55%, transparent);
+}
+.ss-cta:hover::before {
+  transform: translateY(0);
+}
+
+/* Cards lift on hover. */
+.ss-card {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.ss-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ss-shadow-lg);
+  border-color: color-mix(in oklch, var(--ss-primary) 35%, var(--ss-border));
+}
+
+/* Subtle link affordance. */
+.ss-site a {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+/* Scroll reveal — gated on .js so no-JS / crawlers see full content. */
+.js .ss-site section {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.js .ss-site section.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .js .ss-site section {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .ss-cta,
+  .ss-card,
+  .ss-cta::before {
+    transition: none !important;
+  }
+}

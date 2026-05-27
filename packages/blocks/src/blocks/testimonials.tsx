@@ -65,6 +65,7 @@ function Avatar({ url, name }: { url?: string; name: string }) {
 function Card({ item }: { item: TestimonialsProps['items'][number] }) {
   return (
     <figure
+      className="ss-card"
       style={card({
         margin: 0,
         display: 'flex',

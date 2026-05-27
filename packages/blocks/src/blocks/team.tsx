@@ -83,6 +83,7 @@ function Team({ props, variant }: { props: TeamProps; variant: string }) {
             return (
               <div
                 key={`${m.name}:${m.role}`}
+                className={list ? undefined : 'ss-card'}
                 style={list ? layout : card({ ...layout, padding: 28 })}
               >
                 <Photo url={m.photoUrl} alt={m.photoAlt ?? m.name} size={list ? 72 : 120} />

@@ -35,6 +35,7 @@ function Faq({ props, variant }: { props: FaqProps; variant: string }) {
           {props.items.map((item, i) => (
             <details
               key={i}
+              className="ss-card"
               style={card({
                 padding: '16px 20px',
               })}

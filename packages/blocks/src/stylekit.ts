@@ -96,10 +96,42 @@ export function display(extra?: CSSProperties): CSSProperties {
   return {
     fontFamily: t.fontHeading,
     fontWeight: t.weightHeading as unknown as number,
-    fontSize: 'clamp(2.2rem, 5.5vw, var(--ss-text-6xl))',
-    lineHeight: 1.05,
-    letterSpacing: '-0.03em',
+    fontSize: 'clamp(2.6rem, 6.2vw, var(--ss-text-6xl))',
+    lineHeight: 0.96,
+    letterSpacing: '-0.035em',
+    textWrap: 'balance' as CSSProperties['textWrap'],
     margin: 0,
+    ...extra,
+  };
+}
+
+/**
+ * Eyebrow/kicker base style. Pair with className="ss-eyebrow" (renderer global
+ * CSS makes it mono + tracked). Color defaults to the brand primary.
+ */
+export function eyebrow(extra?: CSSProperties): CSSProperties {
+  return {
+    color: t.primary,
+    fontWeight: 600,
+    margin: 0,
+    ...extra,
+  };
+}
+
+/** Small status/badge pill (e.g. hero "Now booking" / live dot). */
+export function chip(extra?: CSSProperties): CSSProperties {
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '6px 14px',
+    borderRadius: 999,
+    border: `1px solid ${t.border}`,
+    background: t.card,
+    color: t.mutedFg,
+    fontFamily: t.fontBody,
+    fontSize: t.textSm,
+    fontWeight: 500,
     ...extra,
   };
 }

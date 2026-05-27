@@ -29,7 +29,7 @@ function Cta({ props, variant }: { props: CtaProps; variant: string }) {
         gap: 16,
         ...(boxed
           ? {
-              background: t.accent,
+              background: 'var(--ss-grad-hero)',
               borderRadius: t.radiusLg,
               padding: 'clamp(32px, 6vw, 64px)',
               boxShadow: t.shadowSm,
@@ -50,7 +50,7 @@ function Cta({ props, variant }: { props: CtaProps; variant: string }) {
           marginTop: 8,
         }}
       >
-        <a href={props.primaryCta.href} style={button('primary')}>
+        <a href={props.primaryCta.href} className="ss-cta" style={button('primary')}>
           {props.primaryCta.label}
         </a>
         {props.secondaryCta && (

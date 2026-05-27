@@ -42,5 +42,15 @@ export const ThemeTokens = z.object({
   /** Overall visual character — drives subtle block styling choices. */
   density: z.enum(['airy', 'comfortable', 'compact']),
   mood: z.enum(['minimal', 'warm', 'bold', 'classic', 'modern', 'playful']),
+  /** Optional signature CSS gradients (premium look). Values are full CSS
+   * gradient strings (OKLCH-interpolated). Rendered to --ss-grad-* variables. */
+  gradient: z
+    .object({
+      /** Hero/section background mesh or wash. */
+      hero: z.string().optional(),
+      /** Accent gradient for emphasis text / fills. */
+      signature: z.string().optional(),
+    })
+    .optional(),
 });
 export type ThemeTokens = z.infer<typeof ThemeTokens>;

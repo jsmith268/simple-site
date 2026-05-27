@@ -52,6 +52,12 @@ export function tokensToCssVars(t: ThemeTokens): Record<string, string> {
   vars['--ss-text-5xl'] = `${(baseSizePx * scaleRatio ** 6).toFixed(2)}px`;
   vars['--ss-text-6xl'] = `${(baseSizePx * scaleRatio ** 7).toFixed(2)}px`;
 
+  // Signature gradients (premium look). Fall back to a primary→accent wash.
+  vars['--ss-grad-hero'] =
+    t.gradient?.hero ?? `radial-gradient(ellipse 80% 60% at 70% 30%, ${t.palette.primary}14, transparent 70%)`;
+  vars['--ss-grad-signature'] =
+    t.gradient?.signature ?? `linear-gradient(105deg in oklch, ${t.palette.accent}, ${t.palette.primary})`;
+
   return vars;
 }
 
