@@ -202,7 +202,7 @@ export function Conversation({ projectId, initial }: { projectId: string; initia
 
 function Avatar() {
   return (
-    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-[13px] font-600 text-brand-ink">A</span>
+    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-[13px] font-semibold text-brand-ink">A</span>
   );
 }
 

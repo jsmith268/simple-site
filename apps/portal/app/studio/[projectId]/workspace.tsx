@@ -124,7 +124,7 @@ export function Workspace({
                 key={p.slug}
                 onClick={() => setPage(p)}
                 className={cn(
-                  "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-500 transition-colors",
+                  "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
                   page.slug === p.slug ? "bg-ink text-brand-ink" : "text-ink-soft hover:bg-surface",
                 )}
               >
@@ -146,7 +146,7 @@ export function Workspace({
         {/* Comment / chat panel — ~24% */}
         <aside className="flex w-[340px] shrink-0 flex-col bg-surface">
           <div className="shrink-0 border-b border-line px-4 py-3">
-            <p className="font-display text-[16px] font-600">Your notes</p>
+            <p className="font-display text-[16px] font-semibold">Your notes</p>
             <p className="text-[12.5px] text-muted">
               Comment on <strong className="text-ink-soft">{page.name}</strong> · {viewport}. We compile every note into one change list before rebuilding.
             </p>
@@ -222,7 +222,7 @@ function ChecklistModal({ checklist, onClose, onApprove, busy }: { checklist: Re
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-sm">
       <div className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-lg">
         <div className="border-b border-line px-5 py-4">
-          <p className="font-display text-[18px] font-600">Approve these changes?</p>
+          <p className="font-display text-[18px] font-semibold">Approve these changes?</p>
           <p className="text-[13px] text-ink-soft">We&apos;ll keep the design you chose and apply exactly this list — then re-check quality before you see it.</p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 thin-scroll">

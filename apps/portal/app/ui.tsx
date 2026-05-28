@@ -24,7 +24,7 @@ export function Logo({ className }: { className?: string }) {
           <path d="M3 11.5c1.6 1 3 1.4 4.2 1.1 1.8-.4 2-2 .6-2.7-1-.5-3.2-.6-4-1.6-1-1.2.1-3 2.6-3.3 1.3-.2 2.6.1 3.8.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
         </svg>
       </span>
-      <span className="font-display text-[17px] font-600 tracking-tight">Simple Site</span>
+      <span className="font-display text-[17px] font-semibold tracking-tight">Simple Site</span>
     </span>
   );
 }
@@ -60,7 +60,7 @@ export function Eyebrow({ children, className }: { children: React.ReactNode; cl
 }
 
 export function Title({ children, className, as: As = "h1" }: { children: React.ReactNode; className?: string; as?: React.ElementType }) {
-  return <As className={cn("font-display font-600 tracking-tight text-ink", className)}>{children}</As>;
+  return <As className={cn("font-display font-semibold tracking-tight text-ink", className)}>{children}</As>;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────── */
@@ -72,7 +72,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const BTN_BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full font-500 transition-all duration-150 ease-out disabled:opacity-50 disabled:pointer-events-none select-none";
+  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-150 ease-out disabled:opacity-50 disabled:pointer-events-none select-none";
 const BTN_VARIANT: Record<string, string> = {
   primary: "bg-brand text-brand-ink hover:brightness-[1.06] shadow-sm hover:shadow-md",
   secondary: "bg-surface text-ink border border-line-strong hover:border-ink/40 hover:bg-paper-2",
@@ -109,7 +109,7 @@ export function Field({ label, hint, htmlFor, children, className }: { label?: s
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <label htmlFor={htmlFor} className="text-[13px] font-500 text-ink-soft">
+        <label htmlFor={htmlFor} className="text-[13px] font-medium text-ink-soft">
           {label}
         </label>
       )}
@@ -147,7 +147,7 @@ export function Chip({
   return (
     <As
       className={cn(
-        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13.5px] font-500 transition-all duration-150 ease-out",
+        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13.5px] font-medium transition-all duration-150 ease-out",
         selected
           ? "border-brand bg-brand-soft text-brand"
           : "border-line-strong bg-surface text-ink-soft hover:border-ink/30 hover:bg-paper-2",
@@ -171,7 +171,7 @@ const TONE: Record<string, string> = {
 
 export function Badge({ children, tone = "neutral", className }: { children: React.ReactNode; tone?: keyof typeof TONE; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-600", TONE[tone], className)}>
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold", TONE[tone], className)}>
       {children}
     </span>
   );

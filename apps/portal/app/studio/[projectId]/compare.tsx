@@ -93,7 +93,7 @@ function VariantCard({ variant, onChoose, busy, disabled }: { variant: BuildVari
           {variant.designScore != null && <span className="text-[12px] text-muted">Design {variant.designScore}/100</span>}
         </div>
         {variant.previewUrl && (
-          <a href={variant.previewUrl} target="_blank" rel="noreferrer" className="text-[12.5px] font-500 text-brand hover:underline">
+          <a href={variant.previewUrl} target="_blank" rel="noreferrer" className="text-[12.5px] font-medium text-brand hover:underline">
             Open full preview ↗
           </a>
         )}
@@ -143,11 +143,11 @@ function RegenPanel({ onCancel, onSubmit, busy, remaining }: { onCancel: () => v
       <p className="mt-1 text-[13.5px] text-ink-soft">The more specific you are, the better the next two will be. We keep what you liked and fix what you didn&apos;t.</p>
       <div className="mt-4 flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-500 text-ink-soft">What worked? Keep this.</span>
+          <span className="text-[13px] font-medium text-ink-soft">What worked? Keep this.</span>
           <Textarea value={liked} onChange={(e) => setLiked(e.target.value)} placeholder="e.g. the bold headline, the dark palette, the photo treatment" />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-500 text-ink-soft">What missed? Change this.</span>
+          <span className="text-[13px] font-medium text-ink-soft">What missed? Change this.</span>
           <Textarea value={disliked} onChange={(e) => setDisliked(e.target.value)} placeholder="e.g. too corporate, hero feels empty, wrong vibe for a family café" />
         </label>
         <div className="flex flex-wrap items-center gap-2">

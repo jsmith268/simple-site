@@ -1,331 +1,113 @@
-import { loadDashboard } from '../actions';
-import { ActionsBar } from './actions-bar';
+import { getGenerationState } from "@simplesight/db";
+import Link from "next/link";
+import { loadDashboard } from "../actions";
+import { Badge, Button, Card, Container, Divider, Eyebrow, Logo, Title } from "../../ui";
 
-// Warm, reassuring palette for a customer who just paid a lot.
-const c = {
-  ink: '#2b2420',
-  body: '#5c5249',
-  muted: '#8a7d72',
-  line: '#ece4da',
-  card: '#ffffff',
-  page: '#faf6f1',
-  accent: '#b4520f',
+type StatusTone = "neutral" | "brand" | "success" | "warn" | "info";
+
+const STATUS: Record<string, { label: string; blurb: string; tone: StatusTone }> = {
+  purchased: { label: "Welcome aboard", blurb: "Let's scope your site and get building.", tone: "warn" },
+  onboarding: { label: "Scoping", blurb: "Finish the quick onboarding to start your build.", tone: "warn" },
+  queued: { label: "Queued", blurb: "Your build is lined up and will start shortly.", tone: "warn" },
+  building: { label: "Building", blurb: "Your studios are crafting two directions right now.", tone: "info" },
+  preview: { label: "Ready to review", blurb: "Two directions are ready — compare and choose.", tone: "success" },
+  changes_requested: { label: "Refining", blurb: "We're applying your changes.", tone: "info" },
+  approved: { label: "Locked in", blurb: "Your design is set. Take it live whenever you're ready.", tone: "success" },
+  live: { label: "Live", blurb: "Your website is published and online.", tone: "success" },
+  refunded: { label: "Refunded", blurb: "This project was refunded.", tone: "neutral" },
+  cancelled: { label: "Cancelled", blurb: "This project was cancelled.", tone: "neutral" },
 };
 
-type StatusKey =
-  | 'purchased'
-  | 'onboarding'
-  | 'queued'
-  | 'building'
-  | 'preview'
-  | 'changes_requested'
-  | 'approved'
-  | 'live'
-  | 'refunded'
-  | 'cancelled';
-
-const STATUS_MAP: Record<
-  StatusKey,
-  { label: string; blurb: string; fg: string; bg: string; dot: string }
-> = {
-  purchased: {
-    label: 'Welcome aboard',
-    blurb: 'Thanks for your purchase. Let’s get your site started.',
-    fg: '#7a5a16',
-    bg: '#fdf3da',
-    dot: '#c8961f',
-  },
-  onboarding: {
-    label: 'Finishing your details',
-    blurb: 'Tell us about your business so we can build the perfect site.',
-    fg: '#7a5a16',
-    bg: '#fdf3da',
-    dot: '#c8961f',
-  },
-  queued: {
-    label: 'You’re in the queue',
-    blurb: 'Your build is lined up and will start shortly.',
-    fg: '#7a5a16',
-    bg: '#fdf3da',
-    dot: '#c8961f',
-  },
-  building: {
-    label: 'We’re building your site',
-    blurb: 'Our team is hard at work crafting your website right now.',
-    fg: '#1c4f8f',
-    bg: '#e6effb',
-    dot: '#2f6fc0',
-  },
-  preview: {
-    label: 'Your site is ready to preview',
-    blurb: 'Take a look and let us know what you think.',
-    fg: '#0f6b4f',
-    bg: '#e3f6ec',
-    dot: '#1f9d6e',
-  },
-  changes_requested: {
-    label: 'Working on your changes',
-    blurb: 'We received your notes and are updating your site.',
-    fg: '#1c4f8f',
-    bg: '#e6effb',
-    dot: '#2f6fc0',
-  },
-  approved: {
-    label: 'Approved — going live soon',
-    blurb: 'Thanks for approving! We’re putting the finishing touches on go-live.',
-    fg: '#0f6b4f',
-    bg: '#e3f6ec',
-    dot: '#1f9d6e',
-  },
-  live: {
-    label: 'Your site is live',
-    blurb: 'Congratulations — your website is published and online.',
-    fg: '#0f6b4f',
-    bg: '#e3f6ec',
-    dot: '#1f9d6e',
-  },
-  refunded: {
-    label: 'Refunded',
-    blurb: 'This project has been refunded. Reach out if you have questions.',
-    fg: '#8a7d72',
-    bg: '#f1ece5',
-    dot: '#b3a89c',
-  },
-  cancelled: {
-    label: 'Cancelled',
-    blurb: 'This project has been cancelled. Reach out if you’d like to restart.',
-    fg: '#8a7d72',
-    bg: '#f1ece5',
-    dot: '#b3a89c',
-  },
-};
-
-function statusInfo(status: string) {
-  return (
-    STATUS_MAP[status as StatusKey] ?? {
-      label: status,
-      blurb: 'We’ll keep you posted on your project here.',
-      fg: c.muted,
-      bg: '#f1ece5',
-      dot: '#b3a89c',
-    }
-  );
-}
-
-const RUN_STATUS_LABEL: Record<string, string> = {
-  pending: 'Getting started',
-  running: 'In progress',
-  succeeded: 'Completed',
-  failed: 'Hit a snag — our team is on it',
-  cancelled: 'Cancelled',
-};
-
-function formatCost(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
-const shell: React.CSSProperties = {
-  minHeight: '100vh',
-  background: c.page,
-  fontFamily: 'system-ui, -apple-system, sans-serif',
-  color: c.ink,
-};
-
-const container: React.CSSProperties = {
-  maxWidth: 680,
-  margin: '0 auto',
-  padding: '56px 24px 96px',
-};
-
-const cardStyle: React.CSSProperties = {
-  background: c.card,
-  border: `1px solid ${c.line}`,
-  borderRadius: 16,
-  padding: 28,
-  marginBottom: 20,
-  boxShadow: '0 1px 2px rgba(43, 36, 32, 0.04)',
-};
-
-export default async function DashboardPage({
-  params,
-}: {
-  params: Promise<{ projectId: string }>;
-}) {
+export default async function DashboardPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
-  const data = await loadDashboard(projectId);
+  const [data, gen] = await Promise.all([loadDashboard(projectId), getGenerationState(projectId)]);
 
   if (!data.project) {
     return (
-      <main style={shell}>
-        <div style={{ ...container, textAlign: 'center', paddingTop: 120 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }} aria-hidden>
-            🔍
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 12px' }}>
-            We couldn’t find that project
-          </h1>
-          <p style={{ color: c.body, lineHeight: 1.6, maxWidth: 420, margin: '0 auto' }}>
-            Double-check your link, or reach out to support and we’ll help you find it
-            right away.
-          </p>
-        </div>
-      </main>
+      <div className="grid min-h-screen place-items-center brand-gradient">
+        <Container size="sm" className="text-center">
+          <Title as="h1" className="text-2xl">
+            We couldn&apos;t find that project
+          </Title>
+          <p className="mt-2 text-ink-soft">Double-check your link, or reach out to support.</p>
+        </Container>
+      </div>
     );
   }
 
-  const { project, businessName, preview, latestRun } = data;
-  const info = statusInfo(project.status);
-  const showPreview =
-    !!preview && ['preview', 'approved', 'live'].includes(project.status);
-  const canAct = ['preview', 'changes_requested'].includes(project.status);
+  const { project, businessName, preview } = data;
+  const info = STATUS[project.status] ?? { label: project.status, blurb: "We'll keep you posted here.", tone: "neutral" as StatusTone };
+  const cta = primaryCta(projectId, project.status, gen.status, gen.currentRound);
 
   return (
-    <main style={shell}>
-      <div style={container}>
-        {/* Header */}
-        <header style={{ marginBottom: 32 }}>
-          <p
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: 0.4,
-              textTransform: 'uppercase',
-              color: c.accent,
-              margin: '0 0 8px',
-            }}
-          >
-            Your Simple Site project
-          </p>
-          <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.15 }}>
-            {businessName ?? 'Your website'}
-          </h1>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 14px',
-              borderRadius: 999,
-              background: info.bg,
-              color: info.fg,
-              fontSize: 14,
-              fontWeight: 600,
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: info.dot,
-                display: 'inline-block',
-              }}
-            />
-            {info.label}
+    <div className="min-h-screen brand-gradient">
+      <header className="border-b border-line/70 bg-paper/80 backdrop-blur">
+        <Container size="md" className="flex h-16 items-center justify-between">
+          <Logo />
+          <Badge tone={info.tone}>{info.label}</Badge>
+        </Container>
+      </header>
+
+      <Container size="md" className="py-12">
+        <Eyebrow>Your project</Eyebrow>
+        <Title as="h1" className="mt-2 text-4xl">
+          {businessName ?? "Your website"}
+        </Title>
+        <p className="mt-2 text-[16px] leading-relaxed text-ink-soft">{info.blurb}</p>
+
+        <Card className="mt-8 p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-display text-[18px] font-semibold">{cta.title}</h2>
+              <p className="mt-1 text-[14px] text-ink-soft">{cta.blurb}</p>
+            </div>
+            <Link href={cta.href} className="shrink-0">
+              <Button size="lg">{cta.label} →</Button>
+            </Link>
           </div>
-          <p style={{ color: c.body, lineHeight: 1.6, margin: '14px 0 0', fontSize: 16 }}>
-            {info.blurb}
-          </p>
-        </header>
 
-        {/* Preview card (prominent when ready) */}
-        {showPreview && preview && (
-          <section
-            style={{
-              ...cardStyle,
-              background: 'linear-gradient(135deg, #fff7ef 0%, #ffffff 70%)',
-              borderColor: '#f3dcc6',
-            }}
-            aria-labelledby="preview-heading"
-          >
-            <h2
-              id="preview-heading"
-              style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px' }}
-            >
-              Your website is ready
-            </h2>
-            <p style={{ color: c.body, lineHeight: 1.6, margin: '0 0 18px', fontSize: 15 }}>
-              Open it in a new tab to see exactly how it looks to your visitors.
-            </p>
-            <a
-              href={preview}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                background: c.accent,
-                color: '#fff',
-                fontSize: 15,
-                fontWeight: 700,
-                padding: '12px 22px',
-                borderRadius: 10,
-                textDecoration: 'none',
-              }}
-            >
-              View your website →
-            </a>
-            {project.username && (
-              <p style={{ marginTop: 16, fontSize: 14, color: c.muted }}>
-                Lives at{' '}
-                <span style={{ color: c.ink, fontWeight: 600 }}>
-                  {project.username}.simplesight.co
-                </span>
-              </p>
-            )}
-          </section>
-        )}
-
-        {/* Build progress / status card */}
-        <section style={cardStyle} aria-labelledby="progress-heading">
-          <h2
-            id="progress-heading"
-            style={{ fontSize: 16, fontWeight: 700, margin: '0 0 16px' }}
-          >
-            Build progress
-          </h2>
-          {latestRun ? (
-            <dl style={{ margin: 0 }}>
-              <Row
-                label="Latest build"
-                value={RUN_STATUS_LABEL[latestRun.status] ?? latestRun.status}
-              />
-              {latestRun.attemptNumber > 1 && (
-                <Row label="Attempt" value={`#${latestRun.attemptNumber}`} />
-              )}
-              <Row label="Build cost so far" value={formatCost(latestRun.costCents)} />
-            </dl>
-          ) : (
-            <p style={{ color: c.body, lineHeight: 1.6, margin: 0, fontSize: 15 }}>
-              No build has run yet. Once your site starts building, you’ll see live
-              progress here.
-            </p>
+          {preview && ["preview", "approved", "live"].includes(project.status) && (
+            <>
+              <Divider className="my-5" />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-[14px] text-ink-soft">
+                  Lives at{" "}
+                  {project.username ? (
+                    <span className="font-semibold text-ink">{project.username}.simplesight.co</span>
+                  ) : (
+                    "your address"
+                  )}
+                </div>
+                <a href={preview} target="_blank" rel="noreferrer">
+                  <Button variant="secondary" size="sm">
+                    View site ↗
+                  </Button>
+                </a>
+              </div>
+            </>
           )}
-        </section>
+        </Card>
 
-        {/* Actions */}
-        <ActionsBar projectId={project.id} canAct={canAct} status={project.status} />
-      </div>
-    </main>
+        {gen.currentRound > 0 && gen.status !== "finalized" && (
+          <p className="mt-4 text-center text-[13px] text-muted">
+            {gen.currentRound} of {gen.maxRounds} design rounds used · refine your chosen design as much as you need.
+          </p>
+        )}
+      </Container>
+    </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        gap: 16,
-        padding: '8px 0',
-        borderTop: `1px solid ${c.line}`,
-        fontSize: 15,
-      }}
-    >
-      <dt style={{ color: c.muted }}>{label}</dt>
-      <dd style={{ margin: 0, fontWeight: 600, color: c.ink, textAlign: 'right' }}>
-        {value}
-      </dd>
-    </div>
-  );
+function primaryCta(projectId: string, status: string, gen: string, round: number) {
+  const studio = `/studio/${projectId}`;
+  const onboarding = `/onboarding/${projectId}`;
+  const goLive = `/dashboard/${projectId}/go-live`;
+  if (status === "live") return { title: "Your site is live", blurb: "Manage hosting, domains, or request changes.", label: "Manage hosting", href: goLive };
+  if (gen === "finalized" || status === "approved") return { title: "Ready to launch", blurb: "Connect a domain and publish your site.", label: "Set up hosting & go live", href: goLive };
+  if (gen === "selected" || gen === "revising") return { title: "Refine your site", blurb: "Walk every page, leave notes, and approve changes.", label: "Open the workspace", href: studio };
+  if (gen === "comparing" || gen === "exhausted") return { title: "Compare your designs", blurb: "Two directions are waiting for you to choose.", label: "Compare & choose", href: studio };
+  if (gen === "generating" || status === "building") return { title: "We're building", blurb: "Watch your two directions come together.", label: "View progress", href: studio };
+  if (round === 0 && (status === "purchased" || status === "onboarding" || status === "queued"))
+    return { title: "Let's build your site", blurb: "A few quick questions, then we build two directions.", label: "Start onboarding", href: onboarding };
+  return { title: "Continue in your studio", blurb: "Pick up where you left off.", label: "Open studio", href: studio };
 }

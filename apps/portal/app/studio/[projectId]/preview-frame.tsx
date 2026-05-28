@@ -48,7 +48,7 @@ export function ViewportSwitcher({ value, onChange }: { value: Viewport; onChang
           onClick={() => onChange(v.id)}
           title={v.label}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-500 transition-colors",
+            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium transition-colors",
             value === v.id ? "bg-ink text-brand-ink" : "text-ink-soft hover:bg-paper-2",
           )}
         >

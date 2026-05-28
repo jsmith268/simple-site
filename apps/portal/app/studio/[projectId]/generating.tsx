@@ -67,7 +67,7 @@ export function Generating({ mode }: { mode: "building" | "applying" }) {
                     </svg>
                   )}
                 </span>
-                <span className={done ? "text-muted line-through" : now ? "font-500 text-ink" : "text-muted"}>{s}</span>
+                <span className={done ? "text-muted line-through" : now ? "font-medium text-ink" : "text-muted"}>{s}</span>
               </li>
             );
           })}

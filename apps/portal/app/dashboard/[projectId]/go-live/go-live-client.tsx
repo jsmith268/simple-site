@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Badge, Button, Card, Input, cn } from "../../../ui";
 import {
   buyDomainAction,
   connectDomainAction,
@@ -16,136 +17,199 @@ interface DnsRecord {
   value: string;
 }
 
+type Tab = "subdomain" | "connect" | "buy";
+
 export function GoLiveClient(props: {
   projectId: string;
   subdomain: string | null;
   domains: { domain: string; type: string; verified: boolean }[];
   steps: Record<string, unknown>[];
   refundOpen: boolean;
+  live: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [tab, setTab] = useState<Tab>("subdomain");
   const [domain, setDomain] = useState("");
   const [records, setRecords] = useState<DnsRecord[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [confirmRefund, setConfirmRefund] = useState(false);
 
-  const run = (fn: () => Promise<{ ok?: boolean; error?: string; records?: DnsRecord[]; reason?: string }>) =>
+  const run = (fn: () => Promise<{ ok?: boolean; live?: boolean; error?: string; records?: DnsRecord[]; reason?: string }>) =>
     start(async () => {
       setMsg(null);
       const r = await fn();
       if (r.records) setRecords(r.records);
-      if (r.error) setMsg(r.error);
-      else if (r.reason) setMsg(r.reason);
-      else setMsg("Done.");
+      if (r.error) setMsg({ kind: "err", text: r.error });
+      else if (r.reason) setMsg({ kind: "ok", text: r.reason });
+      else setMsg({ kind: "ok", text: "Done." });
       router.refresh();
     });
 
   return (
-    <div style={{ marginTop: 24, display: "grid", gap: 24 }}>
-      {/* Option 1: free subdomain */}
-      <section style={card}>
-        <h2 style={h2}>Launch on a Simple Site subdomain</h2>
-        <p style={muted}>
-          Free, instant. Your site goes live at <code>{props.subdomain ?? "—"}</code>.
-        </p>
-        <button type="button" style={btn} disabled={pending} onClick={() => run(() => goLiveSubdomainAction(props.projectId))}>
-          {pending ? "Working…" : "Go live on subdomain"}
-        </button>
-      </section>
+    <div className="mt-8">
+      <h2 className="font-display text-[20px] font-semibold">Your address</h2>
+      <p className="mt-1 text-[14px] text-ink-soft">Pick how people find you. You can always add more domains later.</p>
 
-      {/* Option 2: connect existing domain */}
-      <section style={card}>
-        <h2 style={h2}>Connect your own domain</h2>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            placeholder="yourbusiness.com"
-            style={input}
-          />
-          <button type="button" style={btnOutline} disabled={pending || !domain} onClick={() => run(() => connectDomainAction(props.projectId, domain))}>
-            Connect
+      <div className="mt-4 inline-flex rounded-full border border-line-strong bg-surface p-1">
+        {([
+          ["subdomain", "Free address"],
+          ["connect", "Connect a domain"],
+          ["buy", "Buy a domain"],
+        ] as [Tab, string][]).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors",
+              tab === id ? "bg-ink text-brand-ink" : "text-ink-soft hover:bg-paper-2",
+            )}
+          >
+            {label}
           </button>
-        </div>
-        {records.length > 0 && (
-          <div style={{ marginTop: 12 }}>
-            <p style={muted}>Add these DNS records at your registrar, then verify:</p>
-            <table style={{ width: "100%", fontFamily: "monospace", fontSize: 13, borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={th}>Type</th>
-                  <th style={th}>Name</th>
-                  <th style={th}>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((r) => (
-                  <tr key={`${r.type}-${r.name}`}>
-                    <td style={td}>{r.type}</td>
-                    <td style={td}>{r.name}</td>
-                    <td style={td}>{r.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button type="button" style={{ ...btn, marginTop: 12 }} disabled={pending || !domain} onClick={() => run(() => goLiveCustomAction(props.projectId, domain))}>
-              Verify &amp; go live
-            </button>
+        ))}
+      </div>
+
+      <Card className="mt-4 p-6">
+        {tab === "subdomain" && (
+          <div className="flex flex-col gap-3">
+            <p className="text-[15px] text-ink">
+              Launch instantly at{" "}
+              <code className="rounded bg-paper-2 px-1.5 py-0.5 font-mono text-[13px] text-brand">{props.subdomain ?? "—"}</code>
+            </p>
+            <p className="text-[13px] text-muted">Free, secure (SSL included), live in seconds. Perfect to start — add a custom domain anytime.</p>
+            <Button className="self-start" loading={pending} disabled={pending || props.live} onClick={() => run(() => goLiveSubdomainAction(props.projectId))}>
+              {props.live ? "You're live" : "Publish to my free address"}
+            </Button>
           </div>
         )}
-      </section>
 
-      {/* Option 3: buy a domain through us */}
-      <section style={card}>
-        <h2 style={h2}>Buy a domain through us</h2>
-        <p style={muted}>We'll register it (via Vercel Domains) and wire DNS automatically.</p>
-        <button type="button" style={btnOutline} disabled={pending || !domain} onClick={() => run(() => buyDomainAction(props.projectId, domain))}>
-          Search &amp; buy “{domain || "yourbusiness.com"}”
-        </button>
-      </section>
+        {tab === "connect" && (
+          <div className="flex flex-col gap-3">
+            <p className="text-[14px] text-ink-soft">Already own a domain? Point it here and we&apos;ll issue SSL automatically.</p>
+            <div className="flex max-w-md gap-2">
+              <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="yourbusiness.com" />
+              <Button variant="secondary" disabled={pending || !domain} onClick={() => run(() => connectDomainAction(props.projectId, domain))}>
+                Connect
+              </Button>
+            </div>
+            {records.length > 0 && <DnsRecords records={records} onVerify={() => run(() => goLiveCustomAction(props.projectId, domain))} busy={pending} />}
+          </div>
+        )}
 
-      {msg && <p role="status" style={{ color: "#374151" }}>{msg}</p>}
+        {tab === "buy" && (
+          <div className="flex flex-col gap-3">
+            <p className="text-[14px] text-ink-soft">We&apos;ll register it and wire up DNS automatically — nothing for you to configure.</p>
+            <div className="flex max-w-md gap-2">
+              <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="yourbusiness.com" />
+              <Button variant="secondary" disabled={pending || !domain} onClick={() => run(() => buyDomainAction(props.projectId, domain))}>
+                Search &amp; buy
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {msg && (
+        <p className={cn("mt-3 text-[13.5px]", msg.kind === "err" ? "text-danger" : "text-success")} role="status">
+          {msg.text}
+        </p>
+      )}
+
+      {props.domains.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {props.domains.map((d) => (
+            <Badge key={d.domain} tone={d.verified ? "success" : "warn"}>
+              {d.domain} · {d.verified ? "verified" : "pending DNS"}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {props.steps.length > 0 && (
-        <section style={card}>
-          <h2 style={h2}>Connection log</h2>
-          <ul style={{ fontFamily: "monospace", fontSize: 13, color: "#555" }}>
+        <Card className="mt-6 p-5">
+          <h3 className="mb-3 text-[14px] font-semibold">Connection progress</h3>
+          <ol className="flex flex-col gap-1.5">
             {props.steps.map((s, i) => (
-              <li key={`${String(s.stepName)}-${i}`}>
-                {String(s.stepName)} — {String(s.status)}
+              <li key={`${String(s.stepName)}-${i}`} className="flex items-center gap-2 text-[13px]">
+                <StepDot status={String(s.status)} />
+                <span className="font-mono text-ink-soft">{String(s.stepName)}</span>
+                <span className="text-muted">— {String(s.status)}</span>
               </li>
             ))}
-          </ul>
-        </section>
+          </ol>
+        </Card>
       )}
 
       {props.refundOpen && (
-        <section style={{ ...card, borderColor: "#fca5a5" }}>
-          <h2 style={{ ...h2, color: "#b91c1c" }}>30-day money-back guarantee</h2>
-          <p style={muted}>Not happy? Get a full refund within 30 days. This unpublishes your site.</p>
-          <button
-            type="button"
-            style={{ ...btnOutline, color: "#b91c1c", borderColor: "#fca5a5" }}
-            disabled={pending}
-            onClick={() => {
-              if (confirm("Request a full refund? This will take your site offline.")) {
-                run(() => refundAction(props.projectId));
-              }
-            }}
-          >
-            Request a refund
-          </button>
-        </section>
+        <Card className="mt-8 border-danger/30 bg-danger-soft/40 p-5">
+          <h3 className="text-[15px] font-semibold text-danger">30-day money-back guarantee</h3>
+          <p className="mt-1 text-[13.5px] text-ink-soft">Not happy? Get a full refund within 30 days. This unpublishes your site and releases the address.</p>
+          {!confirmRefund ? (
+            <Button variant="ghost" className="mt-3 text-danger hover:bg-danger/10" onClick={() => setConfirmRefund(true)}>
+              Request a refund
+            </Button>
+          ) : (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-[13px] text-ink-soft">Are you sure? Your site goes offline.</span>
+              <Button variant="danger" size="sm" loading={pending} onClick={() => run(() => refundAction(props.projectId))}>
+                Yes, refund me
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmRefund(false)}>
+                Keep my site
+              </Button>
+            </div>
+          )}
+        </Card>
       )}
     </div>
   );
 }
 
-const card: React.CSSProperties = { border: "1px solid #e5e7eb", borderRadius: 12, padding: 20 };
-const h2: React.CSSProperties = { fontSize: 17, fontWeight: 700, marginBottom: 6 };
-const muted: React.CSSProperties = { color: "#6b7280", fontSize: 14, marginBottom: 12 };
-const input: React.CSSProperties = { flex: 1, padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: 8 };
-const btn: React.CSSProperties = { padding: "10px 18px", background: "#111827", color: "#fff", border: 0, borderRadius: 8, fontWeight: 600, cursor: "pointer" };
-const btnOutline: React.CSSProperties = { padding: "10px 18px", background: "#fff", color: "#111827", border: "1px solid #d1d5db", borderRadius: 8, fontWeight: 600, cursor: "pointer" };
-const th: React.CSSProperties = { textAlign: "left", borderBottom: "1px solid #e5e7eb", padding: "6px 8px" };
-const td: React.CSSProperties = { borderBottom: "1px solid #f3f4f6", padding: "6px 8px" };
+function StepDot({ status }: { status: string }) {
+  const tone = /complete|done|verified|live|ready/i.test(status) ? "var(--color-success)" : /fail|error/i.test(status) ? "var(--color-danger)" : "var(--color-warn)";
+  return <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: tone }} />;
+}
+
+function DnsRecords({ records, onVerify, busy }: { records: DnsRecord[]; onVerify: () => void; busy: boolean }) {
+  return (
+    <div className="mt-2 rounded-md border border-line bg-paper-2/40 p-4">
+      <p className="mb-3 text-[13px] text-ink-soft">Add these records at your registrar, then verify:</p>
+      <div className="overflow-hidden rounded-md border border-line">
+        <div className="grid grid-cols-[64px_1fr_1fr_auto] gap-2 border-b border-line bg-surface px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+          <span>Type</span>
+          <span>Name</span>
+          <span>Value</span>
+          <span />
+        </div>
+        {records.map((r) => (
+          <div key={`${r.type}-${r.name}`} className="grid grid-cols-[64px_1fr_1fr_auto] items-center gap-2 border-b border-line bg-surface px-3 py-2 font-mono text-[12.5px] last:border-0">
+            <span className="text-ink-soft">{r.type}</span>
+            <span className="truncate">{r.name}</span>
+            <span className="truncate">{r.value}</span>
+            <Copy text={r.value} />
+          </div>
+        ))}
+      </div>
+      <Button className="mt-3" loading={busy} disabled={busy} onClick={onVerify}>
+        Verify &amp; go live
+      </Button>
+    </div>
+  );
+}
+
+function Copy({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard?.writeText(text);
+        setDone(true);
+        setTimeout(() => setDone(false), 1200);
+      }}
+      className="rounded px-2 py-0.5 text-[11px] font-sans font-medium text-brand hover:bg-brand-soft"
+    >
+      {done ? "Copied" : "Copy"}
+    </button>
+  );
+}
