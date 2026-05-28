@@ -1,15 +1,55 @@
 import type { ModelRef } from '@simplesight/contracts';
 
-/** Capability tiers → AI Gateway model strings (provider/model). */
+/**
+ * Canonical model ids (AI Gateway `provider/model` strings). Opus is the newest
+ * 4.8; the GPT engine string is overridable via env so the exact gateway id can
+ * be corrected without a code change.
+ */
+export const MODELS = {
+  opus: 'anthropic/claude-opus-4.8',
+  sonnet: 'anthropic/claude-sonnet-4.6',
+  haiku: 'anthropic/claude-haiku-4.5',
+  gpt: process.env.SIMPLESIGHT_MODEL_GPT ?? 'openai/gpt-5.5',
+} as const;
+
+/** Capability tiers → model ids. Deep is the newest Opus. */
 export const TIERS = {
-  quick: 'anthropic/claude-haiku-4.5',
-  mid: 'anthropic/claude-sonnet-4.6',
-  deep: 'anthropic/claude-opus-4.7',
+  quick: MODELS.haiku,
+  mid: MODELS.sonnet,
+  deep: MODELS.opus,
 } as const;
 
 export type Tier = keyof typeof TIERS;
 
-/** Default tier per agent/critic. Tuned: producers richer, critics mid, bounded quick. */
+/**
+ * The two engines a customer's site is built with IN PARALLEL for the
+ * generate-and-compare flow. A = Claude Opus 4.8, B = OpenAI GPT-5.5. Both are
+ * env-overridable so the duel can be retargeted without a deploy.
+ */
+export const DUEL_MODELS = {
+  A: process.env.SIMPLESIGHT_MODEL_A ?? MODELS.opus,
+  B: process.env.SIMPLESIGHT_MODEL_B ?? MODELS.gpt,
+} as const;
+
+/** Human-facing labels for the compare UI (keyed by model ref). */
+export const MODEL_LABELS: Record<string, string> = {
+  'anthropic/claude-opus-4.8': 'Claude Opus 4.8',
+  'anthropic/claude-opus-4.7': 'Claude Opus 4.7',
+  'anthropic/claude-sonnet-4.6': 'Claude Sonnet 4.6',
+  'anthropic/claude-haiku-4.5': 'Claude Haiku 4.5',
+  'openai/gpt-5.5': 'GPT-5.5',
+};
+
+/** A short, neutral label that never leaks the vendor to the customer. */
+export function studioLabelFor(model: ModelRef, slot: 'A' | 'B'): string {
+  return slot === 'A' ? 'Studio A' : 'Studio B';
+}
+
+export function modelLabel(model: ModelRef): string {
+  return MODEL_LABELS[model] ?? model;
+}
+
+/** Default tier per agent/critic (used by the block-mode `defineAgent` path). */
 export const AGENT_TIERS: Record<string, Tier> = {
   // producers
   discovery: 'mid',

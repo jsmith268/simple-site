@@ -5,6 +5,7 @@ import type { ResolvedDesign } from './validate';
 import { sharedImportMap } from './catalog';
 import { capabilityRules } from './capabilities';
 import { parseSingleFile } from './parse';
+import { COPY_TARGET, voiceRules } from './voice';
 
 export interface PageArgs {
   profile: BusinessProfile;
@@ -71,8 +72,13 @@ DESIGN:
 - Signature devices: ${brief.signatureDevices.join(' · ')}
 - Voice: ${brief.voice}
 
-Return EXACTLY one delimited file block, nothing else:
-=== FILE: ${filePath} ===
+COPY — the visible words must read as written by a senior in-house copywriter, never an LLM. Apply this rigorously:
+${voiceRules()}
+
+${COPY_TARGET}
+
+Return EXACTLY one delimited file block and nothing else, in this format (the exact path is given in the task below):
+=== FILE: <path> ===
 <code>`;
 
   const prompt = `Business facts:
@@ -90,8 +96,13 @@ ${sectionNarrative}
 Verified images you MAY use (exact URLs):
 ${assets.images.map((i) => `- [${i.role}] ${i.url} — ${i.alt}`).join('\n') || '- (none; use CSS/SVG treatments)'}
 
+OUTPUT FILE PATH: ${filePath}
+Return exactly one delimited block:
+=== FILE: ${filePath} ===
+<the complete file>
+
 Write the ONE complete file now. Gorgeous, specific, rich, buildable.`;
 
-  const r = await resilientGenerateText({ model, system, prompt, maxOutputTokens: 32000 });
+  const r = await resilientGenerateText({ model, system, prompt, maxOutputTokens: 32000, cacheSystem: true });
   return { file: parseSingleFile(r.text, filePath), costCents: r.costCents, ms: r.ms };
 }

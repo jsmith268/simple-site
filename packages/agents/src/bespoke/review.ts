@@ -1,4 +1,5 @@
 import { type CriticFinding, type CriticReport, type PageReview, type SiteReview } from '@simplesight/contracts';
+import { MODELS } from '@simplesight/engine';
 import type { DesignBrief } from './brief';
 import { runVisualCritic } from './critic-visual';
 import { runContentCritic } from './critic-content';
@@ -46,7 +47,7 @@ export interface ReviewArgs {
  * design or content finding makes the site fail verification.
  */
 export async function reviewSite(args: ReviewArgs): Promise<SiteReview> {
-  const model = args.model ?? 'anthropic/claude-opus-4.7';
+  const model = args.model ?? MODELS.opus;
   const provider = args.provider ?? defaultScreenshotProvider();
   const base = args.baseUrl.replace(/\/$/, '');
   const pages: PageReview[] = [];

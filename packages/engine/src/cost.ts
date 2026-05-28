@@ -5,6 +5,8 @@ const PRICE_TABLE: Record<string, { in: number; out: number }> = {
   'anthropic/claude-haiku-4.5': { in: 100, out: 500 },
   'anthropic/claude-sonnet-4.6': { in: 300, out: 1500 },
   'anthropic/claude-opus-4.7': { in: 1500, out: 7500 },
+  'anthropic/claude-opus-4.8': { in: 1500, out: 7500 },
+  'openai/gpt-5.5': { in: 1250, out: 10000 },
 };
 
 export function estimateCostCents(model: ModelRef, tokensIn: number, tokensOut: number): number {

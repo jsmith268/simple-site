@@ -1,4 +1,4 @@
-import { generateJson } from '@simplesight/engine';
+import { generateJson, MODELS } from '@simplesight/engine';
 import { type CriticReport, CriticReport as CriticReportSchema } from '@simplesight/contracts';
 import type { DesignBrief } from './brief';
 
@@ -15,7 +15,7 @@ export async function runContentCritic(opts: {
   pageName?: string;
   model?: string;
 }): Promise<CriticReport> {
-  const model = opts.model ?? 'anthropic/claude-opus-4.7';
+  const model = opts.model ?? MODELS.opus;
   const system = `You are an award-winning website copy editor reviewing the VISIBLE TEXT of one web page for an informational small-business website. Judge it as publish-ready marketing copy.
 
 Catch EVERY: grammar error; idiom / natural-English error (e.g. "roasted on Alberta" must be "roasted in Alberta"); awkward or unidiomatic phrasing; inconsistent or off-brand voice; placeholder/lorem/obviously-fabricated content; unclear or empty messaging; typos; punctuation/spacing issues. Quote the exact offending text in each finding.

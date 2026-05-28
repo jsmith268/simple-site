@@ -24,7 +24,7 @@ import { deploySite } from './deploy';
 import { siteReviewToCriticReport } from './review';
 import { runConvergence } from './converge';
 
-const DEFAULT_MODEL = 'anthropic/claude-opus-4.7';
+const DEFAULT_MODEL = 'anthropic/claude-opus-4.8';
 
 export interface BespokeBuildArgs {
   /** Freeform pitch OR an already-structured BusinessProfile. */
@@ -138,7 +138,9 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     'profile.json',
     async () => {
       if (typeof args.input !== 'string') return { value: args.input };
-      return { value: await generateBusinessProfile(args.input, model), costCents: 30 };
+      let c = 0;
+      const value = await generateBusinessProfile(args.input, model, (x) => { c += x; });
+      return { value, costCents: c };
     },
     () => load<BusinessProfile>(args.dir, 'profile.json'),
   );
@@ -150,7 +152,11 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
   const brief = await stage<DesignBrief>(
     'brief',
     'brief.json',
-    async () => ({ value: await generateDesignBrief(profileToBriefInput(profile), model), costCents: 40 }),
+    async () => {
+      let c = 0;
+      const value = await generateDesignBrief(profileToBriefInput(profile), model, (x) => { c += x; });
+      return { value, costCents: c };
+    },
     () => load<DesignBrief>(args.dir, 'brief.json'),
   );
   let design = load<ResolvedDesign>(args.dir, 'design.json');
@@ -167,13 +173,13 @@ export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun>
     'ia',
     'ia.json',
     async () => {
-      let candidate = await generateSiteIA(profile, brief, model);
+      let cost = 0;
+      const onC = (x: number) => { cost += x; };
+      let candidate = await generateSiteIA(profile, brief, model, onC);
       let gate = validateSiteIA(candidate, profile);
-      let cost = 80;
       if (!gate.ok) {
-        candidate = await generateSiteIA(profile, brief, model);
+        candidate = await generateSiteIA(profile, brief, model, onC);
         gate = validateSiteIA(candidate, profile);
-        cost += 80;
       }
       return { value: candidate, costCents: cost, note: gate.ok ? undefined : `IA gate: ${gate.findings.filter((f) => f.severity === 'block').map((f) => f.message).join('; ')}` };
     },

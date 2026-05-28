@@ -56,14 +56,20 @@ function skillText(...names: string[]): string {
  * Generate a committed Design Brief from a business prompt / onboarding answers.
  * The brief is deliberately distinctive — the anti-generic lever.
  */
-export async function generateDesignBrief(businessPrompt: string, model: string): Promise<DesignBrief> {
+export async function generateDesignBrief(
+  businessPrompt: string,
+  model: string,
+  onCost?: (cents: number) => void,
+): Promise<DesignBrief> {
   const system = `You are an award-winning art director scoping a BESPOKE website. Your job is to commit to ONE distinctive, specific aesthetic direction that fits this exact business — never the safe, generic average. Two different businesses must yield two visibly different briefs.
 
 Apply this expertise:
 ${skillText('premium-design', 'design-standards', 'marketing-voice')}
 
 Hard rules:
+- Name the category cliché first, then deliberately avoid or subvert it. (climbing gym → chalky earth tones; dentist → clinical sky-blue; law firm → navy + gold serif; wellness → sage + cream; SaaS → blue-on-white with a gradient blob. If your instinct is the cliché, change it.)
 - Commit to one clear direction and justify it. Avoid the default SaaS look.
+- Specify a grid system and ONE signature section unique to this business (a composition no competitor would have).
 - Palette in OKLCH thinking, tinted neutrals, never pure gray/black, never the default blue-on-white. WCAG AA.
 - Fonts: choose ONLY from this whitelist (these are guaranteed available on Google Fonts). Name them EXACTLY as written. Pick a distinctive DISPLAY face + a readable BODY face (+ the accent serif handles one italic clause per headline; mono handles kickers):
 ${fontWhitelistForPrompt()}
@@ -90,5 +96,6 @@ ${fontWhitelistForPrompt()}
     system,
     prompt: `Business / brief:\n${businessPrompt}\n\n${shape}\n\nProduce the Design Brief now as a single JSON object.`,
     maxOutputTokens: 6000,
+    onCost,
   });
 }

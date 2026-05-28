@@ -8,4 +8,5 @@ export * from './repos/pipeline';
 export * from './repos/observe';
 export * from './repos/hosting';
 export * from './repos/skills';
+export * from './repos/generation';
 export * as offlineStore from './offline-store';

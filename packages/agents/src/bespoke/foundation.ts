@@ -5,6 +5,7 @@ import type { ResolvedDesign } from './validate';
 import { COMPONENT_SPECS, componentNameFor, foundationComponents } from './catalog';
 import { capabilityRules } from './capabilities';
 import { parseDelimitedFiles } from './parse';
+import { COPY_TARGET, voiceRules } from './voice';
 
 export interface FoundationArgs {
   profile: BusinessProfile;
@@ -84,6 +85,11 @@ DESIGN to implement:
 - Fonts (already chosen, wired via the Google Fonts <link>): display=${design.fonts.display.name}, accent=${design.fonts.accent.name} (italic), body=${design.fonts.body.name}, mono=${design.fonts.mono.name}.
 - Signature devices: ${brief.signatureDevices.join(' · ')}
 - Voice: ${brief.voice}
+
+COPY — nav labels, footer, taglines and any component copy must read as a senior in-house copywriter wrote them, never an LLM:
+${voiceRules()}
+
+${COPY_TARGET}
 
 Files to produce (EXACT specs):
 

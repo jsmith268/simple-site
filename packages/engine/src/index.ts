@@ -1,8 +1,19 @@
-export { TIERS, AGENT_TIERS, selectAgentModel, type Tier } from './model-routing';
+export {
+  MODELS,
+  DUEL_MODELS,
+  MODEL_LABELS,
+  modelLabel,
+  studioLabelFor,
+  TIERS,
+  AGENT_TIERS,
+  selectAgentModel,
+  type Tier,
+} from './model-routing';
 export { estimateCostCents } from './cost';
 export { runStructured, generateStructured, generateJson, type RunResult } from './llm-runner';
 export {
   resolveModel,
+  isAnthropicDirect,
   withRetry,
   isTransient,
   resilientGenerateText,

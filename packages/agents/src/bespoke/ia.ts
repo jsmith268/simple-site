@@ -40,6 +40,7 @@ export async function generateSiteIA(
   profile: BusinessProfile,
   brief: DesignBrief,
   model: string,
+  onCost?: (cents: number) => void,
 ): Promise<SiteIA> {
   const embedReqs: string[] = [];
   if (profile.embeds.instagram) embedReqs.push('an Instagram-style "social-feed" on the Home page');
@@ -58,6 +59,8 @@ ${caps.newsletter ? '' : 'Set chrome.footer.showNewsletter = false.'}
 
 Principles:
 - Home + the requested/typical pages for this business. Every page must be RICH: 6-10 sections, varied compositions — not a stack of generic blocks.
+- VARIETY IS MANDATORY: no two ADJACENT sections may share the same composition/kind. Alternate full-bleed, asymmetric split, hairline-bento, editorial column, tone-band, and media-led layouts so each page has rhythm.
+- Each page must declare ONE hero moment — the single most striking composition on that page — in its first section's narrative.
 - Each section's "narrative" is a precise, buildable composition that USES THE BRIEF'S SIGNATURE DEVICES and palette/voice — specific to THIS business (real section intent, concrete content, where photos/components go). This narrative is what the page generator implements, so be concrete (like an art director briefing a developer).
 - "components" lists which catalog component TYPES the section uses (e.g. a pricing page section uses ["pricing-tiers"], a visit page uses ["map","lead-form","faq-accordion"]).
 - Build a real "chrome.nav": group pages under dropdowns where it helps (children), include a single prominent CTA matching the primary goal. Footer columns should cover the nav + contact.
@@ -79,7 +82,7 @@ ${IA_SHAPE}
 
 Produce the SiteIA now as a single JSON object.`;
 
-  return generateJson({ model, schema: SiteIA, system, prompt, maxOutputTokens: 12000, retries: 2 });
+  return generateJson({ model, schema: SiteIA, system, prompt, maxOutputTokens: 12000, retries: 2, onCost });
 }
 
 /** All component types referenced anywhere in the IA. */

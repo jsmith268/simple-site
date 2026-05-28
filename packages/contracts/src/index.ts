@@ -4,3 +4,4 @@ export * from './site';
 export * from './intake';
 export * from './agent';
 export * from './bespoke';
+export * from './generation';

@@ -110,7 +110,11 @@ const PROFILE_SHAPE = `Return BusinessProfile JSON with EXACTLY these fields:
  * the single primary goal, and recommends pages/components/embeds typical for
  * the business when the owner didn't specify them. Never fabricates stats.
  */
-export async function generateBusinessProfile(input: string, model: string): Promise<BusinessProfile> {
+export async function generateBusinessProfile(
+  input: string,
+  model: string,
+  onCost?: (cents: number) => void,
+): Promise<BusinessProfile> {
   const system = `You are an intake analyst for a web studio. Convert the business description / onboarding answers into ONE structured BusinessProfile JSON.
 
 Rules:
@@ -126,6 +130,7 @@ Rules:
     system,
     prompt: `Business description / answers:\n${input}\n\n${PROFILE_SHAPE}\n\nProduce the BusinessProfile now as a single JSON object.`,
     maxOutputTokens: 4000,
+    onCost,
   });
 }
 

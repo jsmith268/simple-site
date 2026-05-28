@@ -1,21 +1,55 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { gateway } from '@ai-sdk/gateway';
 import type { ModelRef } from '@simplesight/contracts';
-import { generateText, type LanguageModel } from 'ai';
+import { generateText, type LanguageModel, type ModelMessage } from 'ai';
 import { estimateCostCents } from './cost';
+
+/**
+ * True when this model will run against the DIRECT Anthropic key (not the
+ * gateway). Only on the direct path can we attach Anthropic prompt-caching
+ * (`cache_control`) and rely on it; the gateway/OpenAI paths ignore it.
+ */
+export function isAnthropicDirect(model: ModelRef): boolean {
+  return model.startsWith('anthropic/') && !!process.env.ANTHROPIC_API_KEY;
+}
 
 /**
  * Resolve a "provider/model" ref to a LanguageModel. Anthropic models route
  * through a DIRECT Anthropic key when present (ANTHROPIC_API_KEY) because the
- * free-tier AI Gateway blocks Sonnet/Opus even via BYOK; everything else goes
- * through the gateway. (Single source of truth — shared by all generators.)
+ * free-tier AI Gateway blocks Sonnet/Opus even via BYOK; everything else
+ * (OpenAI included) goes through the AI Gateway via its provider/model string.
+ * (Single source of truth — shared by all generators.)
  */
 export function resolveModel(model: ModelRef): LanguageModel {
-  if (model.startsWith('anthropic/') && process.env.ANTHROPIC_API_KEY) {
+  if (isAnthropicDirect(model)) {
     const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    return anthropic(model.replace('anthropic/', '').replace('.', '-')); // claude-opus-4.7 → claude-opus-4-7
+    return anthropic(model.replace('anthropic/', '').replace(/\./g, '-')); // claude-opus-4.8 → claude-opus-4-8
   }
   return gateway(model);
+}
+
+/** Ephemeral-cache provider options for a system prefix (Anthropic direct only). */
+const CACHE_SYSTEM_OPTS = { anthropic: { cacheControl: { type: 'ephemeral' as const, ttl: '1h' as const } } };
+
+/**
+ * Build the generateText message/system args. When `cacheSystem` is set and the
+ * model runs on the direct Anthropic path, the system prompt becomes a cached
+ * ephemeral breakpoint (so repeated calls in a build — every page, the reviser,
+ * the critics — reuse the large shared design prefix at ~10% input cost). On any
+ * other path we fall back to a plain system+prompt pair.
+ */
+function buildCallArgs(model: ModelRef, system: string, prompt: string, cacheSystem?: boolean):
+  | { system: string; prompt: string }
+  | { messages: ModelMessage[] } {
+  if (cacheSystem && isAnthropicDirect(model)) {
+    return {
+      messages: [
+        { role: 'system', content: system, providerOptions: CACHE_SYSTEM_OPTS },
+        { role: 'user', content: prompt },
+      ],
+    };
+  }
+  return { system, prompt };
 }
 
 const TRANSIENT =
@@ -93,6 +127,8 @@ export async function resilientGenerateText(opts: {
   timeoutMs?: number;
   retry?: RetryOptions;
   abortSignal?: AbortSignal;
+  /** Mark the system prompt as a cached ephemeral prefix (Anthropic-direct only). */
+  cacheSystem?: boolean;
 }): Promise<ResilientTextResult> {
   const start = Date.now();
   let attempts = 0;
@@ -109,8 +145,7 @@ export async function resilientGenerateText(opts: {
     try {
       return await generateText({
         model: resolveModel(opts.model),
-        system: opts.system,
-        prompt: opts.prompt,
+        ...buildCallArgs(opts.model, opts.system, opts.prompt, opts.cacheSystem),
         maxOutputTokens: opts.maxOutputTokens ?? 8000,
         ...(opts.temperature != null ? { temperature: opts.temperature } : {}),
         abortSignal: signals.length === 1 ? signals[0] : signals.length > 1 ? AbortSignal.any(signals) : undefined,

@@ -1,4 +1,4 @@
-import { generateVision } from '@simplesight/engine';
+import { generateVision, MODELS } from '@simplesight/engine';
 import { type CriticReport } from '@simplesight/contracts';
 import type { DesignBrief } from './brief';
 import { type Screenshot, type ScreenshotProvider, defaultScreenshotProvider } from './screenshot';
@@ -39,7 +39,7 @@ Verdict: "pass" if overall >= 80, "revise" if 60-79, "reject" if < 60.`;
  * catches "looks off" that text/build checks can't.
  */
 export async function runVisualCritic(args: VisualCriticArgs): Promise<VisualCriticResult> {
-  const model = args.model ?? 'anthropic/claude-opus-4.7';
+  const model = args.model ?? MODELS.opus;
   const provider = args.provider ?? defaultScreenshotProvider();
   const shot = args.screenshot ?? (await provider.capture(args.url as string, { fullPage: args.fullPage }));
   if (!args.screenshot && !args.url) throw new Error('runVisualCritic needs a url or a screenshot');

@@ -117,6 +117,10 @@ export async function generateJson<T>(opts: {
   prompt: string;
   maxOutputTokens?: number;
   retries?: number;
+  /** Mark the system prompt as a cached ephemeral prefix (Anthropic-direct only). */
+  cacheSystem?: boolean;
+  /** Reports the REAL token cost of every attempt (so callers stop fabricating it). */
+  onCost?: (cents: number) => void;
 }): Promise<T> {
   const system = `${opts.system}\n\nOUTPUT FORMAT: respond with ONLY one valid JSON object — no markdown, no code fences, no commentary before or after.`;
   let lastErr: unknown;
@@ -128,7 +132,9 @@ export async function generateJson<T>(opts: {
       system,
       prompt: opts.prompt,
       maxOutputTokens: opts.maxOutputTokens ?? 8000,
+      cacheSystem: opts.cacheSystem,
     });
+    opts.onCost?.(r.costCents);
     try {
       let txt = (r.text ?? '').trim();
       txt = txt.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();

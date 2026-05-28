@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { BusinessProfile, SiteIA, SiteReview } from '@simplesight/contracts';
+import { MODELS } from '@simplesight/engine';
 import type { DesignBrief } from './brief';
 import type { ResolvedDesign } from './validate';
 import { reviewSite } from './review';
@@ -17,7 +18,10 @@ export interface ConvergeArgs {
   design: ResolvedDesign;
   ia: SiteIA;
   runner: BuildRunner;
+  /** Model that built the site — used by the reviser so each variant keeps its character. */
   model: string;
+  /** Judge model for the critics — always the strongest, never the model under test. */
+  criticModel?: string;
   maxPasses?: number;
   /** Rebuild+redeploy after a revise pass; returns the fresh URL to re-review. */
   redeploy: () => Promise<string>;
@@ -42,13 +46,14 @@ export interface ConvergeResult {
  */
 export async function runConvergence(args: ConvergeArgs): Promise<ConvergeResult> {
   const { dir, profile, brief, design, ia, runner, model } = args;
+  const criticModel = args.criticModel ?? MODELS.opus;
   const maxPasses = args.maxPasses ?? 3;
   const pageList = ia.pages.map((p) => ({ name: p.name, slug: p.slug }));
   const revised = new Set<string>();
   let costCents = 0;
   let url = args.baseUrl;
 
-  let review = await reviewSite({ baseUrl: url, pages: pageList, brief, model });
+  let review = await reviewSite({ baseUrl: url, pages: pageList, brief, model: criticModel });
   let pass = 0;
 
   while (review.blocking.length > 0 && pass < maxPasses) {
@@ -78,7 +83,7 @@ export async function runConvergence(args: ConvergeArgs): Promise<ConvergeResult
 
     // Redeploy for fresh screenshots, then RE-REVIEW (the critic after the reviser).
     url = await args.redeploy();
-    review = await reviewSite({ baseUrl: url, pages: pageList, brief, model });
+    review = await reviewSite({ baseUrl: url, pages: pageList, brief, model: criticModel });
     args.onPass?.({ pass, review, revised: [...revised] });
   }
 

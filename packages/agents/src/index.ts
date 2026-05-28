@@ -1,4 +1,13 @@
 export { runBuildPipeline, type BuildResult } from './pipeline';
+export {
+  runRound,
+  selectVariant,
+  regenerate,
+  regensRemaining,
+  DUAL_LIMITS,
+  type RoundResult,
+} from './dual';
+export { compileChecklist, applyRevision, classifyComment, type ApplyResult } from './revise';
 export { runAiBuild, type AiBuildResult } from './ai-build';
 export { generateContentBundle, ContentBundleSchema, type ContentBundle } from './content';
 export { assembleSite } from './assemble';
