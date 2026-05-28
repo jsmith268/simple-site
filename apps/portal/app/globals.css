@@ -1,1 +1,141 @@
 @import "tailwindcss";
+
+/* ── SimpleSight portal design system ──────────────────────────────────────
+ * Warm, editorial, confident — the customer is paying for taste, so the portal
+ * must demonstrate it. Tinted neutrals, a single rust accent, real type pairing.
+ * ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-paper: #f7f4ee; /* page background — warm bone */
+  --color-paper-2: #f1ece2; /* alt band */
+  --color-surface: #fffdf9; /* cards */
+  --color-ink: #211d17; /* primary text */
+  --color-ink-soft: #4b4439; /* secondary text */
+  --color-muted: #8a8174; /* tertiary / placeholders */
+  --color-line: #e7dfd2; /* hairlines */
+  --color-line-strong: #d8cdb9;
+
+  --color-brand: #c2410c; /* rust — CTAs, focus, accents (used sparingly) */
+  --color-brand-ink: #fffaf5; /* text on brand */
+  --color-brand-soft: #f7e9df; /* tinted brand surface */
+
+  --color-success: #2f7d4f;
+  --color-success-soft: #e6f1e9;
+  --color-warn: #9a6a16;
+  --color-warn-soft: #f6edd9;
+  --color-danger: #b3401f;
+  --color-danger-soft: #f6e3dc;
+  --color-info: #2f5d8a;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-xs: 0 1px 2px rgba(33, 29, 23, 0.05);
+  --shadow-sm: 0 1px 2px rgba(33, 29, 23, 0.05), 0 2px 6px rgba(33, 29, 23, 0.05);
+  --shadow-md: 0 4px 14px rgba(33, 29, 23, 0.08), 0 2px 5px rgba(33, 29, 23, 0.05);
+  --shadow-lg: 0 18px 48px -16px rgba(33, 29, 23, 0.22), 0 4px 12px rgba(33, 29, 23, 0.06);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv05", "ss01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-brand) 22%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-brand) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Display headings use the serif; tune optical sizing + tracking. */
+.font-display {
+  font-optical-sizing: auto;
+  letter-spacing: -0.018em;
+}
+
+/* Mono eyebrow / kicker. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* A restrained signature gradient for hero moments. */
+.brand-gradient {
+  background-image: radial-gradient(
+      120% 120% at 0% 0%,
+      color-mix(in oklab, var(--color-brand) 14%, var(--color-paper)) 0%,
+      var(--color-paper) 55%
+    );
+}
+
+/* Scroll reveal — opt in with .reveal; honors reduced motion. */
+@keyframes ss-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal {
+  animation: ss-rise 0.5s var(--ease-out) both;
+}
+@keyframes ss-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: ss-spin 0.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Custom, quiet scrollbars in the workspace panels. */
+.thin-scroll::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}

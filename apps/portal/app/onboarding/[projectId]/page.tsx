@@ -1,6 +1,7 @@
-import type { BusinessInfo, IntakeStyle } from '@simplesight/contracts';
-import { loadOnboarding } from '../actions';
-import { Wizard } from './wizard';
+import { loadOnboarding } from "../actions";
+import { Container, Title } from "../../ui";
+import { Conversation } from "./conversation";
+import type { ConversationDraft } from "./draft";
 
 export default async function OnboardingPage({
   params,
@@ -12,33 +13,32 @@ export default async function OnboardingPage({
 
   if (!project) {
     return (
-      <main
-        style={{
-          maxWidth: 560,
-          margin: '0 auto',
-          padding: '96px 24px',
-          fontFamily: 'system-ui, sans-serif',
-          textAlign: 'center',
-        }}
-      >
-        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 12 }}>Project not found</h1>
-        <p style={{ color: '#666', lineHeight: 1.5 }}>
-          We couldn&apos;t find a project with that link. Check the URL or contact support if you
-          think this is a mistake.
-        </p>
+      <main className="brand-gradient min-h-screen">
+        <Container size="sm" className="py-24 text-center">
+          <Title as="h1" className="text-2xl">
+            Project not found
+          </Title>
+          <p className="mt-3 leading-relaxed text-ink-soft">
+            We couldn&apos;t find a project with that link. Check the URL, or contact support if you think this is a mistake.
+          </p>
+        </Container>
       </main>
     );
   }
 
-  const initialStyle = (intake?.style ?? {}) as Partial<IntakeStyle>;
-  const initialBusiness = (intake?.business ?? {}) as Partial<BusinessInfo>;
+  // Pre-fill from any prior intake so a returning customer continues, not restarts.
+  const b = intake?.business;
+  const s = intake?.style;
+  const initial: Partial<ConversationDraft> = {
+    name: b?.name ?? "",
+    description: b?.description ?? "",
+    category: b?.category ?? "",
+    voice: s?.vibe ?? [],
+    avoid: s?.avoid ?? "",
+    email: b?.contact?.email ?? "",
+    phone: b?.contact?.phone ?? "",
+    username: project.username ?? "",
+  };
 
-  return (
-    <Wizard
-      projectId={projectId}
-      initialStyle={initialStyle}
-      initialBusiness={initialBusiness}
-      initialUsername={project.username}
-    />
-  );
+  return <Conversation projectId={projectId} initial={initial} />;
 }
