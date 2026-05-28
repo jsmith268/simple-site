@@ -279,7 +279,8 @@ function readJson<T>(path: string): T | undefined {
 export async function selectVariant(projectId: string, variantId: string): Promise<void> {
   await updateVariant(variantId, { status: 'selected' });
   await setGenerationState(projectId, { status: 'selected', selectedVariantId: variantId });
-  await setProjectStatus(projectId, 'approved');
+  // Still in review (refinement) — not 'approved' until the customer finalizes.
+  await setProjectStatus(projectId, 'preview');
 }
 
 /** Regenerate: spend a round (if any remain), steering with feedback. */

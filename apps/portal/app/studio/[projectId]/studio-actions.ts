@@ -72,6 +72,8 @@ export async function approveRevisionAction(projectId: string, variantId: string
     const res = await applyRevision(projectId, variantId);
     return res;
   }
+  // Flip to the "applying" state up front so the studio shows progress immediately.
+  await setGenerationState(projectId, { status: "revising" });
   void applyRevision(projectId, variantId).catch((err) => logger.error("applyRevision failed", { projectId, error: String(err) }));
   return { ok: true as const, revision: -1, remaining: -1, note: "applying" };
 }
