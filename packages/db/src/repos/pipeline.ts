@@ -13,6 +13,7 @@ import {
   workflowSteps,
 } from '../schema/orchestration';
 import * as store from '../offline-store';
+import { snapshotSiteVersion } from './versions';
 
 const offline = () => !hasDatabase();
 
@@ -295,6 +296,7 @@ export async function saveSiteSpec(projectId: string, spec: SiteSpec): Promise<s
         });
       }
     }
+    await snapshotSiteVersion(projectId, spec).catch(() => {});
     return siteId;
   }
 
@@ -328,6 +330,7 @@ export async function saveSiteSpec(projectId: string, spec: SiteSpec): Promise<s
         .values({ pageId, blockType: b.type, variant: b.variant, props: b.props, order: b.order });
     }
   }
+  await snapshotSiteVersion(projectId, spec).catch(() => {});
   return siteId;
 }
 

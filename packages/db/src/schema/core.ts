@@ -176,3 +176,20 @@ export const siteHits = pgTable(
     byUser: index('site_hits_user_idx').on(t.username),
   }),
 );
+
+// ── Version history ─────────────────────────────────────────────────────────
+// A snapshot of the full SiteSpec each time the live site is (re)written, so a
+// customer can view and restore a prior version. Restore = re-persist the spec.
+export const siteVersions = pgTable(
+  'site_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    label: text('label'),
+    spec: jsonb('spec').notNull(),
+    createdAt: now(),
+  },
+  (t) => ({ byProject: index('site_versions_project_idx').on(t.projectId) }),
+);
