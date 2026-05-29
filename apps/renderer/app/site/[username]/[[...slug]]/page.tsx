@@ -2,6 +2,7 @@ import { SitePage } from "@simplesight/blocks";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prefixLinks } from "@/lib/links";
+import { siteJsonLd, siteMetadata, tenantUrl } from "@/lib/seo";
 import { loadSiteSpec } from "@/lib/tenant";
 
 type Params = { username: string; slug?: string[] };
@@ -14,10 +15,7 @@ export async function generateMetadata({
   const { username } = await params;
   const spec = await loadSiteSpec(username);
   if (!spec) return { title: "Not found" };
-  return {
-    title: spec.seo?.defaultTitle ?? spec.brand.name,
-    description: spec.seo?.defaultDescription ?? spec.brand.tagline,
-  };
+  return siteMetadata(spec, tenantUrl(username));
 }
 
 export default async function TenantPage({
@@ -30,5 +28,11 @@ export default async function TenantPage({
   if (!raw) notFound();
   // Make internal nav work under the tenant base path (works via subdomain or preview URL).
   const spec = prefixLinks(raw, `/site/${encodeURIComponent(username)}`);
-  return <SitePage spec={spec} slug={(slug ?? []).join("/")} />;
+  return (
+    <>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is server-built from our own SiteSpec */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteJsonLd(raw, tenantUrl(username)) }} />
+      <SitePage spec={spec} slug={(slug ?? []).join("/")} />
+    </>
+  );
 }
