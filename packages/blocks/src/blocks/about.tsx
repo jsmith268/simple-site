@@ -33,6 +33,8 @@ function About({ props, variant }: { props: AboutProps; variant: string }) {
     <img
       src={props.imageUrl}
       alt={props.imageAlt ?? ''}
+      loading="lazy"
+      decoding="async"
       style={{
         width: '100%',
         height: '100%',

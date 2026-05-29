@@ -180,6 +180,9 @@ function Hero({ props, variant }: { props: HeroProps; variant: string }) {
           <img
             src={props.imageUrl}
             alt={props.imageAlt ?? ''}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             style={{
               width: '100%',
               height: '100%',

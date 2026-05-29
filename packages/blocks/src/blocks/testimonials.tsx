@@ -22,6 +22,8 @@ function Avatar({ url, name }: { url?: string; name: string }) {
       <img
         src={url}
         alt={name}
+        loading="lazy"
+        decoding="async"
         style={{
           width: 44,
           height: 44,

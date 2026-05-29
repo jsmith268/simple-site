@@ -30,6 +30,8 @@ function Photo({ url, alt, size }: { url?: string; alt: string; size: number }) 
       <img
         src={url}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         style={{ ...shared, objectFit: 'cover', border: `1px solid ${t.border}`, boxShadow: t.shadowSm }}
       />
     );

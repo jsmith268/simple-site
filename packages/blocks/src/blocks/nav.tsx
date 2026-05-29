@@ -50,6 +50,7 @@ function Nav({ props, variant }: { props: NavProps; variant: string }) {
         <img
           src={props.logoUrl}
           alt={`${props.brandName} logo`}
+          decoding="async"
           style={{ height: 28, width: 'auto', display: 'block' }}
         />
       )}

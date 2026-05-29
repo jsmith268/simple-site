@@ -29,6 +29,8 @@ function Feature({ props, variant }: { props: FeatureProps; variant: string }) {
     <img
       src={props.imageUrl}
       alt={props.imageAlt ?? ''}
+      loading="lazy"
+      decoding="async"
       style={{
         width: '100%',
         height: '100%',

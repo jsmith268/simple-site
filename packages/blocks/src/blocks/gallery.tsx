@@ -38,6 +38,8 @@ function Gallery({ props, variant }: { props: GalleryProps; variant: string }) {
                 key={img.url}
                 src={img.url}
                 alt={img.alt}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: '100%',
                   display: 'block',
@@ -63,6 +65,8 @@ function Gallery({ props, variant }: { props: GalleryProps; variant: string }) {
                 key={img.url}
                 src={img.url}
                 alt={img.alt}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: '100%',
                   height: 220,
