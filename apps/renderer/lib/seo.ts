@@ -23,12 +23,45 @@ function findProp(spec: SiteSpec, keys: string[]): string | undefined {
   return undefined;
 }
 
+/** Collect up to 12 services across the site as schema.org Offers. */
+function collectOffers(
+  spec: SiteSpec,
+): { "@type": string; itemOffered: Record<string, unknown> }[] {
+  const offers: { "@type": string; itemOffered: Record<string, unknown> }[] = [];
+  for (const page of spec.pages) {
+    for (const block of page.blocks) {
+      if (block.type !== "services") continue;
+      const items = (block.props as { items?: unknown }).items;
+      if (!Array.isArray(items)) continue;
+      for (const it of items) {
+        const rec = it as { title?: unknown; description?: unknown };
+        if (typeof rec.title === "string" && rec.title.trim()) {
+          offers.push({
+            "@type": "Offer",
+            itemOffered: {
+              "@type": "Service",
+              name: rec.title.trim(),
+              ...(typeof rec.description === "string" && rec.description.trim()
+                ? { description: rec.description.trim() }
+                : {}),
+            },
+          });
+        }
+        if (offers.length >= 12) return offers;
+      }
+    }
+  }
+  return offers;
+}
+
 /** schema.org JSON-LD: a WebSite + a LocalBusiness/Organization built from the SiteSpec. */
 export function siteJsonLd(spec: SiteSpec, url: string): string {
   const name = spec.brand.name;
   const description = spec.seo?.defaultDescription ?? spec.brand.tagline ?? "";
   const phone = findProp(spec, ["phone", "telephone", "tel"]);
   const address = findProp(spec, ["address", "streetAddress"]);
+  const email = findProp(spec, ["email"]);
+  const offers = collectOffers(spec);
   const org: Record<string, unknown> = {
     "@type": phone || address ? "LocalBusiness" : "Organization",
     "@id": `${url}#org`,
@@ -37,7 +70,9 @@ export function siteJsonLd(spec: SiteSpec, url: string): string {
     ...(description ? { description } : {}),
     ...(spec.brand.logoUrl ? { logo: spec.brand.logoUrl } : {}),
     ...(phone ? { telephone: phone } : {}),
+    ...(email ? { email } : {}),
     ...(address ? { address: { "@type": "PostalAddress", streetAddress: address } } : {}),
+    ...(offers.length ? { makesOffer: offers } : {}),
   };
   const website = { "@type": "WebSite", "@id": `${url}#website`, name, url, ...(description ? { description } : {}) };
   return JSON.stringify({ "@context": "https://schema.org", "@graph": [website, org] });
