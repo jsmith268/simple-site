@@ -1,4 +1,4 @@
-import type { BusinessInfo, IntakeStyle } from "@simplesight/contracts";
+import type { BusinessInfo, IntakeCollected, IntakeStyle } from "@simplesight/contracts";
 
 /**
  * The shape the conversational onboarding builds up. Every field is optional
@@ -215,6 +215,39 @@ export const CATEGORY_RULES: CategoryRule[] = [
 /** Detect the business category from the freeform opener. Undefined if unsure. */
 export function inferCategory(text: string): CategoryRule | undefined {
   return CATEGORY_RULES.find((r) => r.match.test(text));
+}
+
+/** Map what the live "Avery" intake gathered into the onboarding draft. */
+export function collectedToDraft(c: IntakeCollected): ConversationDraft {
+  const hasColor = (c.brandColors?.length ?? 0) > 0 || !!c.colorNotes;
+  return {
+    ...emptyDraft(),
+    name: c.name ?? "",
+    description: c.description ?? c.oneLiner ?? "",
+    category: c.category ?? "",
+    categoryKey: inferCategory(`${c.category ?? ""} ${c.description ?? ""}`)?.key ?? "",
+    primaryGoal: c.primaryGoal ?? "",
+    audience: c.audience ?? [],
+    voice: c.voice ?? [],
+    avoid: c.avoid ?? "",
+    colorChoice: hasColor ? "custom" : "designer",
+    colorNotes: c.colorNotes ?? "",
+    brandColors: c.brandColors ?? [],
+    logoUrl: c.logoUrl ?? "",
+    pagesMode: (c.pages?.length ?? 0) > 0 ? "custom" : "auto",
+    pages: c.pages ?? [],
+    offerings: c.offerings ?? [],
+    proof: c.proof ?? [],
+    references: c.references ?? [],
+    email: c.email ?? "",
+    phone: c.phone ?? "",
+    address: c.address ?? "",
+    city: c.city ?? "",
+    instagram: c.instagram ?? "",
+    hours: c.hours ?? "",
+    photos: [],
+    username: c.username ?? "",
+  };
 }
 
 /* ── Sidebar sections (table of contents) ────────────────────────────────── */

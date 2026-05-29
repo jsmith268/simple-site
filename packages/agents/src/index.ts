@@ -8,6 +8,7 @@ export {
   type RoundResult,
 } from './dual';
 export { compileChecklist, applyRevision, classifyComment, type ApplyResult } from './revise';
+export { runIntakeTurn, AVERY_OPENER } from './bespoke/intake';
 export { runAiBuild, type AiBuildResult } from './ai-build';
 export { generateContentBundle, ContentBundleSchema, type ContentBundle } from './content';
 export { assembleSite } from './assemble';

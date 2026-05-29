@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "node scripts/dev.mjs",
+    "dev:live": "SIMPLESIGHT_OFFLINE=0 node scripts/dev.mjs",
     "dev:turbo": "turbo dev --filter=@simplesight/marketing --filter=@simplesight/portal --filter=@simplesight/renderer",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

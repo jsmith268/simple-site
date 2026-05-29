@@ -1,6 +1,8 @@
+import { isOffline } from "@simplesight/env";
 import { loadOnboarding } from "../actions";
 import { Container, Title } from "../../ui";
 import { Conversation } from "./conversation";
+import { LiveConversation } from "./live-conversation";
 import type { ConversationDraft } from "./draft";
 
 export default async function OnboardingPage({
@@ -26,7 +28,12 @@ export default async function OnboardingPage({
     );
   }
 
-  // Pre-fill from any prior intake so a returning customer continues, not restarts.
+  // Live (Anthropic key present) → the LLM-driven Avery. Offline → the smart
+  // scripted flow (deterministic, no API calls), pre-filled from any prior intake.
+  if (!isOffline()) {
+    return <LiveConversation projectId={projectId} />;
+  }
+
   const b = intake?.business;
   const s = intake?.style;
   const initial: Partial<ConversationDraft> = {

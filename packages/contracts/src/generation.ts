@@ -115,6 +115,56 @@ export const RevisionItem = z.object({
 export type RevisionItem = z.infer<typeof RevisionItem>;
 
 /** A compiled, summarized checklist submitted for one revision pass. */
+/* ── LLM-driven intake ("Avery") ─────────────────────────────────────────── */
+
+export const ChatMessage = z.object({
+  role: z.enum(["assistant", "user"]),
+  content: z.string(),
+});
+export type ChatMessage = z.infer<typeof ChatMessage>;
+
+/** Flat bag of everything Avery has gathered (mirrors the onboarding fields). */
+export const IntakeCollected = z.object({
+  name: z.string().optional(),
+  category: z.string().optional(),
+  oneLiner: z.string().optional(),
+  description: z.string().optional(),
+  primaryGoal: z.string().optional(),
+  audience: z.array(z.string()).default([]),
+  voice: z.array(z.string()).default([]),
+  avoid: z.string().optional(),
+  colorNotes: z.string().optional(),
+  brandColors: z.array(z.string()).default([]),
+  logoUrl: z.string().optional(),
+  offerings: z.array(z.string()).default([]),
+  proof: z.array(z.string()).default([]),
+  pages: z.array(z.string()).default([]),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  instagram: z.string().optional(),
+  hours: z.string().optional(),
+  references: z.array(z.string()).default([]),
+  username: z.string().optional(),
+});
+export type IntakeCollected = z.infer<typeof IntakeCollected>;
+
+/** One turn of the intake conversation. */
+export const IntakeTurn = z.object({
+  /** Avery's next message (a question, an acknowledgement, or the wrap-up). */
+  message: z.string(),
+  /** Avery's cumulative understanding so far (full snapshot each turn). */
+  collected: IntakeCollected,
+  /** The section Avery is currently working on (matches the sidebar). */
+  section: z.string().default("business"),
+  /** Quick-reply chips to offer under the message. */
+  suggestions: z.array(z.string()).default([]),
+  /** True when there's enough to build a great first draft. */
+  complete: z.boolean().default(false),
+});
+export type IntakeTurn = z.infer<typeof IntakeTurn>;
+
 export const RevisionChecklist = z.object({
   id: z.string(),
   projectId: z.string(),

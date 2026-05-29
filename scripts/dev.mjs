@@ -10,12 +10,39 @@
  * default is overridable via env (e.g. SIMPLESIGHT_OFFLINE=0 pnpm dev). Ctrl+C
  * stops everything. Anchor elsewhere with `pnpm dev -- 4300`.
  */
+import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dataDir = process.env.SIMPLESIGHT_DATA_DIR ?? join(root, ".data");
+
+// Load API keys from the root .env (handles the ANTROPIC_KEY typo) so live mode
+// (SIMPLESIGHT_OFFLINE=0) works. Offline ignores them.
+function loadKeys() {
+  try {
+    const env = readFileSync(join(root, ".env"), "utf8");
+    const pick = (...names) => {
+      for (const n of names) {
+        const m = env.match(new RegExp(`^\\s*${n}\\s*=\\s*["']?([^"'\\n\\r]+)`, "m"));
+        if (m) return m[1].trim();
+      }
+      return undefined;
+    };
+    const set = (key, ...names) => {
+      const v = process.env[key] ?? pick(...names);
+      if (v) process.env[key] = v;
+    };
+    set("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "ANTROPIC_KEY", "ANTHROPIC_KEY");
+    set("UNSPLASH_ACCESS_KEY", "UNSPLASH_ACCESS_KEY", "UNSPLASH_KEY");
+    set("PEXELS_API_KEY", "PEXELS_API_KEY", "PEXELS_KEY");
+  } catch {
+    /* no .env — offline only */
+  }
+}
+loadKeys();
+const live = process.env.SIMPLESIGHT_OFFLINE === "0";
 
 // Base port: arg → env → 3300. Apps fan out from there (3300/3301/3302).
 const basePort = Number(process.argv[2] || process.env.DEV_BASE_PORT || 3300);
@@ -78,10 +105,11 @@ function shutdown() {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
+const mode = live ? (process.env.ANTHROPIC_API_KEY ? "\x1b[32mLIVE · Opus 4.8\x1b[0m" : "\x1b[31mLIVE but no ANTHROPIC key found\x1b[0m") : "offline";
 console.log(
-  `\n  \x1b[1mSimpleSight\x1b[0m — local dev (offline)\n` +
+  `\n  \x1b[1mSimpleSight\x1b[0m — local dev (${mode})\n` +
     `  ▸ Portal:    \x1b[4mhttp://localhost:${PORTAL}\x1b[0m   ← start here\n` +
     `  ▸ Renderer:  http://localhost:${RENDERER}   (previews)\n` +
     `  ▸ Marketing: http://localhost:${MARKETING}\n` +
-    `  Ctrl+C to stop. (SIMPLESIGHT_OFFLINE=0 pnpm dev for live AI.)\n`,
+    `  Ctrl+C to stop. ${live ? "Avery + builds use live Opus 4.8 (costs apply)." : "Run `pnpm dev:live` for live Opus 4.8."}\n`,
 );
