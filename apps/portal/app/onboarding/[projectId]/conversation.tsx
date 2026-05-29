@@ -16,6 +16,7 @@ import {
   inferCategory,
 } from "./draft";
 import { checkUsernameAction, submitConversationAction } from "./conversation-actions";
+import { BrandStudio } from "./brand-studio";
 
 type Kind = "text" | "single" | "multi" | "color" | "pages" | "list" | "contact" | "brand" | "username" | "review";
 
@@ -483,7 +484,7 @@ function ActiveInput(props: ActiveProps) {
     case "contact":
       return <ContactStep draft={draft} patch={patch} onAdvance={onAdvance} />;
     case "brand":
-      return <BrandStep draft={draft} patch={patch} onAdvance={onAdvance} />;
+      return <BrandStep projectId={props.projectId} draft={draft} patch={patch} onAdvance={onAdvance} />;
     case "username":
       return <UsernameStep projectId={props.projectId} draft={draft} patch={patch} onAdvance={onAdvance} />;
     case "review":
@@ -673,34 +674,16 @@ function ContactStep({ draft, patch, onAdvance }: { draft: ConversationDraft; pa
   );
 }
 
-const HEX_RE = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-function BrandStep({ draft, patch, onAdvance }: { draft: ConversationDraft; patch: (p: Partial<ConversationDraft>) => void; onAdvance: () => void }) {
-  const addColor = (v: string) => {
-    const hex = v.startsWith("#") ? v : `#${v}`;
-    if (HEX_RE.test(v) && !draft.brandColors.includes(hex)) patch({ brandColors: [...draft.brandColors, hex] });
-  };
+function BrandStep({ projectId, draft, patch, onAdvance }: { projectId: string; draft: ConversationDraft; patch: (p: Partial<ConversationDraft>) => void; onAdvance: () => void }) {
   return (
-    <div className="flex flex-col gap-4 rounded-md border border-line bg-surface p-4 shadow-xs">
-      <Field label="Logo" hint="Paste a link to your logo. (Direct upload is coming — for now a URL works, or we'll design a mark for you.)" htmlFor="b-logo">
-        <Input id="b-logo" value={draft.logoUrl} onChange={(e) => patch({ logoUrl: e.target.value })} placeholder="https://… your logo" />
-      </Field>
-      <div>
-        <p className="mb-1.5 text-[13px] font-medium text-ink-soft">Brand colors</p>
-        {draft.brandColors.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {draft.brandColors.map((c) => (
-              <span key={c} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper-2 py-1 pl-1.5 pr-2.5 text-[12.5px]">
-                <span className="h-4 w-4 rounded-full border border-line" style={{ background: c }} />
-                {c}
-                <button onClick={() => patch({ brandColors: draft.brandColors.filter((x) => x !== c) })} className="text-muted hover:text-danger" aria-label="Remove">×</button>
-              </span>
-            ))}
-          </div>
-        )}
-        <CustomComposer onAdd={addColor} placeholder="Exact hex, e.g. #1a2b3c" />
-        <p className="mt-1.5 text-[11.5px] text-muted">Have exact brand colors? Add them and we&apos;ll match precisely. Otherwise we&apos;ll choose a palette that fits.</p>
-      </div>
+    <div className="flex flex-col gap-3">
+      <BrandStudio
+        projectId={projectId}
+        name={draft.name}
+        logoUrl={draft.logoUrl}
+        brandColors={draft.brandColors}
+        onChange={(p) => patch(p)}
+      />
       <Button onClick={onAdvance} className="self-start">Continue</Button>
     </div>
   );

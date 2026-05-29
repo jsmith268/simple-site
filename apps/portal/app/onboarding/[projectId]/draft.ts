@@ -298,6 +298,7 @@ export function mapDraftToIntake(d: ConversationDraft): { style: IntakeStyle; bu
   if (d.audience.length) extras.push(`Audience: ${d.audience.join(", ")}.`);
   if (d.proof.length) extras.push(`Proof points (never invent beyond these): ${d.proof.join("; ")}.`);
   if (d.hours) extras.push(`Hours: ${d.hours}.`);
+  if (d.logoUrl) extras.push(`Use this brand logo in the header and footer: ${d.logoUrl}.`);
   const description = [d.description, ...extras].filter(Boolean).join(" ");
 
   const brandColorNote = d.brandColors.length ? `Exact brand colors: ${d.brandColors.join(", ")}.` : "";
