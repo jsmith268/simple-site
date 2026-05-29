@@ -1,21 +1,15 @@
 import { exec } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-/* Per-site deploy. Each bespoke site is its own Vercel deployment. Uses the
- * authenticated `vercel` CLI from the app dir (the path proven on the live
- * builds); the API-based provisioning in @simplesight/provisioning remains for
- * domain attach / go-live. */
+/* Per-site deploy. Each bespoke site is its own Vercel deployment, shipped with
+ * the `vercel` CLI authenticated by VERCEL_API_TOKEN (works on any server / in a
+ * Sandbox — no interactive login, no local auth.json). The API-based
+ * provisioning in @simplesight/provisioning handles domain attach / go-live. */
 
-/** Vercel API token: explicit env, else the logged-in CLI's auth.json. */
+/** Vercel API token from the environment (the only server-safe source). */
 function vercelToken(): string | undefined {
-  if (process.env.VERCEL_API_TOKEN) return process.env.VERCEL_API_TOKEN;
-  try {
-    return JSON.parse(readFileSync(join(homedir(), 'Library/Application Support/com.vercel.cli/auth.json'), 'utf8')).token;
-  } catch {
-    return undefined;
-  }
+  return process.env.VERCEL_API_TOKEN || undefined;
 }
 
 /**
@@ -54,10 +48,17 @@ export interface DeployOptions {
 }
 
 export function deploySite(opts: DeployOptions): Promise<DeployResult> {
+  const tok = vercelToken();
+  const token = tok ? `--token ${tok}` : '';
   const scope = opts.scope ? `--scope ${opts.scope}` : '';
   const target = opts.prod === false ? '' : '--prod';
-  const cmd = `vercel deploy --yes ${target} ${scope}`.replace(/\s+/g, ' ').trim();
+  // npx so it works without a global install (e.g. inside a Sandbox).
+  const cmd = `npx --yes vercel deploy --yes ${target} ${token} ${scope}`.replace(/\s+/g, ' ').trim();
   return new Promise((resolve) => {
+    if (!tok) {
+      resolve({ ok: false, url: undefined, output: 'VERCEL_API_TOKEN not set — cannot deploy.' });
+      return;
+    }
     exec(cmd, { cwd: opts.dir, timeout: opts.timeoutMs ?? 600000, maxBuffer: 16 * 1024 * 1024 }, async (err, stdout, stderr) => {
       const out = `${stdout}\n${stderr}`;
       const urls = out.match(/https:\/\/[^\s]+\.vercel\.app/g) ?? [];

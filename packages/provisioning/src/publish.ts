@@ -1,6 +1,26 @@
 import { markLive, recordConnectionStep, saveDomain } from '@simplesight/db';
 import { logger } from '@simplesight/observability';
-import { addDomainToRenderer, checkDomainStatus, type DnsRecord } from './vercel';
+import { addDomainToRenderer, checkDomainStatus, type DnsRecord, isProvisioningLive } from './vercel';
+
+/**
+ * Real HTTP smoke test against the live domain (a few retries for propagation /
+ * cert warm-up). Offline (no Vercel) we can't reach a real domain, so it's
+ * treated as a simulated pass.
+ */
+async function smokeTest(domain: string): Promise<boolean> {
+  if (!isProvisioningLive()) return true;
+  const url = `https://${domain}/`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(10_000) });
+      if (res.ok) return true;
+    } catch {
+      /* not propagated yet */
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  return false;
+}
 
 export interface ConnectResult {
   domain: string;
@@ -47,6 +67,12 @@ export async function goLive(
     await saveDomain(projectId, { domain, type: 'subdomain', verified: true });
   }
 
+  await recordConnectionStep(projectId, 'smoke_test', 'running', { domain });
+  const reachable = await smokeTest(domain);
+  if (!reachable) {
+    await recordConnectionStep(projectId, 'smoke_test', 'failed', { domain });
+    return { live: false, domain, reason: "The site isn't reachable yet — DNS/SSL may still be propagating. Try again shortly." };
+  }
   await recordConnectionStep(projectId, 'smoke_test', 'succeeded', { domain });
   await markLive(projectId, domain);
   await recordConnectionStep(projectId, 'marked_live', 'succeeded', { domain });

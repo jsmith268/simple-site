@@ -103,7 +103,7 @@ export async function buyDomainAction(projectId: string, domain: string) {
   const d = domain.trim().toLowerCase();
   const avail = await searchDomain(d);
   if (!avail.available) return { ok: false, error: "That domain isn't available." };
-  const bought = await buyDomain(d);
+  const bought = await buyDomain(d, avail.priceUsd);
   if (!bought.ok) return { ok: false, error: "Purchase failed." };
   const status = await connectCustomDomain(projectId, d);
   return { ok: true, priceUsd: avail.priceUsd, ...status };

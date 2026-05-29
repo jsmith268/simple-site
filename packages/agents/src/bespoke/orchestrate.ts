@@ -19,7 +19,7 @@ import { scaffoldNextApp, writeGeneratedFiles } from './scaffold';
 import { generateFoundation } from './foundation';
 import { generatePage, pageFilePath } from './page';
 import { runCodeCritic } from './critic-code';
-import { LocalBuildRunner, type BuildRunner } from './runner';
+import { type BuildRunner, defaultBuildRunner } from './runner';
 import { deploySite } from './deploy';
 import { siteReviewToCriticReport } from './review';
 import { runConvergence } from './converge';
@@ -69,7 +69,7 @@ function load<T>(dir: string, name: string): T | undefined {
  */
 export async function runBespokeBuild(args: BespokeBuildArgs): Promise<BuildRun> {
   const model = args.model ?? DEFAULT_MODEL;
-  const runner = args.runner ?? new LocalBuildRunner();
+  const runner = args.runner ?? defaultBuildRunner();
   const now = () => new Date().toISOString();
 
   const run: BuildRun =

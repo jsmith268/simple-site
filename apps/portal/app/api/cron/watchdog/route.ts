@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { runBuildPipeline } from "@simplesight/agents";
-import { findStaleRuns } from "@simplesight/db";
+import { finishRun, findStaleRuns } from "@simplesight/db";
 import { logger } from "@simplesight/observability";
 import { NextResponse } from "next/server";
 
@@ -36,6 +36,9 @@ export async function GET(req: Request) {
   const restarted: string[] = [];
   for (const run of stale) {
     try {
+      // Close the stale run FIRST so it can't re-match next tick (no re-build
+      // storm / double-spend), then restart from the deterministic floor.
+      await finishRun(run.id, "failed", 0);
       await runBuildPipeline(run.projectId);
       restarted.push(run.projectId);
     } catch (err) {
