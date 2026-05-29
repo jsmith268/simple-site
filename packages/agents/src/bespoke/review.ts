@@ -32,6 +32,21 @@ async function fetchText(url: string): Promise<string> {
   }
 }
 
+/** Append a Vercel deployment-protection bypass so screenshots/fetch see the real
+ *  site (not the auth wall) when the secret is configured. No-op otherwise. */
+function bypassUrl(u: string): string {
+  const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (!secret) return u;
+  const sep = u.includes('?') ? '&' : '?';
+  return `${u}${sep}x-vercel-protection-bypass=${secret}&x-vercel-set-bypass-cookie=true`;
+}
+
+const PROTECTED_RE = /Vercel Authentication|Authenticating\b|Log in to Vercel|sso-api|deployment is protected|Deployment Protection/i;
+/** True if the fetched page is a Vercel auth/SSO wall rather than the real site. */
+export function looksProtected(text: string): boolean {
+  return text.length < 6000 && PROTECTED_RE.test(text);
+}
+
 export interface ReviewArgs {
   baseUrl: string;
   pages: { name: string; slug: string }[];
@@ -53,8 +68,18 @@ export async function reviewSite(args: ReviewArgs): Promise<SiteReview> {
   const pages: PageReview[] = [];
   const blocking: CriticFinding[] = [];
 
+  // Guard: a Vercel-protected preview returns the auth wall to the public
+  // screenshot/fetch — reviewing THAT falsely rejects and burns reviser passes.
+  // Fail fast with a clear, actionable reason instead.
+  const homeProbe = await fetchText(bypassUrl(base));
+  if (looksProtected(homeProbe)) {
+    throw new Error(
+      'DEPLOYMENT_PROTECTED: the deploy is behind Vercel deployment protection, so the review only sees the login page. Set VERCEL_AUTOMATION_BYPASS_SECRET (Vercel → Project → Settings → Deployment Protection → Protection Bypass for Automation) or turn off protection for preview deployments.',
+    );
+  }
+
   for (const p of args.pages) {
-    const url = `${base}${p.slug === '/' ? '' : p.slug}`;
+    const url = bypassUrl(`${base}${p.slug === '/' ? '' : p.slug}`);
     // Design (full-page screenshot) and content (rendered text) in parallel.
     const [design, text] = await Promise.all([
       runVisualCritic({ url, brief: args.brief, pageName: p.name, model, provider, fullPage: true }).then((r) => r.report),
