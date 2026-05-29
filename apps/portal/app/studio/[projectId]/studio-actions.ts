@@ -15,15 +15,18 @@ import {
 } from "@simplesight/db";
 import { isOffline } from "@simplesight/env";
 import { logger } from "@simplesight/observability";
+import { requireOwnedProject } from "@/lib/auth";
 
 /* Compare screen */
 
 export async function selectVariantAction(projectId: string, variantId: string) {
+  await requireOwnedProject(projectId);
   await selectVariant(projectId, variantId);
   return { ok: true as const };
 }
 
 export async function regenerateAction(projectId: string, feedback: RegenFeedback) {
+  await requireOwnedProject(projectId);
   try {
     if (isOffline()) {
       await regenerate(projectId, feedback);
@@ -46,28 +49,33 @@ export async function addCommentAction(input: {
   viewport: Viewport;
   comment: string;
 }) {
+  await requireOwnedProject(input.projectId);
   const item = await addRevisionItem({ ...input, revision: 0, status: "open" });
   return { ok: true as const, item };
 }
 
-export async function deleteCommentAction(id: string) {
+export async function deleteCommentAction(projectId: string, id: string) {
+  await requireOwnedProject(projectId);
   await deleteRevisionItem(id);
   return { ok: true as const };
 }
 
 export async function listCommentsAction(projectId: string, variantId: string) {
+  await requireOwnedProject(projectId);
   const items = await listRevisionItems(projectId, { variantId, revision: 0, status: "open" });
   return { items };
 }
 
 /** Compile the open comments into a grouped, summarized checklist (preview before approving). */
 export async function previewChecklistAction(projectId: string, variantId: string) {
+  await requireOwnedProject(projectId);
   const checklist = await compileChecklist(projectId, variantId);
   return { checklist };
 }
 
 /** Approve the checklist → apply it (keeps foundation; bounded; QA before surfacing). */
 export async function approveRevisionAction(projectId: string, variantId: string) {
+  await requireOwnedProject(projectId);
   if (isOffline()) {
     const res = await applyRevision(projectId, variantId);
     return res;
@@ -80,6 +88,7 @@ export async function approveRevisionAction(projectId: string, variantId: string
 
 /** Lock in the selected design → ready for hosting / go-live. */
 export async function finalizeAction(projectId: string, variantId: string) {
+  await requireOwnedProject(projectId);
   const variant = await getVariant(variantId);
   // Block-mode/offline variants carry a renderable spec → publish it so the
   // renderer serves the chosen design at the customer's address.

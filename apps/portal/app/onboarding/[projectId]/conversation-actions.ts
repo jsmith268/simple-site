@@ -3,9 +3,11 @@
 import { runRound } from "@simplesight/agents";
 import { completeIntake, reserveUsername, saveIntake, setGenerationState } from "@simplesight/db";
 import { logger } from "@simplesight/observability";
+import { requireOwnedProject } from "@/lib/auth";
 import { type ConversationDraft, mapDraftToIntake } from "./draft";
 
 export async function checkUsernameAction(projectId: string, username: string) {
+  await requireOwnedProject(projectId);
   return reserveUsername(projectId, username);
 }
 
@@ -16,6 +18,7 @@ export async function checkUsernameAction(projectId: string, username: string) {
  * "Generating…" screen and watches it build, rather than seeing sites pop in.
  */
 export async function submitConversationAction(projectId: string, draft: ConversationDraft) {
+  await requireOwnedProject(projectId);
   const { style, business } = mapDraftToIntake(draft);
   await saveIntake(projectId, { style, business, referenceUrls: draft.references });
   if (draft.username) {

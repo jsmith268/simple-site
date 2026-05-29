@@ -2,6 +2,7 @@
 
 import { getSiteVersion, saveSiteSpec } from "@simplesight/db";
 import { revalidatePath } from "next/cache";
+import { requireOwnedProject } from "@/lib/auth";
 
 /**
  * Restore a prior site version: re-persist its SiteSpec as the live site. Uses
@@ -12,6 +13,7 @@ export async function restoreVersionAction(
   projectId: string,
   versionId: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireOwnedProject(projectId);
   const v = await getSiteVersion(projectId, versionId);
   if (!v) return { ok: false, error: "That version is no longer available." };
   try {

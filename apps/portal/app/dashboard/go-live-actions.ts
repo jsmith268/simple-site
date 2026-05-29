@@ -17,12 +17,14 @@ import {
   refundAndCancel,
   searchDomain,
 } from "@simplesight/provisioning";
+import { requireOwnedProject } from "@/lib/auth";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "simplesight.localhost";
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3300").replace(/\/$/, "");
 
 /** Start the hosting subscription at go-live (Stripe when live; no-op offline). */
 export async function startHostingAction(projectId: string, plan: "monthly" | "annual" = "monthly") {
+  await requireOwnedProject(projectId);
   const to = await getProjectEmail(projectId);
   const back = `${APP_URL}/dashboard/${projectId}/go-live`;
   const session = await createHostingCheckout({ email: to ?? "", plan, successUrl: back, cancelUrl: back });
@@ -39,6 +41,7 @@ async function notifyLive(projectId: string, domain: string) {
 }
 
 export async function loadGoLive(projectId: string) {
+  await requireOwnedProject(projectId);
   const [project, domains, steps] = await Promise.all([
     getProject(projectId),
     listDomains(projectId),
@@ -52,6 +55,7 @@ export async function loadGoLive(projectId: string) {
 
 /** Go live on the free Simple Site subdomain. */
 export async function goLiveSubdomainAction(projectId: string) {
+  await requireOwnedProject(projectId);
   const project = await getProject(projectId);
   if (!project?.username) return { ok: false, error: "Reserve a username first." };
   const domain = `${project.username}.${ROOT}`;
@@ -62,12 +66,14 @@ export async function goLiveSubdomainAction(projectId: string) {
 
 /** Attach a customer's existing domain; returns the DNS records to set. */
 export async function connectDomainAction(projectId: string, domain: string) {
+  await requireOwnedProject(projectId);
   const status = await connectCustomDomain(projectId, domain.trim().toLowerCase());
   return { ok: true, ...status };
 }
 
 /** After the customer sets DNS, verify + go live on the custom domain. */
 export async function goLiveCustomAction(projectId: string, domain: string) {
+  await requireOwnedProject(projectId);
   const d = domain.trim().toLowerCase();
   const result = await goLive(projectId, d, "custom");
   if (result.live) await notifyLive(projectId, d);
@@ -76,6 +82,7 @@ export async function goLiveCustomAction(projectId: string, domain: string) {
 
 /** Search + buy a domain through us (Vercel Domains), then attach it. */
 export async function buyDomainAction(projectId: string, domain: string) {
+  await requireOwnedProject(projectId);
   const d = domain.trim().toLowerCase();
   const avail = await searchDomain(d);
   if (!avail.available) return { ok: false, error: "That domain isn't available." };
@@ -87,6 +94,7 @@ export async function buyDomainAction(projectId: string, domain: string) {
 
 /** 30-day money-back guarantee: refund, cancel hosting, unpublish, release. */
 export async function refundAction(projectId: string) {
+  await requireOwnedProject(projectId);
   const project = await getProject(projectId);
   if (!project) return { ok: false, error: "Project not found." };
   if (project.refundDeadlineAt && new Date(project.refundDeadlineAt) < new Date()) {

@@ -16,7 +16,11 @@ function ensureDb() {
       'DATABASE_URL is not set. Set it in .env / Vercel env, or run in offline mode (no DB).',
     );
   }
-  _client = postgres(url, { prepare: false });
+  // Serverless-safe: DATABASE_URL must be the Neon POOLED connection string
+  // (host contains `-pooler`). `prepare: false` is required for PgBouncer
+  // transaction pooling; `max: 1` keeps each function instance to a single
+  // connection so concurrent instances don't exhaust the Neon connection limit.
+  _client = postgres(url, { prepare: false, max: 1 });
   _db = drizzle(_client, { schema });
   return _db;
 }

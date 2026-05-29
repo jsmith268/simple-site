@@ -79,6 +79,58 @@ export async function createPurchasedProject(input: PurchaseInput): Promise<{ pr
   return { projectId, customerId };
 }
 
+/** Look up a customer by their Clerk user id (auth identity → domain identity). */
+export async function getCustomerByClerkId(
+  clerkUserId: string,
+): Promise<{ id: string; email: string } | undefined> {
+  if (!hasDatabase()) {
+    const c = store.findOne('customers', (r) => r.clerkUserId === clerkUserId);
+    return c ? { id: c.id, email: c.email } : undefined;
+  }
+  const rows = await db
+    .select({ id: customers.id, email: customers.email })
+    .from(customers)
+    .where(eq(customers.clerkUserId, clerkUserId))
+    .limit(1);
+  return rows[0];
+}
+
+/**
+ * Upsert the customer row for an authenticated Clerk user. If a customer with
+ * the same email already exists (e.g. created by the purchase webhook before
+ * they signed in), link the Clerk id to it rather than creating a duplicate.
+ */
+export async function getOrCreateCustomerByClerkId(
+  clerkUserId: string,
+  email: string,
+): Promise<{ id: string; email: string }> {
+  const existing = await getCustomerByClerkId(clerkUserId);
+  if (existing) return existing;
+
+  if (!hasDatabase()) {
+    const byEmail = email ? store.findOne('customers', (r) => r.email === email) : undefined;
+    if (byEmail && !byEmail.clerkUserId) {
+      store.update('customers', (r) => r.id === byEmail.id, { clerkUserId });
+      return { id: byEmail.id, email: byEmail.email };
+    }
+    const c = store.insert('customers', { email, clerkUserId });
+    return { id: c.id, email: c.email };
+  }
+
+  if (email) {
+    const byEmail = await db.select().from(customers).where(eq(customers.email, email)).limit(1);
+    if (byEmail[0] && !byEmail[0].clerkUserId) {
+      await db.update(customers).set({ clerkUserId }).where(eq(customers.id, byEmail[0].id));
+      return { id: byEmail[0].id, email: byEmail[0].email };
+    }
+  }
+  const inserted = await db
+    .insert(customers)
+    .values({ clerkUserId, email })
+    .returning({ id: customers.id, email: customers.email });
+  return inserted[0] as { id: string; email: string };
+}
+
 export async function getProject(projectId: string): Promise<ProjectRecord | undefined> {
   if (!hasDatabase()) {
     const p = store.findOne('projects', (r) => r.id === projectId);

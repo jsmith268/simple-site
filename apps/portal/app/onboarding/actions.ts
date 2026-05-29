@@ -11,23 +11,28 @@ import {
 } from "@simplesight/db";
 import { isOffline } from "@simplesight/env";
 import { logger } from "@simplesight/observability";
+import { requireOwnedProject } from "@/lib/auth";
 
 export async function loadOnboarding(projectId: string) {
+  await requireOwnedProject(projectId);
   const [project, intake] = await Promise.all([getProject(projectId), getIntake(projectId)]);
   return { project: project ?? null, intake: intake ?? null };
 }
 
 export async function saveStyleAction(projectId: string, style: IntakeStyle) {
+  await requireOwnedProject(projectId);
   await saveIntake(projectId, { style, referenceUrls: style.referenceUrls });
   return { ok: true };
 }
 
 export async function saveBusinessAction(projectId: string, business: BusinessInfo) {
+  await requireOwnedProject(projectId);
   await saveIntake(projectId, { business });
   return { ok: true };
 }
 
 export async function reserveUsernameAction(projectId: string, username: string) {
+  await requireOwnedProject(projectId);
   return reserveUsername(projectId, username);
 }
 
@@ -38,6 +43,7 @@ export async function reserveUsernameAction(projectId: string, username: string)
  * deployment runs it as a durable workflow — see docs Phase 6).
  */
 export async function submitOnboardingAction(projectId: string) {
+  await requireOwnedProject(projectId);
   await completeIntake(projectId);
   if (isOffline()) {
     const result = await runBuildPipeline(projectId);

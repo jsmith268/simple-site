@@ -11,6 +11,7 @@
     "acceptance": "tsx scripts/acceptance.mts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.2",
     "@simplesight/agents": "workspace:*",
     "@simplesight/blocks": "workspace:*",
     "@simplesight/contracts": "workspace:*",

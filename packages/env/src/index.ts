@@ -57,3 +57,31 @@ export function serverEnv(): ServerEnv {
 export function rootDomain(): string {
   return process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'simplesight.localhost';
 }
+
+/**
+ * Fail fast on incoherent production configuration. Call this at process start
+ * (e.g. instrumentation). The dangerous case is "live but no DB": agents would
+ * run real LLM calls while every repo silently writes to an ephemeral JSON store
+ * that vanishes between serverless invocations.
+ */
+export function assertLiveConfig(): void {
+  if (isOffline()) return; // offline is internally coherent (deterministic + JSON store)
+  const problems: string[] = [];
+  if (!hasDatabase()) {
+    problems.push(
+      'Running in LIVE mode (an AI key is set) but DATABASE_URL is missing. ' +
+        'Set DATABASE_URL (Neon pooled URL) or force SIMPLESIGHT_OFFLINE=1.',
+    );
+  }
+  if (process.env.PADDLE_API_KEY && !process.env.PADDLE_WEBHOOK_SECRET) {
+    problems.push('PADDLE_API_KEY is set but PADDLE_WEBHOOK_SECRET is missing.');
+  }
+  if (problems.length) {
+    throw new Error(`Invalid live configuration:\n  - ${problems.join('\n  - ')}`);
+  }
+}
+
+/** True when DATABASE_URL is set but offline is forced — a likely misconfig worth warning. */
+export function dbWithoutLiveMode(): boolean {
+  return hasDatabase() && process.env.SIMPLESIGHT_OFFLINE === '1';
+}

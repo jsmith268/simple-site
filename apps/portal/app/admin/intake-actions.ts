@@ -1,9 +1,11 @@
 "use server";
 
 import { getIntake, getSkillOverrides, listProjects, setSkillOverride } from "@simplesight/db";
+import { requireOperator } from "@/lib/auth";
 
 /** Operator view: the tunable Avery guidance + every project's gathered intake. */
 export async function loadIntakeConsole() {
+  await requireOperator();
   const [overrides, projects] = await Promise.all([getSkillOverrides().catch(() => ({})), listProjects()]);
   const rows = await Promise.all(
     projects.slice(0, 50).map(async (p) => {
@@ -26,6 +28,7 @@ export async function loadIntakeConsole() {
 
 /** Tune Avery's intake system prompt (operator override, applied on every new conversation). */
 export async function saveIntakeGuidanceAction(text: string) {
+  await requireOperator();
   await setSkillOverride("intake", text, "operator");
   return { ok: true as const };
 }

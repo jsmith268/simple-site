@@ -69,7 +69,7 @@ export function Workspace({
   function removeComment(id: string) {
     setComments((c) => c.filter((x) => x.id !== id));
     start(async () => {
-      await deleteCommentAction(id);
+      await deleteCommentAction(projectId, id);
     });
   }
 

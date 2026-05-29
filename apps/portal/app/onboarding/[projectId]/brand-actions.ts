@@ -1,6 +1,7 @@
 "use server";
 
 import { logger } from "@simplesight/observability";
+import { requireOwnedProject } from "@/lib/auth";
 
 /**
  * Store an uploaded logo. With BLOB_READ_WRITE_TOKEN, uploads to Vercel Blob and
@@ -8,6 +9,7 @@ import { logger } from "@simplesight/observability";
  * no services). No Anthropic involved.
  */
 export async function uploadLogoAction(projectId: string, dataUrl: string, filename = "logo") {
+  await requireOwnedProject(projectId);
   if (!dataUrl.startsWith("data:")) return { ok: true as const, url: dataUrl };
   if (!process.env.BLOB_READ_WRITE_TOKEN) return { ok: true as const, url: dataUrl };
   try {

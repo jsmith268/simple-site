@@ -12,6 +12,7 @@ import {
 } from '@simplesight/agents';
 import { getSkillOverrides, setSkillOverride } from '@simplesight/db';
 import { skills as baseSkills } from '@simplesight/skills';
+import { requireOperator } from '@/lib/auth';
 
 /** Where standalone bespoke build dirs live (each holds .simplesight/run.json). */
 function buildsRoot(): string {
@@ -52,6 +53,7 @@ function summarize(dir: string, a: BuildArtifacts): BuildSummary {
 
 /** List every bespoke build found under the builds root. */
 export async function listBespokeBuilds(): Promise<BuildSummary[]> {
+  await requireOperator();
   const root = buildsRoot();
   if (!existsSync(root)) return [];
   const out: BuildSummary[] = [];
@@ -70,6 +72,7 @@ export async function listBespokeBuilds(): Promise<BuildSummary[]> {
 
 /** Full artifact bundle for one build (by slug). */
 export async function loadBespokeBuild(slug: string): Promise<BuildArtifacts | null> {
+  await requireOperator();
   const root = buildsRoot();
   if (!existsSync(root)) return null;
   for (const entry of readdirSync(root, { withFileTypes: true })) {
@@ -89,6 +92,7 @@ export async function loadBespokeBuild(slug: string): Promise<BuildArtifacts | n
  * name best matches, else proposes a new one.
  */
 export async function proposeSkillFromBuildAction(slug: string): Promise<{ ok: boolean; proposal?: SkillProposalType; error?: string }> {
+  await requireOperator();
   const a = await loadBespokeBuild(slug);
   if (!a?.visualReport) return { ok: false, error: 'No visual-critic report for this build.' };
   const { guidance } = aggregateFindings([a.visualReport]);
@@ -110,6 +114,7 @@ export async function proposeSkillFromBuildAction(slug: string): Promise<{ ok: b
 
 /** Apply an approved skill proposal as a fleet-wide override. */
 export async function applySkillProposalAction(name: string, body: string): Promise<{ ok: boolean }> {
+  await requireOperator();
   await setSkillOverride(name, body, 'learning-loop');
   return { ok: true };
 }
