@@ -44,6 +44,12 @@ function loadKeys() {
 loadKeys();
 const live = process.env.SIMPLESIGHT_OFFLINE === "0";
 
+// GPT-5.5 (Studio B) needs the AI Gateway. With an Anthropic key only, fall back
+// Studio B to Sonnet 4.6 so both studios still build live (A=Opus 4.8, B=Sonnet 4.6).
+if (live && !process.env.AI_GATEWAY_API_KEY && !process.env.SIMPLESIGHT_MODEL_B) {
+  process.env.SIMPLESIGHT_MODEL_B = "anthropic/claude-sonnet-4.6";
+}
+
 // Base port: arg → env → 3300. Apps fan out from there (3300/3301/3302).
 const basePort = Number(process.argv[2] || process.env.DEV_BASE_PORT || 3300);
 const PORTAL = basePort; // 3300
