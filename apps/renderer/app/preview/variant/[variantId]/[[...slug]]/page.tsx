@@ -20,7 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { variantId } = await params;
   const spec = await loadVariantSpec(variantId);
-  if (!spec) return { title: "Preview" };
+  if (!spec) return { title: "Preview", robots: { index: false, follow: false } };
   return {
     title: spec.seo?.defaultTitle ?? spec.brand.name,
     description: spec.seo?.defaultDescription ?? spec.brand.tagline,

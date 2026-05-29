@@ -27,6 +27,12 @@ export default async function TenantPage({
   const { username, slug } = await params;
   const raw = await loadSiteSpec(username);
   if (!raw) notFound();
+  // A non-home slug that matches no page is a real 404 (avoid soft-404 / duplicate
+  // content from silently rendering the home page).
+  const slugStr = (slug ?? []).join("/").replace(/^\/+|\/+$/g, "");
+  if (slugStr && !raw.pages.some((p) => (p.slug ?? "").replace(/^\/+|\/+$/g, "") === slugStr)) {
+    notFound();
+  }
   // Make internal nav work under the tenant base path (works via subdomain or preview URL).
   const spec = prefixLinks(raw, `/site/${encodeURIComponent(username)}`);
   const inSitePath = `/${(slug ?? []).join("/")}`;
