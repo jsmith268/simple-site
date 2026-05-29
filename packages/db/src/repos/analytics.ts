@@ -110,3 +110,45 @@ export async function getHitStats(username: string, opts?: { days?: number }): P
 
   return { total, last7, today: todayCount, byDay, topPaths };
 }
+
+export interface FleetHitTotals {
+  totalViews: number;
+  last7: number;
+  tenantsWithViews: number;
+  topTenants: { username: string; count: number }[];
+}
+
+/** Cross-tenant reach for the operator console: totals + top sites by views. */
+export async function getFleetHitTotals(opts?: { days?: number }): Promise<FleetHitTotals> {
+  const windowDays = opts?.days ?? 30;
+  const sinceDay = utcDay(new Date(Date.now() - windowDays * DAY_MS));
+  const last7Day = utcDay(new Date(Date.now() - 7 * DAY_MS));
+
+  let rows: { username: string; day: string; count: number }[];
+  if (!hasDatabase()) {
+    rows = store
+      .readColl('site_hits')
+      .filter((r) => String(r.day) >= sinceDay)
+      .map((r) => ({
+        username: String(r.username),
+        day: String(r.day),
+        count: (r.count as number) ?? 0,
+      }));
+  } else {
+    rows = await db
+      .select({ username: siteHits.username, day: siteHits.day, count: siteHits.count })
+      .from(siteHits)
+      .where(gte(siteHits.day, sinceDay));
+  }
+
+  const totalViews = rows.reduce((s, r) => s + r.count, 0);
+  const last7 = rows.filter((r) => r.day >= last7Day).reduce((s, r) => s + r.count, 0);
+  const byTenant = new Map<string, number>();
+  for (const r of rows) byTenant.set(r.username, (byTenant.get(r.username) ?? 0) + r.count);
+  const topTenants = [...byTenant.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([username, count]) => ({ username, count }));
+
+  return { totalViews, last7, tenantsWithViews: byTenant.size, topTenants };
+}

@@ -1,3 +1,4 @@
+import { getFleetHitTotals } from '@simplesight/db';
 import Link from 'next/link';
 import { loadFleet } from './actions';
 import { KillSwitch } from './kill-switch';
@@ -17,7 +18,10 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function FleetOverviewPage() {
-  const { projects, fleet, escalations } = await loadFleet();
+  const [{ projects, fleet, escalations }, reach] = await Promise.all([
+    loadFleet(),
+    getFleetHitTotals(),
+  ]);
 
   const totalCostCents = projects.reduce(
     (sum, p) => sum + (p.latestRun?.costCents ?? 0),
@@ -55,7 +59,35 @@ export default async function FleetOverviewPage() {
           <Stat label="Daily budget ceiling" value={formatCents(fleet.dailyBudgetCeilingCents)} />
           <Stat label="Latest-run spend" value={formatCents(totalCostCents)} />
           <Stat label="Open escalations" value={String(escalations.length)} />
+          <Stat label="Site views (30d)" value={reach.totalViews.toLocaleString()} />
+          <Stat label="Views (7d)" value={reach.last7.toLocaleString()} />
         </div>
+      </section>
+
+      {/* Fleet reach — top sites by views */}
+      <section style={{ ...cardStyle, padding: 16 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 4px' }}>
+          Reach{' '}
+          <span style={{ color: '#64748b', fontWeight: 400 }}>
+            · {reach.tenantsWithViews} site{reach.tenantsWithViews === 1 ? '' : 's'} with views (30d)
+          </span>
+        </h2>
+        {reach.topTenants.length === 0 ? (
+          <p style={{ fontSize: 13, color: '#64748b', margin: '8px 0 0' }}>
+            No site views recorded yet.
+          </p>
+        ) : (
+          <ol style={{ margin: '12px 0 0', paddingLeft: 20, display: 'grid', gap: 6 }}>
+            {reach.topTenants.map((t) => (
+              <li key={t.username} style={{ fontSize: 13 }}>
+                <span style={{ fontWeight: 600 }}>{t.username}</span>
+                <span style={{ color: '#64748b', marginLeft: 8 }}>
+                  {t.count.toLocaleString()} view{t.count === 1 ? '' : 's'}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
       {/* Escalations */}
