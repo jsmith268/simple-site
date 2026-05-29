@@ -12,24 +12,33 @@ export interface ScreenshotProvider {
   capture(url: string, opts?: { width?: number; fullPage?: boolean }): Promise<Screenshot>;
 }
 
-/** Default: thum.io (no API key). `fullPage` uses their crop/scroll modifier. */
+/** Default: thum.io (no API key). `fullPage` uses their crop/scroll modifier.
+ *  Retries on transient failures (502/timeout/blank) — the free service is flaky. */
 export class ThumIoScreenshot implements ScreenshotProvider {
   async capture(url: string, opts: { width?: number; fullPage?: boolean } = {}): Promise<Screenshot> {
     const width = opts.width ?? 1280;
     const mods = [`width/${width}`, 'noanimate'];
     if (opts.fullPage) mods.push('crop/2400');
     const endpoint = `https://image.thum.io/get/${mods.join('/')}/${url}`;
-    const ac = new AbortController();
-    const t = setTimeout(() => ac.abort(), 30000);
-    try {
-      const res = await fetch(endpoint, { signal: ac.signal });
-      if (!res.ok) throw new Error(`screenshot service ${res.status}`);
-      const buf = new Uint8Array(await res.arrayBuffer());
-      if (buf.byteLength < 1000) throw new Error('screenshot too small / blank');
-      return { bytes: buf, mediaType: res.headers.get('content-type') ?? 'image/png' };
-    } finally {
-      clearTimeout(t);
+    const attempts = 4;
+    let lastErr: unknown;
+    for (let i = 1; i <= attempts; i++) {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 35000);
+      try {
+        const res = await fetch(endpoint, { signal: ac.signal, headers: { 'user-agent': 'Mozilla/5.0 SimpleSightBot' } });
+        if (!res.ok) throw new Error(`screenshot service ${res.status}`);
+        const buf = new Uint8Array(await res.arrayBuffer());
+        if (buf.byteLength < 1000) throw new Error('screenshot too small / blank');
+        return { bytes: buf, mediaType: res.headers.get('content-type') ?? 'image/png' };
+      } catch (err) {
+        lastErr = err;
+        if (i < attempts) await new Promise((r) => setTimeout(r, 1500 * 2 ** (i - 1))); // 1.5s,3s,6s
+      } finally {
+        clearTimeout(t);
+      }
     }
+    throw lastErr instanceof Error ? lastErr : new Error('screenshot failed');
   }
 }
 
