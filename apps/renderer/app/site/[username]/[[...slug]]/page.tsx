@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prefixLinks } from "@/lib/links";
 import { siteJsonLd, siteMetadata, tenantUrl } from "@/lib/seo";
 import { loadSiteSpec } from "@/lib/tenant";
+import { HitBeacon } from "./hit-beacon";
 
 type Params = { username: string; slug?: string[] };
 
@@ -28,11 +29,13 @@ export default async function TenantPage({
   if (!raw) notFound();
   // Make internal nav work under the tenant base path (works via subdomain or preview URL).
   const spec = prefixLinks(raw, `/site/${encodeURIComponent(username)}`);
+  const inSitePath = `/${(slug ?? []).join("/")}`;
   return (
     <>
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is server-built from our own SiteSpec */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteJsonLd(raw, tenantUrl(username)) }} />
       <SitePage spec={spec} slug={(slug ?? []).join("/")} />
+      <HitBeacon username={username} path={inSitePath} />
     </>
   );
 }

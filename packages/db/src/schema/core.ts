@@ -157,3 +157,22 @@ export const pageBlocks = pgTable(
   },
   (t) => ({ byPage: index('page_blocks_page_idx').on(t.pageId) }),
 );
+
+// ── Privacy-friendly site analytics ─────────────────────────────────────────
+// Cookieless, no PII: one aggregate row per (tenant username, UTC day, path)
+// with a hit count. Keyed by username (not projectId) so the renderer beacon
+// can record without a project lookup. Read back per-project on the dashboard.
+export const siteHits = pgTable(
+  'site_hits',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    username: text('username').notNull(),
+    day: text('day').notNull(), // 'YYYY-MM-DD' (UTC)
+    path: text('path').notNull(), // normalized pathname, '/' = home
+    count: integer('count').notNull().default(0),
+  },
+  (t) => ({
+    uq: uniqueIndex('site_hits_user_day_path_uq').on(t.username, t.day, t.path),
+    byUser: index('site_hits_user_idx').on(t.username),
+  }),
+);

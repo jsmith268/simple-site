@@ -9,4 +9,5 @@ export * from './repos/observe';
 export * from './repos/hosting';
 export * from './repos/skills';
 export * from './repos/generation';
+export * from './repos/analytics';
 export * as offlineStore from './offline-store';

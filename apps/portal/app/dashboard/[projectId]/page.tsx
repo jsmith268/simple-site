@@ -1,7 +1,8 @@
-import { getGenerationState } from "@simplesight/db";
+import { getGenerationState, getHitStats } from "@simplesight/db";
 import Link from "next/link";
 import { loadDashboard } from "../actions";
 import { Badge, Button, Card, Container, Divider, Eyebrow, Logo, Title } from "../../ui";
+import { AnalyticsCard } from "./analytics-card";
 
 type StatusTone = "neutral" | "brand" | "success" | "warn" | "info";
 
@@ -38,6 +39,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ proj
   const { project, businessName, preview } = data;
   const info = STATUS[project.status] ?? { label: project.status, blurb: "We'll keep you posted here.", tone: "neutral" as StatusTone };
   const cta = primaryCta(projectId, project.status, gen.status, gen.currentRound);
+  const viewable = !!project.username && ["preview", "approved", "live"].includes(project.status);
+  const stats = viewable && project.username ? await getHitStats(project.username) : null;
 
   return (
     <div className="min-h-screen brand-gradient">
@@ -90,6 +93,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ proj
             </>
           )}
         </Card>
+
+        {stats && <AnalyticsCard stats={stats} />}
 
         {gen.currentRound > 0 && gen.status !== "finalized" && (
           <p className="mt-4 text-center text-[13px] text-muted">
