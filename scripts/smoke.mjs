@@ -13,6 +13,7 @@
 
 const RENDERER = process.env.SMOKE_RENDERER ?? "http://localhost:3301";
 const PORTAL = process.env.SMOKE_PORTAL ?? "http://localhost:3300";
+const MARKETING = process.env.SMOKE_MARKETING ?? "http://localhost:3302";
 const TENANT = process.argv[2] ?? "reeds";
 
 let pass = 0;
@@ -146,6 +147,27 @@ async function main() {
     }
   } catch (e) {
     console.log(`  \x1b[2m· admin unreachable (${e}) — skipped\x1b[0m`);
+  }
+
+  // 8. Marketing site SEO + OG image (best-effort — may be down in some setups)
+  console.log("Marketing site");
+  try {
+    const { status, body } = await get(`${MARKETING}/`);
+    if (status === 200) {
+      check("marketing og:image", body.includes("og:image"), "no og:image");
+      check("marketing twitter:card", body.includes("twitter:card"), "no twitter:card");
+      check("marketing canonical", body.includes('rel="canonical"'), "no canonical");
+      const og = await getBytes(`${MARKETING}/opengraph-image`);
+      check(
+        "marketing OG PNG",
+        og.status === 200 && og.ct.includes("image/png") && isPng(og.buf),
+        `status ${og.status} ct ${og.ct}`,
+      );
+    } else {
+      console.log(`  \x1b[2m· marketing returned ${status} — skipped\x1b[0m`);
+    }
+  } catch (e) {
+    console.log(`  \x1b[2m· marketing unreachable (${e}) — skipped\x1b[0m`);
   }
 
   console.log(`\n${fail === 0 ? "\x1b[32m" : "\x1b[31m"}${pass} passed, ${fail} failed\x1b[0m`);
