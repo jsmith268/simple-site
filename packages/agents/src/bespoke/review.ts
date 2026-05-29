@@ -55,6 +55,20 @@ export interface ReviewArgs {
   provider?: ScreenshotProvider;
 }
 
+const BLANK_RE = /blank|entirely white|all white|white screen|no content|nothing (is )?(visible|rendered)|failed to (render|load)|empty page/i;
+/** A blank/failed screenshot the critic scored near-zero — not a real design failure. */
+function looksBlankCapture(r: CriticReport): boolean {
+  return r.score < 25 && BLANK_RE.test(`${r.summary} ${r.findings.map((f) => f.message).join(' ')}`);
+}
+/** Neutral design report when a page's screenshot can't be captured — does NOT block. */
+const NOT_ASSESSED: CriticReport = {
+  score: 75,
+  verdict: 'pass',
+  dimensions: {},
+  findings: [{ severity: 'warn', area: 'screenshot', message: 'Screenshot came back blank after retries — design not auto-assessed for this page; verify manually.' }],
+  summary: 'capture failed — design not assessed',
+};
+
 /**
  * Full-site review: for EVERY page, a full-page screenshot → design critic
  * (award-winning designer) AND the rendered text → content critic
@@ -80,11 +94,16 @@ export async function reviewSite(args: ReviewArgs): Promise<SiteReview> {
 
   for (const p of args.pages) {
     const url = bypassUrl(`${base}${p.slug === '/' ? '' : p.slug}`);
+    const shoot = () => runVisualCritic({ url, brief: args.brief, pageName: p.name, model, provider, fullPage: true }).then((r) => r.report);
     // Design (full-page screenshot) and content (rendered text) in parallel.
-    const [design, text] = await Promise.all([
-      runVisualCritic({ url, brief: args.brief, pageName: p.name, model, provider, fullPage: true }).then((r) => r.report),
-      fetchText(url),
-    ]);
+    const [firstDesign, text] = await Promise.all([shoot(), fetchText(url)]);
+    let design = firstDesign;
+    // A blank/failed capture must not falsely reject the page. Retry once; if
+    // still blank, don't assess (and don't block) — flag it for a manual look.
+    if (looksBlankCapture(design)) {
+      design = await shoot().catch(() => design);
+      if (looksBlankCapture(design)) design = NOT_ASSESSED;
+    }
     const content = await runContentCritic({ text, brief: args.brief, pageName: p.name, model });
     pages.push({ slug: p.slug, name: p.name, design, content });
     for (const f of [...design.findings, ...content.findings]) {

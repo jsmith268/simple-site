@@ -6,6 +6,7 @@ import type { DesignBrief } from './brief';
 import type { ResolvedDesign } from './validate';
 import { reviewSite } from './review';
 import { revisePage } from './reviser';
+import { buildAssetManifest } from './assets';
 import { runCodeCritic } from './critic-code';
 import { pageFilePath } from './page';
 import type { BuildRunner } from './runner';
@@ -58,6 +59,22 @@ export async function runConvergence(args: ConvergeArgs): Promise<ConvergeResult
 
   while (review.blocking.length > 0 && pass < maxPasses) {
     pass++;
+
+    // If imagery was flagged anywhere, re-source fresh, on-brand photos once for
+    // this pass — the reviser can only rewrite code, so without new URLs the loop
+    // would hold forever on "the hero photo is too clinical".
+    const imageryFlagged = review.blocking.some((f) => /imagery|photo|image/i.test(f.area));
+    let freshImages: { url: string; alt: string; role: string }[] = [];
+    if (imageryFlagged) {
+      try {
+        const steer = `warm welcoming natural light candid real people ${brief.imagery?.direction ?? ''}`.trim();
+        const fresh = await buildAssetManifest(profile, ia, { imageryDirection: steer });
+        freshImages = fresh.images.filter((i) => i.status === 200).map((i) => ({ url: i.url, alt: i.alt, role: i.role }));
+      } catch {
+        /* proceed without fresh imagery */
+      }
+    }
+
     // Revise every page that has a blocking finding.
     for (const pr of review.pages) {
       const all = [...pr.design.findings, ...pr.content.findings];
@@ -66,10 +83,12 @@ export async function runConvergence(args: ConvergeArgs): Promise<ConvergeResult
       const fp = pageFilePath(pr.slug);
       const full = join(dir, fp);
       if (!plan || !existsSync(full)) continue;
+      const pageHasImagery = all.some((f) => f.severity === 'block' && /imagery|photo|image/i.test(f.area));
       const res = await revisePage({
         profile, brief, design, ia, page: plan,
         currentContents: readFileSync(full, 'utf8'),
         findings: all.filter((f) => f.severity !== 'info'),
+        newImages: pageHasImagery && freshImages.length ? freshImages : undefined,
         model,
       });
       writeFileSync(full, res.file.contents);

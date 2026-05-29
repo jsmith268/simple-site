@@ -17,7 +17,9 @@ export interface ScreenshotProvider {
 export class ThumIoScreenshot implements ScreenshotProvider {
   async capture(url: string, opts: { width?: number; fullPage?: boolean } = {}): Promise<Screenshot> {
     const width = opts.width ?? 1280;
-    const mods = [`width/${width}`, 'noanimate'];
+    // `wait/3` gives the page time to paint (fonts/images) — without it, heavy
+    // pages capture blank white and the design critic falsely scores ~5.
+    const mods = [`width/${width}`, 'noanimate', 'wait/3'];
     if (opts.fullPage) mods.push('crop/2400');
     const endpoint = `https://image.thum.io/get/${mods.join('/')}/${url}`;
     const attempts = 4;
@@ -29,7 +31,7 @@ export class ThumIoScreenshot implements ScreenshotProvider {
         const res = await fetch(endpoint, { signal: ac.signal, headers: { 'user-agent': 'Mozilla/5.0 SimpleSightBot' } });
         if (!res.ok) throw new Error(`screenshot service ${res.status}`);
         const buf = new Uint8Array(await res.arrayBuffer());
-        if (buf.byteLength < 1000) throw new Error('screenshot too small / blank');
+        if (buf.byteLength < 2500) throw new Error('screenshot too small / blank');
         return { bytes: buf, mediaType: res.headers.get('content-type') ?? 'image/png' };
       } catch (err) {
         lastErr = err;

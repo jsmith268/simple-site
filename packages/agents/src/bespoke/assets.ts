@@ -32,8 +32,11 @@ const AUTHENTIC = 'candid documentary natural light real';
  */
 export function deriveImageNeeds(profile: BusinessProfile, ia: SiteIA, imageryDirection?: string): ImageNeed[] {
   const used = componentsUsed(ia);
-  const dir = (imageryDirection ?? '').replace(/[^a-z0-9 ]/gi, ' ').split(/\s+/).filter(Boolean).slice(0, 8).join(' ');
-  const base = [profile.category, dir, ...profile.visual.moodWords].filter(Boolean).join(' ').trim() || profile.category;
+  const dir = (imageryDirection ?? '').replace(/[^a-z0-9 ]/gi, ' ').split(/\s+/).filter(Boolean).slice(0, 10).join(' ');
+  // Lead with the brief's ART DIRECTION + mood, not the bare category — a query
+  // of "dental practice" returns clinical glove-and-mirror stock, whereas the
+  // brief's "warm, sunlit waiting room" steers toward on-brand, human imagery.
+  const base = [dir, ...profile.visual.moodWords, profile.category].filter(Boolean).join(' ').trim() || profile.category;
   const needs: ImageNeed[] = [{ role: 'hero', count: Math.max(2, ia.pages.length), query: `${base} ${AUTHENTIC}`, orientation: 'landscape' }];
   if (used.includes('social-feed')) needs.push({ role: 'feed', count: 8, query: `${profile.category} ${AUTHENTIC}`, orientation: 'squarish' });
   if (used.includes('gallery')) needs.push({ role: 'gallery', count: 10, query: `${profile.category} interior ${AUTHENTIC}`, orientation: 'landscape' });

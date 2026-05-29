@@ -16,6 +16,8 @@ export interface ReviseArgs {
   page: PagePlan;
   currentContents: string;
   findings: CriticFinding[]; // design + content findings for THIS page
+  /** Fresh, verified, on-brand photos to swap in when imagery was flagged off-brief. */
+  newImages?: { url: string; alt: string; role: string }[];
   model: string;
 }
 
@@ -67,11 +69,15 @@ Return EXACTLY one delimited file block and nothing else, in the format:
 === FILE: <path> ===
 <code>`;
 
+  const imageryBlock = args.newImages?.length
+    ? `\nIMAGERY WAS FLAGGED OFF-BRIEF (too clinical/cold/stocky). REPLACE the photo src values on this page with these verified, on-brand URLs (use them in order; write specific alt text; keep the same treatment/CSS):\n${args.newImages.map((i) => `- [${i.role}] ${i.url} — ${i.alt}`).join('\n')}\n`
+    : '';
+
   const prompt = `PAGE: "${page.name}" (${page.slug}) — file ${filePath}
 
 REVIEWER FINDINGS to fix on this page:
 ${findingList}
-
+${imageryBlock}
 CURRENT FILE (${filePath}):
 \`\`\`tsx
 ${args.currentContents}
