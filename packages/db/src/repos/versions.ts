@@ -2,7 +2,7 @@ import type { SiteSpec } from '@simplesight/contracts';
 import { hasDatabase } from '@simplesight/env';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../client';
-import { siteVersions } from '../schema/core';
+import { projects, siteVersions } from '../schema/core';
 import * as store from '../offline-store';
 
 const MAX_VERSIONS = 20;
@@ -117,6 +117,34 @@ export async function listSiteVersions(projectId: string): Promise<VersionSummar
       };
     })
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** ISO timestamp of the most recent version for a tenant username, or null. */
+export async function latestVersionAt(username: string): Promise<string | null> {
+  if (!hasDatabase()) {
+    const proj = store.findOne('projects', (p) => p.username === username);
+    if (!proj) return null;
+    const times = store
+      .findMany('site_versions', (r) => r.projectId === proj.id)
+      .map((r) => String(r.createdAt))
+      .sort();
+    return times.length ? (times[times.length - 1] ?? null) : null;
+  }
+  const projRows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(eq(projects.username, username))
+    .limit(1);
+  const pid = projRows[0]?.id;
+  if (!pid) return null;
+  const rows = await db
+    .select({ createdAt: siteVersions.createdAt })
+    .from(siteVersions)
+    .where(eq(siteVersions.projectId, pid))
+    .orderBy(desc(siteVersions.createdAt))
+    .limit(1);
+  const c = rows[0]?.createdAt;
+  return c ? (c instanceof Date ? c.toISOString() : String(c)) : null;
 }
 
 /** Full snapshot (with spec) by id, scoped to a project. */

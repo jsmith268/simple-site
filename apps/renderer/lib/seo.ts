@@ -49,6 +49,22 @@ function findPage(spec: SiteSpec, slug: string): SiteSpec["pages"][number] | und
   return spec.pages.find((p) => (p.slug ?? "").replace(/^\/+|\/+$/g, "") === norm);
 }
 
+/** BreadcrumbList JSON-LD for an inner page (Home → page). Null on the home page. */
+export function breadcrumbJsonLd(spec: SiteSpec, baseUrl: string, slug: string): string | null {
+  const norm = slug.replace(/^\/+|\/+$/g, "");
+  if (!norm) return null;
+  const page = findPage(spec, norm);
+  const name = page?.title ?? norm;
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: baseUrl },
+      { "@type": "ListItem", position: 2, name, item: `${baseUrl}/${norm}` },
+    ],
+  });
+}
+
 /**
  * Per-page OpenGraph + canonical metadata. Uses the matched page's own
  * `seo.title`/`seo.description` when present, falling back to the site defaults

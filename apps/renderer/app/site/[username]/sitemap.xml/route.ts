@@ -1,3 +1,4 @@
+import { latestVersionAt } from "@simplesight/db";
 import { tenantUrl } from "@/lib/seo";
 import { loadSiteSpec } from "@/lib/tenant";
 
@@ -23,6 +24,8 @@ export async function GET(
   const { username } = await params;
   const spec = await loadSiteSpec(username).catch(() => null);
   const base = tenantUrl(username);
+  const lastmod = (await latestVersionAt(username).catch(() => null))?.slice(0, 10);
+  const lastmodTag = lastmod ? `<lastmod>${lastmod}</lastmod>` : "";
   const pages = spec
     ? [...spec.pages].sort((a, b) => a.order - b.order)
     : [{ slug: "", order: 0 } as { slug: string; order: number }];
@@ -35,7 +38,7 @@ export async function GET(
     seen.add(loc);
     const priority = slug ? "0.7" : "1.0";
     urls.push(
-      `  <url><loc>${escapeXml(loc)}</loc><changefreq>weekly</changefreq><priority>${priority}</priority></url>`,
+      `  <url><loc>${escapeXml(loc)}</loc>${lastmodTag}<changefreq>weekly</changefreq><priority>${priority}</priority></url>`,
     );
   }
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
