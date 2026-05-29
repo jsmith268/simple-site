@@ -2,10 +2,12 @@ import Link from "next/link";
 import { loadGoLive } from "../../go-live-actions";
 import { Badge, Button, Card, Container, Divider, Eyebrow, Logo, Title } from "../../../ui";
 import { GoLiveClient } from "./go-live-client";
+import { StartHosting } from "./start-hosting";
 
 export const dynamic = "force-dynamic";
 
 const HOSTING_MONTHLY_USD = 29;
+const HOSTING_ANNUAL_USD = 290;
 const HOSTING_INCLUDES = [
   "Fast global hosting + CDN",
   "Automatic SSL on every domain",
@@ -76,8 +78,9 @@ export default async function GoLivePage({ params }: { params: Promise<{ project
             ))}
           </ul>
           {!live && (
-            <div className="border-t border-line bg-paper-2/40 px-6 py-3 text-[13px] text-muted">
-              Your hosting subscription activates automatically the moment you publish below — no separate checkout.
+            <div className="border-t border-line px-6 py-4">
+              <p className="mb-3 text-[13px] text-ink-soft">Start your hosting plan, then publish below. You only pay for hosting now that you&apos;ve chosen your design — the build fee was one-time.</p>
+              <StartHosting projectId={projectId} monthly={HOSTING_MONTHLY_USD} annual={HOSTING_ANNUAL_USD} />
             </div>
           )}
         </Card>

@@ -12,12 +12,22 @@ import { email } from "@simplesight/observability";
 import {
   buyDomain,
   connectCustomDomain,
+  createHostingCheckout,
   goLive,
   refundAndCancel,
   searchDomain,
 } from "@simplesight/provisioning";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "simplesight.localhost";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3300").replace(/\/$/, "");
+
+/** Start the hosting subscription at go-live (Stripe when live; no-op offline). */
+export async function startHostingAction(projectId: string, plan: "monthly" | "annual" = "monthly") {
+  const to = await getProjectEmail(projectId);
+  const back = `${APP_URL}/dashboard/${projectId}/go-live`;
+  const session = await createHostingCheckout({ email: to ?? "", plan, successUrl: back, cancelUrl: back });
+  return { ok: true as const, url: session?.url ?? null };
+}
 
 async function notifyLive(projectId: string, domain: string) {
   try {

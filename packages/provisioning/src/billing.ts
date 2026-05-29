@@ -15,15 +15,15 @@ async function stripe() {
 
 export interface CheckoutInput {
   email: string;
-  plan: 'monthly' | 'annual';
+  plan?: 'monthly' | 'annual';
   successUrl: string;
   cancelUrl: string;
 }
 
 /**
- * Create a Checkout session for the one-time build fee plus the chosen hosting
- * subscription. Returns the URL to redirect the buyer to. Offline returns null
- * (the caller then runs the instant-purchase path).
+ * Purchase = the ONE-TIME build fee only (mode: 'payment'). Hosting is a separate
+ * subscription started at go-live, after the customer picks a design — see
+ * `createHostingCheckout`. Offline returns null (caller runs instant-purchase).
  */
 export async function createCheckoutSession(input: CheckoutInput): Promise<{ url: string } | null> {
   if (!isBillingLive()) {
@@ -31,27 +31,54 @@ export async function createCheckoutSession(input: CheckoutInput): Promise<{ url
     return null;
   }
   const buildFee = process.env.STRIPE_PRICE_BUILD_FEE;
-  const hosting =
-    input.plan === 'annual'
-      ? process.env.STRIPE_PRICE_HOSTING_ANNUAL
-      : process.env.STRIPE_PRICE_HOSTING_MONTHLY;
+  const s = await stripe();
+  const session = await s.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: input.email,
+    line_items: buildFee ? [{ price: buildFee, quantity: 1 }] : [],
+    success_url: input.successUrl,
+    cancel_url: input.cancelUrl,
+    payment_intent_data: { metadata: { product: 'simplesight', kind: 'build_fee' } },
+  });
+  return session.url ? { url: session.url } : null;
+}
+
+export interface HostingCheckoutInput {
+  email: string;
+  plan: 'monthly' | 'annual';
+  successUrl: string;
+  cancelUrl: string;
+  customerId?: string;
+}
+
+/**
+ * Hosting subscription checkout — created at GO-LIVE, once the customer has
+ * chosen a design. Offline returns null (the go-live flow proceeds without it).
+ */
+export async function createHostingCheckout(input: HostingCheckoutInput): Promise<{ url: string } | null> {
+  if (!isBillingLive()) {
+    logger.info('billing.offline: skipping hosting subscription', { email: input.email, plan: input.plan });
+    return null;
+  }
+  const hosting = input.plan === 'annual' ? process.env.STRIPE_PRICE_HOSTING_ANNUAL : process.env.STRIPE_PRICE_HOSTING_MONTHLY;
+  if (!hosting) return null;
   const s = await stripe();
   const session = await s.checkout.sessions.create({
     mode: 'subscription',
-    customer_email: input.email,
-    line_items: [
-      ...(buildFee ? [{ price: buildFee, quantity: 1 }] : []),
-      ...(hosting ? [{ price: hosting, quantity: 1 }] : []),
-    ],
+    ...(input.customerId ? { customer: input.customerId } : { customer_email: input.email }),
+    line_items: [{ price: hosting, quantity: 1 }],
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
-    subscription_data: { metadata: { product: 'simplesight' } },
+    subscription_data: { metadata: { product: 'simplesight', kind: 'hosting' } },
   });
   return session.url ? { url: session.url } : null;
 }
 
 export interface VerifiedEvent {
   type: string;
+  /** Checkout mode: 'payment' = build fee (create the project); 'subscription' = hosting. */
+  mode?: 'payment' | 'subscription';
+  kind?: string; // metadata.kind: 'build_fee' | 'hosting'
   email?: string;
   stripeCustomerId?: string;
   paymentIntentId?: string;
@@ -72,6 +99,8 @@ export async function constructWebhookEvent(
     const session = event.data.object as Record<string, any>;
     return {
       type: event.type,
+      mode: session.mode === 'subscription' ? 'subscription' : 'payment',
+      kind: session.metadata?.kind ?? session.subscription_data?.metadata?.kind,
       email: session.customer_email ?? session.customer_details?.email,
       stripeCustomerId: typeof session.customer === 'string' ? session.customer : undefined,
       paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
