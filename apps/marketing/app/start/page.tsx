@@ -2,9 +2,29 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { IntakeForm } from "./intake-form";
 
+const START_TITLE = "Start your website — Simple Site";
+const START_DESC = "Tell us about your business. Three custom design concepts within 24 hours.";
+
 export const metadata: Metadata = {
-  title: "Start your website — Simple Site",
-  description: "Tell us about your business. Three custom design concepts within 24 hours.",
+  title: START_TITLE,
+  description: START_DESC,
+  alternates: { canonical: "/start" },
+  // Define openGraph here (shallow-overrides root) so social shares of /start show
+  // its own title — re-declare the image so it isn't dropped by the override.
+  openGraph: {
+    title: START_TITLE,
+    description: START_DESC,
+    url: "/start",
+    siteName: "Simple Site",
+    type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Simple Site" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: START_TITLE,
+    description: START_DESC,
+    images: ["/twitter-image"],
+  },
 };
 
 export default function StartPage() {
