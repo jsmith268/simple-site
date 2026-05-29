@@ -31,3 +31,15 @@ offline-verifiable improvements.
 
 Implement in order, commit + verify each (typecheck/build + live offline curl where possible).
 Continue until 04:49, then restore cc-watchdog defaults and write the final summary.
+
+## Status — round-2 + round-3 shipped & verified (~03:45)
+
+- **NW5 ✅** per-page SEO (own title/description + canonical) — verified (home vs /about).
+- **NW6 ✅** branded 404 + real 404 on unknown slugs + noindex preview + security headers — verified live.
+- **NW7 ✅** sitemap `<lastmod>` (from version history) + BreadcrumbList JSON-LD — verified.
+- **NW8 ✅** admin fleet analytics (cross-tenant reach) — verified live.
+- **NW9 ✅** FAQPage structured data from faq blocks — verified (4 Q&A on reeds).
+- **NW10 ✅** LocalBusiness enriched with makesOffer (services) + email — verified.
+
+Full workspace `pnpm -r typecheck` clean; portal/renderer/marketing all build. Test data
+seeded during verification was removed (.data restored to pre-session state).
