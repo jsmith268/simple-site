@@ -43,24 +43,46 @@ export function siteJsonLd(spec: SiteSpec, url: string): string {
   return JSON.stringify({ "@context": "https://schema.org", "@graph": [website, org] });
 }
 
-/** OpenGraph + canonical metadata for a tenant page. */
-export function siteMetadata(spec: SiteSpec, url: string): Metadata {
-  const title = spec.seo?.defaultTitle ?? spec.brand.name;
-  const description = spec.seo?.defaultDescription ?? spec.brand.tagline;
-  // Brand-generated 1200×630 cards produced by the colocated opengraph-image.tsx /
-  // twitter-image.tsx routes. Referenced explicitly (not via the file-convention
-  // auto-injection) because this page's generateMetadata defines `openGraph`, which
-  // shallow-overrides the parent segment's file-based image.
-  const ogImage = `${url}/opengraph-image`;
-  const twImage = `${url}/twitter-image`;
+/** Find the page matching a slug ('' = home). */
+function findPage(spec: SiteSpec, slug: string): SiteSpec["pages"][number] | undefined {
+  const norm = slug.replace(/^\/+|\/+$/g, "");
+  return spec.pages.find((p) => (p.slug ?? "").replace(/^\/+|\/+$/g, "") === norm);
+}
+
+/**
+ * Per-page OpenGraph + canonical metadata. Uses the matched page's own
+ * `seo.title`/`seo.description` when present, falling back to the site defaults
+ * — so every page gets a distinct, accurate title/description and canonical.
+ * `baseUrl` is the tenant root; `slug` is the in-site path ('' = home).
+ */
+export function pageMetadata(spec: SiteSpec, baseUrl: string, slug = ""): Metadata {
+  const page = findPage(spec, slug);
+  const isHome = !slug.replace(/^\/+|\/+$/g, "");
+  const siteTitle = spec.seo?.defaultTitle ?? spec.brand.name;
+  const siteDesc = spec.seo?.defaultDescription ?? spec.brand.tagline;
+  const title =
+    page?.seo?.title ??
+    (isHome
+      ? siteTitle
+      : page?.title
+        ? `${page.title} · ${spec.brand.name}`
+        : siteTitle);
+  const description = page?.seo?.description ?? siteDesc;
+  const pageUrl = isHome ? baseUrl : `${baseUrl}/${slug.replace(/^\/+|\/+$/g, "")}`;
+  // Brand-generated 1200×630 cards from the colocated opengraph-image.tsx /
+  // twitter-image.tsx routes. Referenced explicitly (not via file-convention
+  // auto-injection) because this segment's generateMetadata defines `openGraph`,
+  // which shallow-overrides the parent segment's file-based image.
+  const ogImage = `${baseUrl}/opengraph-image`;
+  const twImage = `${baseUrl}/twitter-image`;
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: pageUrl },
     openGraph: {
       title,
       description: description ?? undefined,
-      url,
+      url: pageUrl,
       siteName: spec.brand.name,
       type: "website",
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
@@ -72,4 +94,9 @@ export function siteMetadata(spec: SiteSpec, url: string): Metadata {
       images: [twImage],
     },
   };
+}
+
+/** Site-level metadata (home). Thin wrapper kept for callers that don't have a slug. */
+export function siteMetadata(spec: SiteSpec, url: string): Metadata {
+  return pageMetadata(spec, url, "");
 }

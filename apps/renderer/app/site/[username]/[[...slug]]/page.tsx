@@ -2,7 +2,7 @@ import { SitePage } from "@simplesight/blocks";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prefixLinks } from "@/lib/links";
-import { siteJsonLd, siteMetadata, tenantUrl } from "@/lib/seo";
+import { pageMetadata, siteJsonLd, tenantUrl } from "@/lib/seo";
 import { loadSiteSpec } from "@/lib/tenant";
 import { HitBeacon } from "./hit-beacon";
 
@@ -13,10 +13,10 @@ export async function generateMetadata({
 }: {
   params: Promise<Params>;
 }): Promise<Metadata> {
-  const { username } = await params;
+  const { username, slug } = await params;
   const spec = await loadSiteSpec(username);
   if (!spec) return { title: "Not found" };
-  return siteMetadata(spec, tenantUrl(username));
+  return pageMetadata(spec, tenantUrl(username), (slug ?? []).join("/"));
 }
 
 export default async function TenantPage({
