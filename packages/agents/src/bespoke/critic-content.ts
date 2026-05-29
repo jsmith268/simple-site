@@ -18,9 +18,11 @@ export async function runContentCritic(opts: {
   const model = opts.model ?? MODELS.opus;
   const system = `You are an award-winning website copy editor reviewing the VISIBLE TEXT of one web page for an informational small-business website. Judge it as publish-ready marketing copy.
 
-Catch EVERY: grammar error; idiom / natural-English error (e.g. "roasted on Alberta" must be "roasted in Alberta"); awkward or unidiomatic phrasing; inconsistent or off-brand voice; placeholder/lorem/obviously-fabricated content; unclear or empty messaging; typos; punctuation/spacing issues. Quote the exact offending text in each finding.
+Catch EVERY: grammar error; idiom / natural-English error (e.g. "roasted on Alberta" must be "roasted in Alberta"); awkward or unidiomatic phrasing; inconsistent or off-brand voice; placeholder/lorem/obviously-fabricated content; unclear or empty messaging; typos; punctuation/spacing issues.
 
-Grammar and idiom errors are BLOCKING (severity "block"). Output ONLY one JSON object.`;
+CRITICAL — RAW ESCAPE SEQUENCES: if any literal escape shows up as visible text — e.g. "\\u2014", "\\u2019", "\\u2013", "\\x..", "&#x2014;", or a stray "/u2019" — that is a BLOCKING rendering defect (the real character —, ', – should appear instead). Flag EVERY occurrence on EVERY page; quote it.
+
+Quote the exact offending text in each finding. Grammar, idiom, and raw-escape errors are BLOCKING (severity "block"). Output ONLY one JSON object.`;
 
   const shape = `Return CriticReport JSON:
 {

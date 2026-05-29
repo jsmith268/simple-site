@@ -38,7 +38,7 @@ export {
   type OnboardingQuestion,
 } from './bespoke/profile';
 export { generateSiteIA, validateSiteIA, componentsUsed } from './bespoke/ia';
-export { parseDelimitedFiles, parseSingleFile } from './bespoke/parse';
+export { parseDelimitedFiles, parseSingleFile, deLiteralizeUnicode } from './bespoke/parse';
 export { scaffoldNextApp, writeGeneratedFiles, type ScaffoldOptions } from './bespoke/scaffold';
 export {
   componentNameFor,
