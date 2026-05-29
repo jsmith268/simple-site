@@ -32,3 +32,12 @@ code, typecheck, `next build`, offline runs.
 
 Implement in order, commit each, typecheck + build to verify. Continue until 04:49, then
 restore the cc-watchdog and write the final summary.
+
+## Status — all four shipped & verified (~02:35)
+
+- **NW1 ✅** favicon + OG/Twitter cards (next/og) — verified live (valid PNGs, all meta tags).
+- **NW2 ✅** per-tenant robots.txt + sitemap.xml — verified live (200, content-types).
+- **NW3 ✅** cookieless analytics + dashboard widget — verified live (5 hits → dashboard 5/sparkline/top-pages).
+- **NW4 ✅** version history snapshot + restore — verified (panel renders, restore reuses saveSiteSpec).
+
+Full workspace typecheck + portal/renderer/marketing builds all green. Round-2 plan in `docs/12`.
