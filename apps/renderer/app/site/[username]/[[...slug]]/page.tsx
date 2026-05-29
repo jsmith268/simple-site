@@ -2,7 +2,7 @@ import { SitePage } from "@simplesight/blocks";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prefixLinks } from "@/lib/links";
-import { breadcrumbJsonLd, pageMetadata, siteJsonLd, tenantUrl } from "@/lib/seo";
+import { breadcrumbJsonLd, faqJsonLd, pageMetadata, siteJsonLd, tenantUrl } from "@/lib/seo";
 import { loadSiteSpec } from "@/lib/tenant";
 import { HitBeacon } from "./hit-beacon";
 
@@ -37,6 +37,7 @@ export default async function TenantPage({
   const spec = prefixLinks(raw, `/site/${encodeURIComponent(username)}`);
   const inSitePath = `/${(slug ?? []).join("/")}`;
   const crumb = breadcrumbJsonLd(raw, tenantUrl(username), slugStr);
+  const faq = faqJsonLd(raw, slugStr);
   return (
     <>
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is server-built from our own SiteSpec */}
@@ -44,6 +45,10 @@ export default async function TenantPage({
       {crumb && (
         // biome-ignore lint/security/noDangerouslySetInnerHtml: server-built BreadcrumbList from our own SiteSpec
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: crumb }} />
+      )}
+      {faq && (
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: server-built FAQPage from our own SiteSpec
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faq }} />
       )}
       <SitePage spec={spec} slug={(slug ?? []).join("/")} />
       <HitBeacon username={username} path={inSitePath} />

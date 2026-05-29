@@ -49,6 +49,40 @@ function findPage(spec: SiteSpec, slug: string): SiteSpec["pages"][number] | und
   return spec.pages.find((p) => (p.slug ?? "").replace(/^\/+|\/+$/g, "") === norm);
 }
 
+/** FAQPage JSON-LD built from any faq block on the given page. Null if none. */
+export function faqJsonLd(spec: SiteSpec, slug: string): string | null {
+  const norm = slug.replace(/^\/+|\/+$/g, "");
+  const page = findPage(spec, norm);
+  if (!page) return null;
+  const qa: { question: string; answer: string }[] = [];
+  for (const block of page.blocks) {
+    if (block.type !== "faq") continue;
+    const items = (block.props as { items?: unknown }).items;
+    if (!Array.isArray(items)) continue;
+    for (const it of items) {
+      const rec = it as { question?: unknown; answer?: unknown };
+      if (
+        typeof rec.question === "string" &&
+        typeof rec.answer === "string" &&
+        rec.question.trim() &&
+        rec.answer.trim()
+      ) {
+        qa.push({ question: rec.question.trim(), answer: rec.answer.trim() });
+      }
+    }
+  }
+  if (!qa.length) return null;
+  return JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: qa.map((x) => ({
+      "@type": "Question",
+      name: x.question,
+      acceptedAnswer: { "@type": "Answer", text: x.answer },
+    })),
+  });
+}
+
 /** BreadcrumbList JSON-LD for an inner page (Home → page). Null on the home page. */
 export function breadcrumbJsonLd(spec: SiteSpec, baseUrl: string, slug: string): string | null {
   const norm = slug.replace(/^\/+|\/+$/g, "");
