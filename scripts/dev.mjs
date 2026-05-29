@@ -1,47 +1,54 @@
 #!/usr/bin/env node
 /**
- * One-command local dev for the SimpleSight walkthrough.
- *   pnpm dev:3000
- * Starts the portal on :3000 and the renderer on :3001, fully offline
- * (deterministic, no external services), sharing one data dir so the portal's
- * generated variants render in the renderer's preview iframes. Ctrl+C stops both.
+ * One-command local dev. `pnpm dev` starts all three apps on the 3300 range:
+ *   • Portal   → http://localhost:3300   (the app you walk through)
+ *   • Renderer → http://localhost:3301   (serves the preview iframes)
+ *   • Marketing→ http://localhost:3302
+ *
+ * Defaults to offline (deterministic, no external services) and a shared local
+ * data store so the portal's generated variants render in the renderer. Every
+ * default is overridable via env (e.g. SIMPLESIGHT_OFFLINE=0 pnpm dev). Ctrl+C
+ * stops everything. Anchor elsewhere with `pnpm dev -- 4300`.
  */
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const dataDir = join(root, ".data");
+const dataDir = process.env.SIMPLESIGHT_DATA_DIR ?? join(root, ".data");
 
-// Allow `pnpm dev:3000 -- 4000` (or PORT=4000) to anchor at a different base port.
-const basePort = Number(process.argv[2] || process.env.PORT || 3000);
-const PORTAL_PORT = basePort;
-const RENDERER_PORT = basePort + 1;
+// Base port: arg → env → 3300. Apps fan out from there (3300/3301/3302).
+const basePort = Number(process.argv[2] || process.env.DEV_BASE_PORT || 3300);
+const PORTAL = basePort; // 3300
+const RENDERER = basePort + 1; // 3301
+const MARKETING = basePort + 2; // 3302
 
 const baseEnv = {
   ...process.env,
-  SIMPLESIGHT_OFFLINE: "1", // deterministic offline (no Anthropic / no credits needed)
-  DATABASE_URL: "", // force the local file store, not the (un-migrated) Neon DB
-  SIMPLESIGHT_DATA_DIR: dataDir, // shared between both apps
+  SIMPLESIGHT_OFFLINE: process.env.SIMPLESIGHT_OFFLINE ?? "1",
+  DATABASE_URL: process.env.DATABASE_URL ?? "",
+  SIMPLESIGHT_DATA_DIR: dataDir,
   NEXT_TELEMETRY_DISABLED: "1",
 };
 
 const apps = [
-  { name: "renderer", cwd: join(root, "apps/renderer"), port: RENDERER_PORT, color: "\x1b[36m" },
+  { name: "renderer", dir: "apps/renderer", port: RENDERER, color: "\x1b[36m" },
   {
     name: "portal",
-    cwd: join(root, "apps/portal"),
-    port: PORTAL_PORT,
+    dir: "apps/portal",
+    port: PORTAL,
     color: "\x1b[35m",
-    env: { NEXT_PUBLIC_RENDERER_URL: `http://localhost:${RENDERER_PORT}` },
+    env: { NEXT_PUBLIC_RENDERER_URL: `http://localhost:${RENDERER}` },
   },
+  { name: "marketing", dir: "apps/marketing", port: MARKETING, color: "\x1b[33m" },
 ];
 
 const procs = [];
 for (const app of apps) {
-  const bin = join(app.cwd, "node_modules/.bin/next");
+  const cwd = join(root, app.dir);
+  const bin = join(cwd, "node_modules/.bin/next");
   const child = spawn(bin, ["dev", "-p", String(app.port)], {
-    cwd: app.cwd,
+    cwd,
     env: { ...baseEnv, ...(app.env ?? {}) },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -52,7 +59,8 @@ for (const app of apps) {
   };
   child.stdout.on("data", prefix);
   child.stderr.on("data", prefix);
-  child.on("exit", (code) => console.log(`${tag}exited (${code}). Stopping the other server…`) || shutdown());
+  // A single app crashing shouldn't take down the others (mirrors turbo dev).
+  child.on("exit", (code) => console.log(`${tag}exited (code ${code}).`));
   procs.push(child);
 }
 
@@ -71,8 +79,9 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 console.log(
-  `\n  \x1b[1mSimpleSight\x1b[0m — local walkthrough (offline)\n` +
-    `  ▸ Portal:   \x1b[4mhttp://localhost:${PORTAL_PORT}\x1b[0m   ← start here\n` +
-    `  ▸ Renderer: http://localhost:${RENDERER_PORT}   (serves previews)\n` +
-    `  Two design "studios" are simulated offline. Ctrl+C to stop.\n`,
+  `\n  \x1b[1mSimpleSight\x1b[0m — local dev (offline)\n` +
+    `  ▸ Portal:    \x1b[4mhttp://localhost:${PORTAL}\x1b[0m   ← start here\n` +
+    `  ▸ Renderer:  http://localhost:${RENDERER}   (previews)\n` +
+    `  ▸ Marketing: http://localhost:${MARKETING}\n` +
+    `  Ctrl+C to stop. (SIMPLESIGHT_OFFLINE=0 pnpm dev for live AI.)\n`,
 );

@@ -8,8 +8,8 @@
   },
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev --filter=@simplesight/marketing --filter=@simplesight/portal --filter=@simplesight/renderer",
-    "dev:3000": "node scripts/dev.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:turbo": "turbo dev --filter=@simplesight/marketing --filter=@simplesight/portal --filter=@simplesight/renderer",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
