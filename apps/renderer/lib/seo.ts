@@ -47,6 +47,12 @@ export function siteJsonLd(spec: SiteSpec, url: string): string {
 export function siteMetadata(spec: SiteSpec, url: string): Metadata {
   const title = spec.seo?.defaultTitle ?? spec.brand.name;
   const description = spec.seo?.defaultDescription ?? spec.brand.tagline;
+  // Brand-generated 1200×630 cards produced by the colocated opengraph-image.tsx /
+  // twitter-image.tsx routes. Referenced explicitly (not via the file-convention
+  // auto-injection) because this page's generateMetadata defines `openGraph`, which
+  // shallow-overrides the parent segment's file-based image.
+  const ogImage = `${url}/opengraph-image`;
+  const twImage = `${url}/twitter-image`;
   return {
     title,
     description,
@@ -57,8 +63,13 @@ export function siteMetadata(spec: SiteSpec, url: string): Metadata {
       url,
       siteName: spec.brand.name,
       type: "website",
-      ...(spec.brand.logoUrl ? { images: [{ url: spec.brand.logoUrl }] } : {}),
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
-    twitter: { card: "summary_large_image", title, description: description ?? undefined },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: description ?? undefined,
+      images: [twImage],
+    },
   };
 }
