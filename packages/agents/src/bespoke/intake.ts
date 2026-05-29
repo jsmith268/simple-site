@@ -23,6 +23,8 @@ export async function runIntakeTurn(opts: {
   collected: IntakeCollected;
   model?: string;
   onCost?: (cents: number) => void;
+  /** Operator-tuned extra guidance (from /admin/intake), appended to Avery's prompt. */
+  extraGuidance?: string;
 }): Promise<IntakeTurn> {
   const model = opts.model ?? MODELS.opus;
 
@@ -49,7 +51,7 @@ OUTPUT — each turn return ONE JSON object:
 - "suggestions": quick-reply chips (strings) or [].
 - "complete": true ONLY once you have at least name, what-they-do, category, primaryGoal, and a contact email — OR the owner told you to just build it. When complete, your message should say you're ready to build two directions.
 
-Never invent facts (stats, awards, prices). Near the end, collect a web address (a short username for username.simplesight.co).`;
+Never invent facts (stats, awards, prices). Near the end, collect a web address (a short username for username.simplesight.co).${opts.extraGuidance ? `\n\nOPERATOR GUIDANCE (apply this in addition to the above):\n${opts.extraGuidance}` : ''}`;
 
   const prompt = `Conversation so far:
 ${transcript(opts.history)}

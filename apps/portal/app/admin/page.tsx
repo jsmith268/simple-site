@@ -34,6 +34,7 @@ export default async function FleetOverviewPage() {
         <nav style={{ marginTop: 10, display: 'flex', gap: 16, fontSize: 13 }}>
           <Link href="/admin/builds">Bespoke builds</Link>
           <Link href="/admin/skills">Skills</Link>
+          <Link href="/admin/intake">Intake</Link>
         </nav>
       </header>
 
