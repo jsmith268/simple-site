@@ -56,3 +56,5 @@ export function startTrace(name: string, meta?: Record<string, unknown>): Trace 
     },
   };
 }
+
+export { sendEmail, isEmailLive, email, type EmailInput } from './notify';

@@ -9,6 +9,7 @@ import type {
 } from '@simplesight/contracts';
 import {
   getGenerationState,
+  getProjectEmail,
   getVariant,
   listRevisionItems,
   saveChecklist,
@@ -18,7 +19,7 @@ import {
 } from '@simplesight/db';
 import { MODELS } from '@simplesight/engine';
 import { isOffline } from '@simplesight/env';
-import { logger } from '@simplesight/observability';
+import { email, logger } from '@simplesight/observability';
 import type { DesignBrief } from './bespoke/brief';
 import type { ResolvedDesign } from './bespoke/validate';
 import { reviewSite } from './bespoke/review';
@@ -136,6 +137,13 @@ export async function applyRevision(projectId: string, variantId: string): Promi
   if (ok) {
     await setGenerationState(projectId, { status: 'selected', revisionCount: revision });
     await updateVariant(variantId, { previewUrl, status: 'selected' });
+    try {
+      const to = await getProjectEmail(projectId);
+      const url = `${(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3300').replace(/\/$/, '')}/studio/${projectId}`;
+      if (to) await email.changesApplied(to, url);
+    } catch (err) {
+      logger.warn('notify.changesApplied failed', { projectId, error: String(err) });
+    }
   } else {
     await setGenerationState(projectId, { status: 'selected' });
   }

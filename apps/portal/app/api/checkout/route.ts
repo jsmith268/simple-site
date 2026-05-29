@@ -1,4 +1,5 @@
 import { createPurchasedProject } from "@simplesight/db";
+import { email } from "@simplesight/observability";
 import { createCheckoutSession } from "@simplesight/provisioning";
 import { NextResponse } from "next/server";
 
@@ -26,5 +27,6 @@ export async function POST(req: Request) {
   }
   // Offline / no Stripe: create the project immediately.
   const { projectId } = await createPurchasedProject({ email: body.email, amountCents: 0 });
+  await email.purchaseReceived(body.email).catch(() => {});
   return NextResponse.json({ redirect: `/onboarding/${projectId}` });
 }

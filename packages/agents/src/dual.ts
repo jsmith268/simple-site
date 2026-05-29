@@ -13,6 +13,7 @@ import {
   createVariant,
   getGenerationState,
   getIntake,
+  getProjectEmail,
   saveVariantSpec,
   setGenerationState,
   setProjectStatus,
@@ -21,7 +22,7 @@ import {
 } from '@simplesight/db';
 import { DUEL_MODELS, studioLabelFor } from '@simplesight/engine';
 import { isOffline } from '@simplesight/env';
-import { logger } from '@simplesight/observability';
+import { email, logger } from '@simplesight/observability';
 import { pickPlaybook } from '@simplesight/skills';
 import { presetByFamily } from '@simplesight/theme';
 import { assembleSite } from './assemble';
@@ -52,6 +53,11 @@ function rendererBase(): string {
 
 function variantPreviewUrl(variantId: string): string {
   return `${rendererBase()}/preview/variant/${encodeURIComponent(variantId)}`;
+}
+
+/** The customer portal base (for email deep-links to the studio). */
+function appBase(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3300').replace(/\/$/, '');
 }
 
 /**
@@ -191,6 +197,13 @@ export async function runRound(projectId: string, feedback?: RegenFeedback): Pro
 
   await setGenerationState(projectId, { status: 'comparing' });
   await setProjectStatus(projectId, 'preview');
+  // Let the customer know their two directions are ready (offline → just logs).
+  try {
+    const to = await getProjectEmail(projectId);
+    if (to) await email.designsReady(to, `${appBase()}/studio/${projectId}`);
+  } catch (err) {
+    logger.warn('notify.designsReady failed', { projectId, error: String(err) });
+  }
   const fresh = await variantsForRound(projectId, round);
   return { round, variants: fresh };
 }

@@ -2,11 +2,13 @@
 
 import {
   getProject,
+  getProjectEmail,
   listConnectionSteps,
   listDomains,
   setProjectStatus,
   unpublishSite,
 } from "@simplesight/db";
+import { email } from "@simplesight/observability";
 import {
   buyDomain,
   connectCustomDomain,
@@ -16,6 +18,15 @@ import {
 } from "@simplesight/provisioning";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "simplesight.localhost";
+
+async function notifyLive(projectId: string, domain: string) {
+  try {
+    const to = await getProjectEmail(projectId);
+    if (to) await email.goingLive(to, domain, `https://${domain}`);
+  } catch {
+    /* non-fatal */
+  }
+}
 
 export async function loadGoLive(projectId: string) {
   const [project, domains, steps] = await Promise.all([
@@ -33,7 +44,9 @@ export async function loadGoLive(projectId: string) {
 export async function goLiveSubdomainAction(projectId: string) {
   const project = await getProject(projectId);
   if (!project?.username) return { ok: false, error: "Reserve a username first." };
-  const result = await goLive(projectId, `${project.username}.${ROOT}`, "subdomain");
+  const domain = `${project.username}.${ROOT}`;
+  const result = await goLive(projectId, domain, "subdomain");
+  if (result.live) await notifyLive(projectId, domain);
   return { ok: result.live, ...result };
 }
 
@@ -45,7 +58,9 @@ export async function connectDomainAction(projectId: string, domain: string) {
 
 /** After the customer sets DNS, verify + go live on the custom domain. */
 export async function goLiveCustomAction(projectId: string, domain: string) {
-  const result = await goLive(projectId, domain.trim().toLowerCase(), "custom");
+  const d = domain.trim().toLowerCase();
+  const result = await goLive(projectId, d, "custom");
+  if (result.live) await notifyLive(projectId, d);
   return { ok: result.live, ...result };
 }
 
@@ -70,5 +85,11 @@ export async function refundAction(projectId: string) {
   await refundAndCancel({});
   await unpublishSite(projectId);
   await setProjectStatus(projectId, "refunded");
+  try {
+    const to = await getProjectEmail(projectId);
+    if (to) await email.refunded(to);
+  } catch {
+    /* non-fatal */
+  }
   return { ok: true };
 }

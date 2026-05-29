@@ -99,6 +99,22 @@ export async function getProject(projectId: string): Promise<ProjectRecord | und
   };
 }
 
+/** The customer email for a project (for transactional notifications). */
+export async function getProjectEmail(projectId: string): Promise<string | undefined> {
+  if (!hasDatabase()) {
+    const p = store.findOne('projects', (r) => r.id === projectId);
+    if (!p) return undefined;
+    return store.findOne('customers', (r) => r.id === p.customerId)?.email;
+  }
+  const rows = await db
+    .select({ email: customers.email })
+    .from(projects)
+    .innerJoin(customers, eq(projects.customerId, customers.id))
+    .where(eq(projects.id, projectId))
+    .limit(1);
+  return rows[0]?.email;
+}
+
 export async function setProjectStatus(projectId: string, status: string): Promise<void> {
   if (!hasDatabase()) {
     store.update('projects', (r) => r.id === projectId, { status });
