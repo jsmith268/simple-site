@@ -8,11 +8,30 @@ const inter = Inter({
   display: "swap",
 });
 
+const TITLE = "Simple Site — Custom websites for small businesses, from $1,248";
+const DESCRIPTION =
+  "We design and build distinctive, conversion-focused websites for service businesses. Transparent pricing. Real designers. Live in under 72 hours. Launch promo: 50% off.";
+
 export const metadata: Metadata = {
-  title: "Simple Site — Custom websites for small businesses, from $1,248",
-  description:
-    "We design and build distinctive, conversion-focused websites for service businesses. Transparent pricing. Real designers. Live in under 72 hours. Launch promo: 50% off.",
+  title: TITLE,
+  description: DESCRIPTION,
   metadataBase: new URL("https://simplesite.co"),
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+    siteName: "Simple Site",
+    type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Simple Site" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/twitter-image"],
+  },
 };
 
 export const viewport: Viewport = {
