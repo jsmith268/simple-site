@@ -1,136 +1,162 @@
 import { logger } from '@simplesight/observability';
+import { Environment, EventName, Paddle } from '@paddle/paddle-node-sdk';
 
 /**
- * Stripe wrapper. Live when STRIPE_SECRET_KEY is set; otherwise offline mode
- * (no SDK calls), so the purchase → onboarding flow is fully testable locally.
+ * Paddle (merchant of record) wrapper. Live when PADDLE_API_KEY is set; otherwise
+ * offline mode (no SDK calls), so purchase → onboarding is fully testable locally.
+ *
+ * Checkout itself is CLIENT-SIDE (Paddle.js overlay, see apps/portal/app/buy).
+ * The server's job is the source of truth: verifying webhooks and issuing
+ * refunds/cancellations. There is no server-created checkout session.
  */
 export function isBillingLive(): boolean {
-  return !!process.env.STRIPE_SECRET_KEY;
+  return !!process.env.PADDLE_API_KEY;
 }
 
-async function stripe() {
-  const { default: Stripe } = await import('stripe');
-  return new Stripe(process.env.STRIPE_SECRET_KEY as string);
+function paddleEnv(): Environment {
+  return process.env.PADDLE_ENV === 'production' ? Environment.production : Environment.sandbox;
 }
 
-export interface CheckoutInput {
-  email: string;
-  plan?: 'monthly' | 'annual';
-  successUrl: string;
-  cancelUrl: string;
+let _paddle: Paddle | null = null;
+function paddle(): Paddle {
+  if (!_paddle) _paddle = new Paddle(process.env.PADDLE_API_KEY as string, { environment: paddleEnv() });
+  return _paddle;
 }
 
-/**
- * Purchase = the ONE-TIME build fee only (mode: 'payment'). Hosting is a separate
- * subscription started at go-live, after the customer picks a design — see
- * `createHostingCheckout`. Offline returns null (caller runs instant-purchase).
- */
-export async function createCheckoutSession(input: CheckoutInput): Promise<{ url: string } | null> {
-  if (!isBillingLive()) {
-    logger.info('billing.offline: skipping Stripe checkout', { email: input.email });
-    return null;
-  }
-  const buildFee = process.env.STRIPE_PRICE_BUILD_FEE;
-  const s = await stripe();
-  const session = await s.checkout.sessions.create({
-    mode: 'payment',
-    customer_email: input.email,
-    line_items: buildFee ? [{ price: buildFee, quantity: 1 }] : [],
-    success_url: input.successUrl,
-    cancel_url: input.cancelUrl,
-    payment_intent_data: { metadata: { product: 'simplesight', kind: 'build_fee' } },
-  });
-  return session.url ? { url: session.url } : null;
-}
+// Price ids identify which product a transaction/subscription line item is.
+const buildFeePrice = () => process.env.PADDLE_PRICE_BUILD_FEE ?? '';
+const hostingMonthlyPrice = () => process.env.PADDLE_PRICE_HOSTING_MONTHLY ?? '';
+const hostingAnnualPrice = () => process.env.PADDLE_PRICE_HOSTING_ANNUAL ?? '';
 
-export interface HostingCheckoutInput {
-  email: string;
-  plan: 'monthly' | 'annual';
-  successUrl: string;
-  cancelUrl: string;
-  customerId?: string;
+function classifyPrices(priceIds: string[]): 'build_fee' | 'hosting' | 'other' {
+  if (buildFeePrice() && priceIds.includes(buildFeePrice())) return 'build_fee';
+  if (priceIds.includes(hostingMonthlyPrice()) || priceIds.includes(hostingAnnualPrice())) return 'hosting';
+  return 'other';
 }
-
-/**
- * Hosting subscription checkout — created at GO-LIVE, once the customer has
- * chosen a design. Offline returns null (the go-live flow proceeds without it).
- */
-export async function createHostingCheckout(input: HostingCheckoutInput): Promise<{ url: string } | null> {
-  if (!isBillingLive()) {
-    logger.info('billing.offline: skipping hosting subscription', { email: input.email, plan: input.plan });
-    return null;
-  }
-  const hosting = input.plan === 'annual' ? process.env.STRIPE_PRICE_HOSTING_ANNUAL : process.env.STRIPE_PRICE_HOSTING_MONTHLY;
-  if (!hosting) return null;
-  const s = await stripe();
-  const session = await s.checkout.sessions.create({
-    mode: 'subscription',
-    ...(input.customerId ? { customer: input.customerId } : { customer_email: input.email }),
-    line_items: [{ price: hosting, quantity: 1 }],
-    success_url: input.successUrl,
-    cancel_url: input.cancelUrl,
-    subscription_data: { metadata: { product: 'simplesight', kind: 'hosting' } },
-  });
-  return session.url ? { url: session.url } : null;
+function planFromPrices(priceIds: string[]): 'monthly' | 'annual' | undefined {
+  if (hostingAnnualPrice() && priceIds.includes(hostingAnnualPrice())) return 'annual';
+  if (hostingMonthlyPrice() && priceIds.includes(hostingMonthlyPrice())) return 'monthly';
+  return undefined;
 }
 
 export interface VerifiedEvent {
   type: string;
-  /** Checkout mode: 'payment' = build fee (create the project); 'subscription' = hosting. */
-  mode?: 'payment' | 'subscription';
-  kind?: string; // metadata.kind: 'build_fee' | 'hosting'
+  /** Paddle event id — persist this to make webhook handling idempotent. */
+  eventId: string;
+  kind?: 'build_fee' | 'hosting' | 'other';
+  /** From Paddle.js customData — the buyer's Clerk user id. */
+  clerkUserId?: string;
+  /** From Paddle.js customData — the project a hosting subscription belongs to. */
+  projectId?: string;
   email?: string;
-  stripeCustomerId?: string;
-  paymentIntentId?: string;
+  paddleCustomerId?: string;
+  transactionId?: string;
   amountCents?: number;
   subscriptionId?: string;
+  plan?: 'monthly' | 'annual';
+  status?: string;
+  adjustmentId?: string;
+  currentPeriodEnd?: string;
 }
 
-/** Verify a webhook signature and normalize the events we care about. */
+/**
+ * Verify a Paddle webhook (HMAC-SHA256 of `ts:body` against the pdl_ntfset_
+ * secret, with replay protection) and normalize the events we care about.
+ * Returns null only when billing is offline (no key). A bad signature throws.
+ */
 export async function constructWebhookEvent(
   rawBody: string,
   signature: string,
 ): Promise<VerifiedEvent | null> {
   if (!isBillingLive()) return null;
-  const secret = process.env.STRIPE_WEBHOOK_SECRET as string;
-  const s = await stripe();
-  const event = s.webhooks.constructEvent(rawBody, signature, secret);
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Record<string, any>;
-    return {
-      type: event.type,
-      mode: session.mode === 'subscription' ? 'subscription' : 'payment',
-      kind: session.metadata?.kind ?? session.subscription_data?.metadata?.kind,
-      email: session.customer_email ?? session.customer_details?.email,
-      stripeCustomerId: typeof session.customer === 'string' ? session.customer : undefined,
-      paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
-      amountCents: session.amount_total ?? undefined,
-      subscriptionId: typeof session.subscription === 'string' ? session.subscription : undefined,
-    };
+  const secret = process.env.PADDLE_WEBHOOK_SECRET as string;
+  const event = await paddle().webhooks.unmarshal(rawBody, secret, signature);
+  if (!event) return null;
+  const data = event.data as Record<string, any>;
+  const base: VerifiedEvent = { type: event.eventType, eventId: event.eventId };
+
+  switch (event.eventType) {
+    case EventName.TransactionCompleted: {
+      const priceIds: string[] = (data.items ?? []).map((i: any) => i.price?.id).filter(Boolean);
+      return {
+        ...base,
+        kind: classifyPrices(priceIds),
+        clerkUserId: data.customData?.clerkUserId,
+        projectId: data.customData?.projectId,
+        email: data.customData?.email,
+        paddleCustomerId: data.customerId ?? undefined,
+        transactionId: data.id,
+        subscriptionId: data.subscriptionId ?? undefined,
+        amountCents: data.details?.totals?.total ? Number(data.details.totals.total) : undefined,
+      };
+    }
+    case EventName.SubscriptionCreated:
+    case EventName.SubscriptionUpdated:
+    case EventName.SubscriptionCanceled: {
+      const priceIds: string[] = (data.items ?? []).map((i: any) => i.price?.id).filter(Boolean);
+      return {
+        ...base,
+        kind: 'hosting',
+        clerkUserId: data.customData?.clerkUserId,
+        projectId: data.customData?.projectId,
+        paddleCustomerId: data.customerId ?? undefined,
+        subscriptionId: data.id,
+        status: data.status,
+        plan: planFromPrices(priceIds),
+        currentPeriodEnd: data.currentBillingPeriod?.endsAt ?? undefined,
+      };
+    }
+    case EventName.AdjustmentCreated:
+    case EventName.AdjustmentUpdated: {
+      return {
+        ...base,
+        adjustmentId: data.id,
+        transactionId: data.transactionId ?? undefined,
+        status: data.status,
+      };
+    }
+    default:
+      return base;
   }
-  return { type: event.type };
 }
 
+/** Hosted Paddle customer portal (manage / cancel subscription, update card). */
 export async function createBillingPortalSession(
   customerId: string,
-  returnUrl: string,
+  subscriptionIds: string[] = [],
 ): Promise<{ url: string } | null> {
   if (!isBillingLive()) return null;
-  const s = await stripe();
-  const session = await s.billingPortal.sessions.create({ customer: customerId, return_url: returnUrl });
-  return { url: session.url };
+  const session = await paddle().customerPortalSessions.create(customerId, subscriptionIds);
+  return { url: session.urls.general.overview };
 }
 
-/** Refund the build fee and cancel hosting (the 30-day money-back guarantee). */
+/**
+ * Refund the build fee (full) and cancel hosting immediately — the 30-day
+ * money-back guarantee. Returns the adjustment id (live refunds start as
+ * `pending_approval` and confirm via the adjustment.updated webhook).
+ */
 export async function refundAndCancel(opts: {
-  paymentIntentId?: string;
+  transactionId?: string;
   subscriptionId?: string;
-}): Promise<void> {
+  reason?: string;
+}): Promise<{ adjustmentId?: string }> {
   if (!isBillingLive()) {
     logger.info('billing.offline: would refund + cancel', opts);
-    return;
+    return {};
   }
-  const s = await stripe();
-  if (opts.paymentIntentId) await s.refunds.create({ payment_intent: opts.paymentIntentId });
-  if (opts.subscriptionId) await s.subscriptions.cancel(opts.subscriptionId);
+  const p = paddle();
+  let adjustmentId: string | undefined;
+  if (opts.transactionId) {
+    const adj = await p.adjustments.create({
+      action: 'refund',
+      type: 'full',
+      reason: opts.reason ?? '30-day money-back guarantee',
+      transactionId: opts.transactionId,
+    });
+    adjustmentId = adj.id;
+  }
+  if (opts.subscriptionId) {
+    await p.subscriptions.cancel(opts.subscriptionId, { effectiveFrom: 'immediately' });
+  }
+  return { adjustmentId };
 }

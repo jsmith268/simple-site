@@ -5,17 +5,19 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "biome check .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@paddle/paddle-node-sdk": "^3.8.0",
     "@simplesight/contracts": "workspace:*",
     "@simplesight/db": "workspace:*",
-    "@simplesight/observability": "workspace:*",
     "@simplesight/env": "workspace:*",
-    "stripe": "^17.0.0"
+    "@simplesight/observability": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

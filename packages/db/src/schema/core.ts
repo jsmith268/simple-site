@@ -18,7 +18,7 @@ export const customers = pgTable('customers', {
   id: uuid('id').primaryKey().defaultRandom(),
   clerkUserId: text('clerk_user_id').unique(),
   email: text('email').notNull(),
-  stripeCustomerId: text('stripe_customer_id'),
+  paddleCustomerId: text('paddle_customer_id'),
   createdAt: now(),
 });
 
@@ -48,9 +48,9 @@ export const subscriptions = pgTable('subscriptions', {
   projectId: uuid('project_id')
     .notNull()
     .references(() => projects.id, { onDelete: 'cascade' }),
-  stripeSubscriptionId: text('stripe_subscription_id'),
+  paddleSubscriptionId: text('paddle_subscription_id').unique(),
   plan: text('plan'), // 'monthly' | 'annual'
-  status: text('status'), // stripe subscription status
+  status: text('status'), // paddle subscription status (active | canceled | past_due | paused)
   currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
   createdAt: now(),
 });
@@ -58,7 +58,8 @@ export const subscriptions = pgTable('subscriptions', {
 export const payments = pgTable('payments', {
   id: uuid('id').primaryKey().defaultRandom(),
   projectId: uuid('project_id').references(() => projects.id, { onDelete: 'set null' }),
-  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  // Unique so a replayed Paddle webhook can't create a duplicate payment/project.
+  paddleTransactionId: text('paddle_transaction_id').unique(),
   amountCents: integer('amount_cents').notNull(),
   kind: text('kind').notNull(), // 'build_fee' | 'hosting'
   createdAt: now(),
@@ -67,9 +68,18 @@ export const payments = pgTable('payments', {
 export const refunds = pgTable('refunds', {
   id: uuid('id').primaryKey().defaultRandom(),
   projectId: uuid('project_id').references(() => projects.id, { onDelete: 'set null' }),
-  stripeRefundId: text('stripe_refund_id'),
+  paddleAdjustmentId: text('paddle_adjustment_id'),
   amountCents: integer('amount_cents').notNull(),
   reason: text('reason'),
+  status: text('status'), // pending_approval | approved | rejected
+  createdAt: now(),
+});
+
+// Webhook idempotency: every Paddle event id we've already handled. The webhook
+// route no-ops if the event id is present, so retries/replays are safe.
+export const processedEvents = pgTable('processed_events', {
+  eventId: text('event_id').primaryKey(),
+  type: text('type'),
   createdAt: now(),
 });
 

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.2",
+    "@paddle/paddle-js": "^1.6.4",
     "@simplesight/agents": "workspace:*",
     "@simplesight/blocks": "workspace:*",
     "@simplesight/contracts": "workspace:*",

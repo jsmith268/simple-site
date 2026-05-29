@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "customers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"clerk_user_id" text,
 	"email" text NOT NULL,
-	"stripe_customer_id" text,
+	"paddle_customer_id" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "customers_clerk_user_id_unique" UNIQUE("clerk_user_id")
 );
@@ -51,9 +51,16 @@ CREATE TABLE IF NOT EXISTS "pages" (
 CREATE TABLE IF NOT EXISTS "payments" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid,
-	"stripe_payment_intent_id" text,
+	"paddle_transaction_id" text,
 	"amount_cents" integer NOT NULL,
 	"kind" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "payments_paddle_transaction_id_unique" UNIQUE("paddle_transaction_id")
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "processed_events" (
+	"event_id" text PRIMARY KEY NOT NULL,
+	"type" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -71,9 +78,10 @@ CREATE TABLE IF NOT EXISTS "projects" (
 CREATE TABLE IF NOT EXISTS "refunds" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid,
-	"stripe_refund_id" text,
+	"paddle_adjustment_id" text,
 	"amount_cents" integer NOT NULL,
 	"reason" text,
+	"status" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -110,11 +118,12 @@ CREATE TABLE IF NOT EXISTS "sites" (
 CREATE TABLE IF NOT EXISTS "subscriptions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
-	"stripe_subscription_id" text,
+	"paddle_subscription_id" text,
 	"plan" text,
 	"status" text,
 	"current_period_end" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "subscriptions_paddle_subscription_id_unique" UNIQUE("paddle_subscription_id")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "agent_costs_daily" (

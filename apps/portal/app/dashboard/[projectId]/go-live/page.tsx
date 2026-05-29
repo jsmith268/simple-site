@@ -91,7 +91,7 @@ export default async function GoLivePage({ params }: { params: Promise<{ project
           subdomain={data.subdomain}
           domains={data.domains}
           steps={data.steps}
-          refundOpen={data.refundOpen}
+          canRefund={data.canRefund}
           live={live}
         />
       </Container>

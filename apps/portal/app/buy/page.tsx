@@ -1,36 +1,49 @@
 "use client";
 
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Badge, Button, Card, Container, Eyebrow, Field, Input, Logo, Title } from "../ui";
+import { PRICES, openCheckout, paddleConfigured } from "@/lib/paddle-client";
+import { Badge, Button, Card, Container, Eyebrow, Logo, Title } from "../ui";
 
 const BUILD_FEE = 1248;
 const INCLUDED = [
-  "Two complete website directions to choose from",
-  "Built by Claude Opus 4.8 and GPT-5.5 in parallel",
-  "Unlimited refinement on your chosen design",
+  "A complete, bespoke website designed for your business",
+  "Built by Claude Opus 4.8 — not a template",
+  "Unlimited refinement until it's right",
   "A free address to launch on instantly",
   "Connect your own domain whenever you're ready",
 ];
 
 export default function BuyPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const { isSignedIn, user, isLoaded } = useUser();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   function purchase() {
     setError(null);
     start(async () => {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = (await res.json()) as { url?: string; redirect?: string; error?: string };
-      if (data.error) return setError(data.error);
-      if (data.url) return void (window.location.href = data.url);
-      if (data.redirect) return router.push(data.redirect);
+      try {
+        if (paddleConfigured()) {
+          // Live: Paddle.js overlay. The webhook creates the project on payment;
+          // customData carries the Clerk id so the project is owned correctly.
+          await openCheckout({
+            priceId: PRICES.buildFee,
+            email: user?.primaryEmailAddress?.emailAddress,
+            customData: { clerkUserId: user?.id ?? "", email: user?.primaryEmailAddress?.emailAddress ?? "" },
+            successUrl: `${window.location.origin}/dashboard`,
+          });
+          return;
+        }
+        // Offline: create the project immediately (route reads the Clerk session).
+        const res = await fetch("/api/checkout", { method: "POST" });
+        const data = (await res.json()) as { redirect?: string; error?: string };
+        if (data.error) return setError(data.error);
+        if (data.redirect) router.push(data.redirect);
+      } catch (e) {
+        setError(String((e as Error)?.message ?? e));
+      }
     });
   }
 
@@ -46,10 +59,11 @@ export default function BuyPage() {
         <div>
           <Eyebrow>Your website, built for you</Eyebrow>
           <Title as="h1" className="mt-3 text-4xl leading-[1.05] sm:text-5xl">
-            Two studios. One brief. <span className="text-brand">The site you actually wanted.</span>
+            One brief. <span className="text-brand">The site you actually wanted.</span>
           </Title>
           <p className="mt-4 max-w-md text-[16px] leading-relaxed text-ink-soft">
-            Tell us about your business in a few minutes. Two AI studios each design and build you a complete site — you compare, choose, and refine until it&apos;s right.
+            Tell us about your business in a few minutes. We design and build you a complete,
+            bespoke site — then you refine it with us until it&apos;s right.
           </p>
           <ul className="mt-6 flex flex-col gap-2.5">
             {INCLUDED.map((f) => (
@@ -71,15 +85,17 @@ export default function BuyPage() {
           <p className="mt-1 text-[14px] text-muted">One-time build fee · no subscription to start</p>
 
           <div className="mt-6 flex flex-col gap-4">
-            <Field label="Email" htmlFor="buy-email">
-              <Input id="buy-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" />
-            </Field>
-
             {error && <p className="text-[13.5px] text-danger">{error}</p>}
 
-            <Button size="lg" onClick={purchase} loading={pending} disabled={pending || !email} className="mt-1 w-full">
-              {pending ? "Starting…" : "Purchase & start onboarding"}
-            </Button>
+            {isLoaded && !isSignedIn ? (
+              <SignInButton mode="modal" forceRedirectUrl="/buy">
+                <Button size="lg" className="mt-1 w-full">Sign in to purchase</Button>
+              </SignInButton>
+            ) : (
+              <Button size="lg" onClick={purchase} loading={pending} disabled={pending || !isLoaded} className="mt-1 w-full">
+                {pending ? "Starting…" : "Purchase & start onboarding"}
+              </Button>
+            )}
             <p className="text-center text-[12px] text-muted">
               Hosting is set up later — you only choose a plan once you&apos;ve picked the design you love.
             </p>

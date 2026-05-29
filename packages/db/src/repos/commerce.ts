@@ -1,15 +1,18 @@
 import { hasDatabase } from '@simplesight/env';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../client';
-import { customers, payments, projects } from '../schema/core';
+import { customers, payments, processedEvents, projects, refunds, subscriptions } from '../schema/core';
 import * as store from '../offline-store';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface PurchaseInput {
   email: string;
-  stripeCustomerId?: string;
-  paymentIntentId?: string;
+  /** When present (live Paddle webhook), the project is owned by this Clerk user. */
+  clerkUserId?: string;
+  paddleCustomerId?: string;
+  /** Paddle transaction id — unique, makes fulfillment idempotent on webhook replay. */
+  transactionId?: string;
   amountCents: number;
 }
 
@@ -25,16 +28,26 @@ export interface ProjectRecord {
 
 /**
  * Create (or reuse) a customer and a fresh purchased project. Called from the
- * Stripe webhook on checkout.session.completed (or the offline instant-purchase).
+ * Paddle webhook on transaction.completed (or the offline instant-purchase).
+ *
+ * Idempotent: if a payment with the same Paddle transaction id already exists,
+ * the existing project is returned instead of creating a duplicate (Paddle
+ * delivers webhooks at-least-once).
  */
 export async function createPurchasedProject(input: PurchaseInput): Promise<{ projectId: string; customerId: string }> {
   const refundDeadline = new Date(Date.now() + THIRTY_DAYS_MS);
 
   if (!hasDatabase()) {
-    let customer = store.findOne('customers', (c) => c.email === input.email);
-    if (!customer) {
-      customer = store.insert('customers', { email: input.email, stripeCustomerId: input.stripeCustomerId });
+    if (input.transactionId) {
+      const dup = store.findOne('payments', (p) => p.paddleTransactionId === input.transactionId);
+      if (dup) {
+        const proj = store.findOne('projects', (r) => r.id === dup.projectId);
+        if (proj) return { projectId: proj.id, customerId: proj.customerId };
+      }
     }
+    const customer = input.clerkUserId
+      ? await getOrCreateCustomerByClerkId(input.clerkUserId, input.email)
+      : reuseOrInsertCustomerOffline(input.email, input.paddleCustomerId);
     const project = store.insert('projects', {
       customerId: customer.id,
       username: null,
@@ -44,11 +57,30 @@ export async function createPurchasedProject(input: PurchaseInput): Promise<{ pr
     });
     store.insert('payments', {
       projectId: project.id,
-      stripePaymentIntentId: input.paymentIntentId,
+      paddleTransactionId: input.transactionId,
       amountCents: input.amountCents,
       kind: 'build_fee',
     });
     return { projectId: project.id, customerId: customer.id };
+  }
+
+  if (input.transactionId) {
+    const dup = await db
+      .select({ projectId: payments.projectId })
+      .from(payments)
+      .where(eq(payments.paddleTransactionId, input.transactionId))
+      .limit(1);
+    if (dup[0]?.projectId) {
+      const proj = await db.select().from(projects).where(eq(projects.id, dup[0].projectId)).limit(1);
+      if (proj[0]) return { projectId: proj[0].id, customerId: proj[0].customerId };
+    }
+  }
+  if (input.clerkUserId) {
+    const c = await getOrCreateCustomerByClerkId(input.clerkUserId, input.email);
+    if (input.paddleCustomerId) {
+      await db.update(customers).set({ paddleCustomerId: input.paddleCustomerId }).where(eq(customers.id, c.id));
+    }
+    return insertProjectAndPaymentPg(c.id, input, refundDeadline);
   }
 
   const existing = await db.select().from(customers).where(eq(customers.email, input.email)).limit(1);
@@ -56,27 +88,39 @@ export async function createPurchasedProject(input: PurchaseInput): Promise<{ pr
   if (!customerId) {
     const inserted = await db
       .insert(customers)
-      .values({ email: input.email, stripeCustomerId: input.stripeCustomerId })
+      .values({ email: input.email, paddleCustomerId: input.paddleCustomerId })
       .returning({ id: customers.id });
     customerId = inserted[0]?.id as string;
   }
-  const proj = await db
-    .insert(projects)
-    .values({
-      customerId,
-      status: 'purchased',
-      buildFeePaidAt: new Date(),
-      refundDeadlineAt: refundDeadline,
-    })
-    .returning({ id: projects.id });
-  const projectId = proj[0]?.id as string;
-  await db.insert(payments).values({
-    projectId,
-    stripePaymentIntentId: input.paymentIntentId,
-    amountCents: input.amountCents,
-    kind: 'build_fee',
+  return insertProjectAndPaymentPg(customerId, input, refundDeadline);
+}
+
+function reuseOrInsertCustomerOffline(email: string, paddleCustomerId?: string): { id: string; email: string } {
+  const found = email ? store.findOne('customers', (c) => c.email === email) : undefined;
+  if (found) return { id: found.id, email: found.email };
+  const c = store.insert('customers', { email, paddleCustomerId });
+  return { id: c.id, email: c.email };
+}
+
+async function insertProjectAndPaymentPg(
+  customerId: string,
+  input: PurchaseInput,
+  refundDeadline: Date,
+): Promise<{ projectId: string; customerId: string }> {
+  return db.transaction(async (tx) => {
+    const proj = await tx
+      .insert(projects)
+      .values({ customerId, status: 'purchased', buildFeePaidAt: new Date(), refundDeadlineAt: refundDeadline })
+      .returning({ id: projects.id });
+    const projectId = proj[0]?.id as string;
+    await tx.insert(payments).values({
+      projectId,
+      paddleTransactionId: input.transactionId,
+      amountCents: input.amountCents,
+      kind: 'build_fee',
+    });
+    return { projectId, customerId };
   });
-  return { projectId, customerId };
 }
 
 /** Look up a customer by their Clerk user id (auth identity → domain identity). */
@@ -188,4 +232,177 @@ export async function listProjects(): Promise<ProjectRecord[]> {
     refundDeadlineAt: p.refundDeadlineAt ? p.refundDeadlineAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   }));
+}
+
+// ── Webhook idempotency ──────────────────────────────────────────────────────
+
+export async function isEventProcessed(eventId: string): Promise<boolean> {
+  if (!hasDatabase()) return !!store.findOne('processed_events', (e) => e.eventId === eventId);
+  const rows = await db
+    .select({ id: processedEvents.eventId })
+    .from(processedEvents)
+    .where(eq(processedEvents.eventId, eventId))
+    .limit(1);
+  return !!rows[0];
+}
+
+export async function markEventProcessed(eventId: string, type?: string): Promise<void> {
+  if (!hasDatabase()) {
+    if (!store.findOne('processed_events', (e) => e.eventId === eventId)) {
+      store.insert('processed_events', { eventId, type });
+    }
+    return;
+  }
+  await db.insert(processedEvents).values({ eventId, type }).onConflictDoNothing();
+}
+
+// ── Hosting subscription persistence ─────────────────────────────────────────
+
+export interface SubscriptionInput {
+  projectId: string;
+  paddleSubscriptionId?: string;
+  plan?: string;
+  status?: string;
+  currentPeriodEnd?: string;
+}
+
+/** Upsert the hosting subscription for a project (webhook + offline start). */
+export async function recordSubscription(input: SubscriptionInput): Promise<void> {
+  if (!hasDatabase()) {
+    const existing = input.paddleSubscriptionId
+      ? store.findOne('subscriptions', (s) => s.paddleSubscriptionId === input.paddleSubscriptionId)
+      : store.findOne('subscriptions', (s) => s.projectId === input.projectId);
+    if (existing) {
+      store.update('subscriptions', (s) => s.id === existing.id, {
+        plan: input.plan ?? existing.plan,
+        status: input.status ?? existing.status,
+        paddleSubscriptionId: input.paddleSubscriptionId ?? existing.paddleSubscriptionId,
+        currentPeriodEnd: input.currentPeriodEnd ?? existing.currentPeriodEnd,
+      });
+    } else {
+      store.insert('subscriptions', {
+        projectId: input.projectId,
+        paddleSubscriptionId: input.paddleSubscriptionId,
+        plan: input.plan,
+        status: input.status ?? 'active',
+        currentPeriodEnd: input.currentPeriodEnd,
+      });
+    }
+    return;
+  }
+  const periodEnd = input.currentPeriodEnd ? new Date(input.currentPeriodEnd) : undefined;
+  if (input.paddleSubscriptionId) {
+    await db
+      .insert(subscriptions)
+      .values({
+        projectId: input.projectId,
+        paddleSubscriptionId: input.paddleSubscriptionId,
+        plan: input.plan,
+        status: input.status,
+        currentPeriodEnd: periodEnd,
+      })
+      .onConflictDoUpdate({
+        target: subscriptions.paddleSubscriptionId,
+        set: { plan: input.plan, status: input.status, currentPeriodEnd: periodEnd },
+      });
+  } else {
+    await db.insert(subscriptions).values({
+      projectId: input.projectId,
+      plan: input.plan,
+      status: input.status ?? 'active',
+      currentPeriodEnd: periodEnd,
+    });
+  }
+}
+
+export async function setSubscriptionStatus(paddleSubscriptionId: string, status: string): Promise<void> {
+  if (!hasDatabase()) {
+    store.update('subscriptions', (s) => s.paddleSubscriptionId === paddleSubscriptionId, { status });
+    return;
+  }
+  await db
+    .update(subscriptions)
+    .set({ status })
+    .where(eq(subscriptions.paddleSubscriptionId, paddleSubscriptionId));
+}
+
+/** True when the project has a hosting subscription that is active (gates go-live). */
+export async function hasActiveSubscription(projectId: string): Promise<boolean> {
+  if (!hasDatabase()) {
+    return !!store.findOne(
+      'subscriptions',
+      (s) => s.projectId === projectId && (s.status === 'active' || s.status === 'trialing'),
+    );
+  }
+  const rows = await db
+    .select({ status: subscriptions.status })
+    .from(subscriptions)
+    .where(eq(subscriptions.projectId, projectId));
+  return rows.some((r) => r.status === 'active' || r.status === 'trialing');
+}
+
+/** Map a Paddle subscription id back to its project (for status webhooks). */
+export async function getProjectIdBySubscription(paddleSubscriptionId: string): Promise<string | undefined> {
+  if (!hasDatabase()) {
+    return store.findOne('subscriptions', (s) => s.paddleSubscriptionId === paddleSubscriptionId)?.projectId;
+  }
+  const rows = await db
+    .select({ projectId: subscriptions.projectId })
+    .from(subscriptions)
+    .where(eq(subscriptions.paddleSubscriptionId, paddleSubscriptionId))
+    .limit(1);
+  return rows[0]?.projectId;
+}
+
+/** The Paddle ids needed to refund + cancel (build-fee txn + hosting sub). */
+export async function getBillingIdsForProject(
+  projectId: string,
+): Promise<{ transactionId?: string; subscriptionId?: string }> {
+  if (!hasDatabase()) {
+    const pay = store.findOne('payments', (p) => p.projectId === projectId && p.kind === 'build_fee');
+    const sub = store.findOne('subscriptions', (s) => s.projectId === projectId);
+    return { transactionId: pay?.paddleTransactionId, subscriptionId: sub?.paddleSubscriptionId };
+  }
+  const pay = await db
+    .select({ tx: payments.paddleTransactionId })
+    .from(payments)
+    .where(and(eq(payments.projectId, projectId), eq(payments.kind, 'build_fee')))
+    .limit(1);
+  const sub = await db
+    .select({ sid: subscriptions.paddleSubscriptionId })
+    .from(subscriptions)
+    .where(eq(subscriptions.projectId, projectId))
+    .limit(1);
+  return { transactionId: pay[0]?.tx ?? undefined, subscriptionId: sub[0]?.sid ?? undefined };
+}
+
+// ── Refunds ──────────────────────────────────────────────────────────────────
+
+export async function recordRefund(input: {
+  projectId: string;
+  paddleAdjustmentId?: string;
+  amountCents: number;
+  reason?: string;
+  status?: string;
+}): Promise<void> {
+  const values = {
+    projectId: input.projectId,
+    paddleAdjustmentId: input.paddleAdjustmentId,
+    amountCents: input.amountCents,
+    reason: input.reason,
+    status: input.status ?? 'pending_approval',
+  };
+  if (!hasDatabase()) {
+    store.insert('refunds', values);
+    return;
+  }
+  await db.insert(refunds).values(values);
+}
+
+export async function updateRefundStatus(paddleAdjustmentId: string, status: string): Promise<void> {
+  if (!hasDatabase()) {
+    store.update('refunds', (r) => r.paddleAdjustmentId === paddleAdjustmentId, { status });
+    return;
+  }
+  await db.update(refunds).set({ status }).where(eq(refunds.paddleAdjustmentId, paddleAdjustmentId));
 }

@@ -24,7 +24,7 @@ export function GoLiveClient(props: {
   subdomain: string | null;
   domains: { domain: string; type: string; verified: boolean }[];
   steps: Record<string, unknown>[];
-  refundOpen: boolean;
+  canRefund: boolean;
   live: boolean;
 }) {
   const router = useRouter();
@@ -141,7 +141,7 @@ export function GoLiveClient(props: {
         </Card>
       )}
 
-      {props.refundOpen && (
+      {props.canRefund && (
         <Card className="mt-8 border-danger/30 bg-danger-soft/40 p-5">
           <h3 className="text-[15px] font-semibold text-danger">30-day money-back guarantee</h3>
           <p className="mt-1 text-[13.5px] text-ink-soft">Not happy? Get a full refund within 30 days. This unpublishes your site and releases the address.</p>
