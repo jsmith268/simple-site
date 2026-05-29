@@ -7,6 +7,27 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Skip-to-content link — offscreen until keyboard focus (WCAG 2.4.1 Bypass Blocks). */
+.ss-skip {
+  position: absolute;
+  left: 8px;
+  top: -56px;
+  z-index: 10000;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--ss-fg, #111);
+  color: var(--ss-bg, #fff);
+  font: 600 14px/1.2 var(--ss-font-body, system-ui, sans-serif);
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.ss-skip:focus {
+  top: 8px;
+  outline: 2px solid var(--ss-accent, #2563eb);
+  outline-offset: 2px;
+}
+
 .ss-site ::selection {
   background: var(--ss-accent);
   color: var(--ss-bg);

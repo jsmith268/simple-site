@@ -36,10 +36,26 @@ export function SitePage({ spec, slug = '' }: { spec: SiteSpec; slug?: string })
   };
 
   const blocks = page ? [...page.blocks].sort((a, b) => a.order - b.order) : [];
+  // Wrap the page body in a <main> landmark (nav/footer stay outside) so the
+  // skip link has a target and assistive tech gets proper document structure.
+  const navBlocks = blocks.filter((b) => b.type === 'nav');
+  const footerBlocks = blocks.filter((b) => b.type === 'footer');
+  const mainBlocks = blocks.filter((b) => b.type !== 'nav' && b.type !== 'footer');
 
   return (
     <div className="ss-site" style={wrapper}>
-      {blocks.map((b) => (
+      <a href="#ss-main" className="ss-skip">
+        Skip to content
+      </a>
+      {navBlocks.map((b) => (
+        <BlockRenderer key={b.id} instance={b} />
+      ))}
+      <main id="ss-main">
+        {mainBlocks.map((b) => (
+          <BlockRenderer key={b.id} instance={b} />
+        ))}
+      </main>
+      {footerBlocks.map((b) => (
         <BlockRenderer key={b.id} instance={b} />
       ))}
     </div>
