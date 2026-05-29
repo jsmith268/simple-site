@@ -39,6 +39,24 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
+          {
+            // Defense-in-depth alongside escaped JSON-LD. Permissive on script/style
+            // (Next injects inline bootstrap + the renderer uses inline theme styles)
+            // but locks down object/base-uri and constrains where assets can load.
+            // frame-ancestors is intentionally omitted so the portal can iframe previews.
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "img-src 'self' data: blob: https:",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "script-src 'self' 'unsafe-inline'",
+              "connect-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];

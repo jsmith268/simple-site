@@ -84,6 +84,20 @@ function findPage(spec: SiteSpec, slug: string): SiteSpec["pages"][number] | und
   return spec.pages.find((p) => (p.slug ?? "").replace(/^\/+|\/+$/g, "") === norm);
 }
 
+/**
+ * Escape a JSON-LD string for safe injection into <script>. SiteSpec content is
+ * AI-generated from crawled URLs + customer free-text — NOT trusted — so a value
+ * containing `</script>` must not be able to break out of the JSON-LD block.
+ */
+export function escapeJsonLd(json: string): string {
+  return json
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 /** FAQPage JSON-LD built from any faq block on the given page. Null if none. */
 export function faqJsonLd(spec: SiteSpec, slug: string): string | null {
   const norm = slug.replace(/^\/+|\/+$/g, "");

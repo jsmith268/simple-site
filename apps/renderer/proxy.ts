@@ -11,7 +11,9 @@ export function proxy(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = (req.headers.get("host") ?? "").split(":")[0] ?? "";
 
-  let tenant = url.searchParams.get("tenant") ?? undefined;
+  // The ?tenant= shortcut is a local-dev convenience only — never honor it in
+  // production, where the host→tenant binding must be authoritative.
+  let tenant = process.env.NODE_ENV !== "production" ? url.searchParams.get("tenant") ?? undefined : undefined;
   if (
     !tenant &&
     hostname.endsWith(`.${ROOT}`) &&

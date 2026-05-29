@@ -2,7 +2,7 @@ import { SitePage } from "@simplesight/blocks";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prefixLinks } from "@/lib/links";
-import { breadcrumbJsonLd, faqJsonLd, pageMetadata, siteJsonLd, tenantUrl } from "@/lib/seo";
+import { breadcrumbJsonLd, escapeJsonLd, faqJsonLd, pageMetadata, siteJsonLd, tenantUrl } from "@/lib/seo";
 import { loadSiteSpec } from "@/lib/tenant";
 import { HitBeacon } from "./hit-beacon";
 
@@ -36,19 +36,20 @@ export default async function TenantPage({
   // Make internal nav work under the tenant base path (works via subdomain or preview URL).
   const spec = prefixLinks(raw, `/site/${encodeURIComponent(username)}`);
   const inSitePath = `/${(slug ?? []).join("/")}`;
+  // SiteSpec content is AI/crawl/customer-derived → escape before injecting.
   const crumb = breadcrumbJsonLd(raw, tenantUrl(username), slugStr);
   const faq = faqJsonLd(raw, slugStr);
   return (
     <>
-      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is server-built from our own SiteSpec */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteJsonLd(raw, tenantUrl(username)) }} />
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: escaped JSON-LD (escapeJsonLd neutralizes </script>) */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: escapeJsonLd(siteJsonLd(raw, tenantUrl(username))) }} />
       {crumb && (
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: server-built BreadcrumbList from our own SiteSpec
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: crumb }} />
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: escaped JSON-LD
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: escapeJsonLd(crumb) }} />
       )}
       {faq && (
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: server-built FAQPage from our own SiteSpec
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: faq }} />
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: escaped JSON-LD
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: escapeJsonLd(faq) }} />
       )}
       <SitePage spec={spec} slug={(slug ?? []).join("/")} />
       <HitBeacon username={username} path={inSitePath} />

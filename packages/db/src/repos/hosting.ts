@@ -73,7 +73,13 @@ export async function recordConnectionStep(
     store.insert('connection_steps', { siteId, stepName, status, attemptNumber: 1, metadata });
     return;
   }
-  await db.insert(connectionSteps).values({ siteId, stepName, status, metadata: metadata as object });
+  await db
+    .insert(connectionSteps)
+    .values({ siteId, stepName, status, metadata: metadata as object })
+    .onConflictDoUpdate({
+      target: [connectionSteps.siteId, connectionSteps.stepName, connectionSteps.attemptNumber],
+      set: { status, metadata: metadata as object },
+    });
 }
 
 export async function listConnectionSteps(projectId: string): Promise<Record<string, unknown>[]> {

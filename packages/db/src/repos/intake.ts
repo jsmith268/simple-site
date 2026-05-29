@@ -28,7 +28,17 @@ export async function reserveUsername(
     .where(and(eq(projects.username, u), ne(projects.id, projectId)))
     .limit(1);
   if (taken.length) return { ok: false, error: 'That name is taken.' };
-  await db.update(projects).set({ username: u }).where(eq(projects.id, projectId));
+  try {
+    await db.update(projects).set({ username: u }).where(eq(projects.id, projectId));
+  } catch (err) {
+    // The unique index on projects.username is the real guard — if two requests
+    // race past the check above, the loser hits a unique violation here.
+    const msg = String(err).toLowerCase();
+    if (msg.includes('projects_username_uq') || msg.includes('unique')) {
+      return { ok: false, error: 'That name is taken.' };
+    }
+    throw err;
+  }
   return { ok: true };
 }
 

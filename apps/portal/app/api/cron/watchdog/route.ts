@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { runBuildPipeline } from "@simplesight/agents";
 import { findStaleRuns } from "@simplesight/db";
 import { logger } from "@simplesight/observability";
@@ -8,19 +9,25 @@ export const maxDuration = 300;
 
 const STALE_MS = 15 * 60 * 1000; // a run with no progress for 15 min is stuck
 
+function tokenOk(authHeader: string | null, secret: string): boolean {
+  if (!authHeader) return false;
+  const a = Buffer.from(authHeader);
+  const b = Buffer.from(`Bearer ${secret}`);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 /**
  * Watchdog: finds builds stuck mid-run (crash, timeout, redeploy) and restarts
- * them. Re-running is safe — saveSiteSpec replaces, and the deterministic floor
- * guarantees a site. Schedule via Vercel Cron. Auth: CRON_SECRET (skipped when
- * unset, e.g. local/offline).
+ * them. Schedule via Vercel Cron. Auth: CRON_SECRET — REQUIRED in production
+ * (rejects when unset); skipped only outside production (local/offline).
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  const isProd = process.env.NODE_ENV === "production";
+  if (!secret) {
+    if (isProd) return NextResponse.json({ error: "cron not configured" }, { status: 401 });
+  } else if (!tokenOk(req.headers.get("authorization"), secret)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const stale = await findStaleRuns(STALE_MS);
