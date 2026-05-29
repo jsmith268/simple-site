@@ -26,6 +26,7 @@ export function Compare({
   const [busy, setBusy] = useState<string | null>(null);
   const [showRegen, setShowRegen] = useState(false);
   const remaining = Math.max(0, max - used);
+  const multi = variants.length > 1;
 
   function choose(variantId: string) {
     setBusy(`select:${variantId}`);
@@ -50,14 +51,16 @@ export function Compare({
       <div className="flex flex-col items-center gap-2 text-center">
         <Eyebrow>Round {round} of {max}</Eyebrow>
         <Title as="h1" className="text-3xl sm:text-[40px]">
-          Two directions, built for you
+          {multi ? "Two directions, built for you" : "Your site, built for you"}
         </Title>
         <p className="max-w-xl text-[15px] leading-relaxed text-ink-soft">
-          Each studio took your brief and ran with it. Click through both, then keep the one that feels right — or tell us what to change and we&apos;ll try again.
+          {multi
+            ? "Each studio took your brief and ran with it. Click through both, then keep the one that feels right — or tell us what to change and we'll try again."
+            : "We took your brief and built you a complete, bespoke site. Open the full preview, then keep it — or tell us what to change and we'll rework it."}
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className={cn("mt-10 grid grid-cols-1 gap-6", multi ? "lg:grid-cols-2" : "mx-auto max-w-3xl")}>
         {variants.map((v) => (
           <VariantCard key={v.id} variant={v} onChoose={() => choose(v.id)} busy={busy === `select:${v.id}`} disabled={pending} />
         ))}
@@ -66,16 +69,16 @@ export function Compare({
       <div className="mt-10">
         {!showRegen ? (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-[14px] text-ink-soft">Neither quite right?</p>
+            <p className="text-[14px] text-ink-soft">{multi ? "Neither quite right?" : "Not quite right?"}</p>
             <Button variant="secondary" onClick={() => setShowRegen(true)} disabled={remaining === 0}>
-              {remaining === 0 ? "No regenerations left" : `Regenerate both — ${remaining} of ${max} left`}
+              {remaining === 0 ? "No regenerations left" : `${multi ? "Regenerate both" : "Regenerate"} — ${remaining} of ${max} left`}
             </Button>
             {remaining === 0 && (
               <p className="text-[13px] text-muted">You&apos;ve explored all {max} rounds. Pick the closest and refine it — refinement is unlimited per change.</p>
             )}
           </div>
         ) : (
-          <RegenPanel onCancel={() => setShowRegen(false)} onSubmit={regenerate} busy={busy === "regen"} remaining={remaining} />
+          <RegenPanel onCancel={() => setShowRegen(false)} onSubmit={regenerate} busy={busy === "regen"} remaining={remaining} multi={multi} />
         )}
       </div>
     </Container>
@@ -131,7 +134,7 @@ function BuildingPulse({ label }: { label: string }) {
   );
 }
 
-function RegenPanel({ onCancel, onSubmit, busy, remaining }: { onCancel: () => void; onSubmit: (f: RegenFeedback) => void; busy: boolean; remaining: number }) {
+function RegenPanel({ onCancel, onSubmit, busy, remaining, multi }: { onCancel: () => void; onSubmit: (f: RegenFeedback) => void; busy: boolean; remaining: number; multi: boolean }) {
   const [liked, setLiked] = useState("");
   const [disliked, setDisliked] = useState("");
   const [preferred, setPreferred] = useState<"A" | "B" | undefined>(undefined);
@@ -150,15 +153,17 @@ function RegenPanel({ onCancel, onSubmit, busy, remaining }: { onCancel: () => v
           <span className="text-[13px] font-medium text-ink-soft">What missed? Change this.</span>
           <Textarea value={disliked} onChange={(e) => setDisliked(e.target.value)} placeholder="e.g. too corporate, hero feels empty, wrong vibe for a family café" />
         </label>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13px] text-ink-soft">Leaning toward one?</span>
-          <Chip as="button" selected={preferred === "A"} onClick={() => setPreferred(preferred === "A" ? undefined : "A")}>
-            Studio A
-          </Chip>
-          <Chip as="button" selected={preferred === "B"} onClick={() => setPreferred(preferred === "B" ? undefined : "B")}>
-            Studio B
-          </Chip>
-        </div>
+        {multi && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] text-ink-soft">Leaning toward one?</span>
+            <Chip as="button" selected={preferred === "A"} onClick={() => setPreferred(preferred === "A" ? undefined : "A")}>
+              Studio A
+            </Chip>
+            <Chip as="button" selected={preferred === "B"} onClick={() => setPreferred(preferred === "B" ? undefined : "B")}>
+              Studio B
+            </Chip>
+          </div>
+        )}
       </div>
       <div className="mt-5 flex items-center gap-2">
         <Button onClick={() => onSubmit({ liked, disliked, preferredSlot: preferred })} loading={busy} disabled={busy}>

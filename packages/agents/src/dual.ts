@@ -30,19 +30,32 @@ import { profileFromIntake } from './bespoke/profile';
 import { renderVerify } from './render-verify';
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Dual-model generation: every round produces TWO variants in parallel —
- * Studio A (Claude Opus 4.8) and Studio B (GPT-5.5). The customer compares,
- * then SELECTS one or REGENERATES with feedback (up to 5 rounds = 10 designs).
+ * Generation rounds. By default (STUDIO_VARIANTS=1) we build a SINGLE bespoke
+ * site with Claude Opus 4.8 via the direct Anthropic key — the primary path.
+ * Set STUDIO_VARIANTS=2 (and SIMPLESIGHT_MODEL_B / a gateway key) to restore the
+ * dual studio (Studio A = Opus, Studio B = GPT-5.5) compare experience.
  *
  *  - Online (AI + Vercel keys): each variant is a real bespoke Next app built by
- *    its model and deployed to a preview URL, vetted by the convergence loop.
+ *    its model and deployed to a preview URL, vetted by the convergence loop. A
+ *    live build that fails is HELD (surfaced), never silently swapped for a
+ *    template — the customer paid for the bespoke product.
  *  - Offline/dev: each variant is a distinct, renderable SiteSpec served by the
  *    multi-tenant renderer at /preview/variant/<id>, so the whole flow is
- *    demonstrable with zero external services. A round ALWAYS yields two
- *    viewable variants — the zero-fail guarantee extends to the compare step.
+ *    demonstrable with zero external services.
  * ────────────────────────────────────────────────────────────────────────── */
 
 const BUILD_ROOT = process.env.SIMPLESIGHT_BUILD_DIR ?? join(tmpdir(), 'simplesight-builds');
+
+/** How many variants to generate per round. 1 = single Opus (default), 2 = dual studio. */
+function studioVariants(): number {
+  return Number(process.env.STUDIO_VARIANTS ?? '1') >= 2 ? 2 : 1;
+}
+
+/** Optional per-variant spend cap (cents) for live bespoke builds. */
+function costCeilingCents(): number | undefined {
+  const n = Number(process.env.SIMPLESIGHT_COST_CEILING_CENTS ?? '');
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
 
 function rendererBase(): string {
   const r = process.env.NEXT_PUBLIC_RENDERER_URL;
@@ -140,7 +153,7 @@ export async function runRound(projectId: string, feedback?: RegenFeedback): Pro
 
   const intake = await getIntake(projectId);
   const business = businessFromIntake(intake);
-  const slots: VariantSlot[] = ['A', 'B'];
+  const slots: VariantSlot[] = studioVariants() >= 2 ? ['A', 'B'] : ['A'];
   const model = { A: DUEL_MODELS.A, B: DUEL_MODELS.B };
 
   // Create the two variant records up front so the compare screen can show
@@ -177,19 +190,25 @@ export async function runRound(projectId: string, feedback?: RegenFeedback): Pro
           await buildBespokeVariant(projectId, v, business, feedback);
         }
       } catch (err) {
-        logger.error('dual.variant_failed', { projectId, variantId: v.id, slot: v.slot, error: String(err) });
-        // Never leave a customer with a dead card: fall back to a renderable spec.
-        try {
-          const { spec, family } = buildOfflineSpec(business, v.slot);
-          await saveVariantSpec(v.id, spec);
-          await updateVariant(v.id, {
-            status: 'ready',
-            previewUrl: variantPreviewUrl(v.id),
-            summary: DESIGN_BLURB[family] ?? 'A distinctive, on-brand direction.',
-            error: `fell back to baseline: ${String((err as Error)?.message ?? err)}`,
-          });
-        } catch (err2) {
-          await updateVariant(v.id, { status: 'failed', error: String((err2 as Error)?.message ?? err2) });
+        const msg = String((err as Error)?.message ?? err);
+        logger.error('dual.variant_failed', { projectId, variantId: v.id, slot: v.slot, error: msg });
+        if (isOffline()) {
+          // Offline the template IS the product → safe deterministic fallback.
+          try {
+            const { spec, family } = buildOfflineSpec(business, v.slot);
+            await saveVariantSpec(v.id, spec);
+            await updateVariant(v.id, {
+              status: 'ready',
+              previewUrl: variantPreviewUrl(v.id),
+              summary: DESIGN_BLURB[family] ?? 'A distinctive, on-brand direction.',
+            });
+          } catch (err2) {
+            await updateVariant(v.id, { status: 'failed', error: String((err2 as Error)?.message ?? err2) });
+          }
+        } else {
+          // LIVE: do NOT pass off a template as the bespoke product. Hold it so a
+          // human is alerted (e.g. a gateway 402/403 means Opus didn't actually run).
+          await updateVariant(v.id, { status: 'held', error: msg });
         }
       }
     }),
@@ -236,6 +255,7 @@ async function buildBespokeVariant(
     model: variant.model,
     deploy,
     visualCritic: !!deploy,
+    costCeilingCents: costCeilingCents(),
   });
 
   const review = readJson<{ designScore?: number; contentScore?: number }>(join(dir, '.simplesight', 'review-report.json'));
