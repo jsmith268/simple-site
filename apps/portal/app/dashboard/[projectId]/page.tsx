@@ -44,7 +44,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ proj
       <header className="border-b border-line/70 bg-paper/80 backdrop-blur">
         <Container size="md" className="flex h-16 items-center justify-between">
           <Logo />
-          <Badge tone={info.tone}>{info.label}</Badge>
+          <div className="flex items-center gap-4">
+            <Link href={`/dashboard/${projectId}/settings`} className="text-[13px] text-ink-soft hover:text-ink">Edit details</Link>
+            <Badge tone={info.tone}>{info.label}</Badge>
+          </div>
         </Container>
       </header>
 
