@@ -146,6 +146,7 @@ export async function resilientGenerateText(opts: {
       return await generateText({
         model: resolveModel(opts.model),
         ...buildCallArgs(opts.model, opts.system, opts.prompt, opts.cacheSystem),
+        allowSystemInMessages: true, // our cached-prefix path puts the system in messages by design
         maxOutputTokens: opts.maxOutputTokens ?? 8000,
         ...(opts.temperature != null ? { temperature: opts.temperature } : {}),
         abortSignal: signals.length === 1 ? signals[0] : signals.length > 1 ? AbortSignal.any(signals) : undefined,

@@ -92,22 +92,28 @@ export async function reviewSite(args: ReviewArgs): Promise<SiteReview> {
     );
   }
 
-  for (const p of args.pages) {
-    const url = bypassUrl(`${base}${p.slug === '/' ? '' : p.slug}`);
-    const shoot = () => runVisualCritic({ url, brief: args.brief, pageName: p.name, model, provider, fullPage: true }).then((r) => r.report);
-    // Design (full-page screenshot) and content (rendered text) in parallel.
-    const [firstDesign, text] = await Promise.all([shoot(), fetchText(url)]);
-    let design = firstDesign;
-    // A blank/failed capture must not falsely reject the page. Retry once; if
-    // still blank, don't assess (and don't block) — flag it for a manual look.
-    if (looksBlankCapture(design)) {
-      design = await shoot().catch(() => design);
-      if (looksBlankCapture(design)) design = NOT_ASSESSED;
-    }
-    const content = await runContentCritic({ text, brief: args.brief, pageName: p.name, model });
-    pages.push({ slug: p.slug, name: p.name, design, content });
-    for (const f of [...design.findings, ...content.findings]) {
-      if (f.severity === 'block') blocking.push({ ...f, area: `${p.name}/${f.area}` });
+  // Review every page IN PARALLEL (was sequential — ~5× faster wall-clock).
+  const reviewed = await Promise.all(
+    args.pages.map(async (p): Promise<PageReview> => {
+      const url = bypassUrl(`${base}${p.slug === '/' ? '' : p.slug}`);
+      const shoot = () => runVisualCritic({ url, brief: args.brief, pageName: p.name, model, provider, fullPage: true }).then((r) => r.report);
+      // Design (full-page screenshot) + content (rendered text) in parallel.
+      const [firstDesign, text] = await Promise.all([shoot(), fetchText(url)]);
+      let design = firstDesign;
+      // A blank/failed capture must not falsely reject the page. Retry once; if
+      // still blank, don't assess (and don't block) — flag it for a manual look.
+      if (looksBlankCapture(design)) {
+        design = await shoot().catch(() => design);
+        if (looksBlankCapture(design)) design = NOT_ASSESSED;
+      }
+      const content = await runContentCritic({ text, brief: args.brief, pageName: p.name, model });
+      return { slug: p.slug, name: p.name, design, content };
+    }),
+  );
+  pages.push(...reviewed);
+  for (const pr of pages) {
+    for (const f of [...pr.design.findings, ...pr.content.findings]) {
+      if (f.severity === 'block') blocking.push({ ...f, area: `${pr.name}/${f.area}` });
     }
   }
 
