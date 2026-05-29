@@ -2,22 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Badge, Button, Card, Chip, Container, Eyebrow, Field, Input, Logo, Title } from "../ui";
+import { Badge, Button, Card, Container, Eyebrow, Field, Input, Logo, Title } from "../ui";
 
 const BUILD_FEE = 1248;
-const HOSTING = { monthly: 29, annual: 290 };
 const INCLUDED = [
   "Two complete website directions to choose from",
   "Built by Claude Opus 4.8 and GPT-5.5 in parallel",
   "Unlimited refinement on your chosen design",
-  "Hosting, SSL, and a free address included",
-  "Connect your own domain anytime",
+  "A free address to launch on instantly",
+  "Connect your own domain whenever you're ready",
 ];
 
 export default function BuyPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [plan, setPlan] = useState<"monthly" | "annual">("monthly");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -27,7 +25,7 @@ export default function BuyPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, plan }),
+        body: JSON.stringify({ email }),
       });
       const data = (await res.json()) as { url?: string; redirect?: string; error?: string };
       if (data.error) return setError(data.error);
@@ -45,7 +43,6 @@ export default function BuyPage() {
       </header>
 
       <Container size="md" className="grid items-start gap-10 py-14 md:grid-cols-2">
-        {/* Pitch */}
         <div>
           <Eyebrow>Your website, built for you</Eyebrow>
           <Title as="h1" className="mt-3 text-4xl leading-[1.05] sm:text-5xl">
@@ -66,37 +63,26 @@ export default function BuyPage() {
           </ul>
         </div>
 
-        {/* Purchase card */}
         <Card className="p-7">
           <div className="flex items-baseline justify-between">
             <span className="font-display text-[40px] font-semibold leading-none">${BUILD_FEE.toLocaleString()}</span>
             <Badge tone="success">30-day money back</Badge>
           </div>
-          <p className="mt-1 text-[14px] text-muted">One-time build fee · then hosting below</p>
+          <p className="mt-1 text-[14px] text-muted">One-time build fee · no subscription to start</p>
 
           <div className="mt-6 flex flex-col gap-4">
             <Field label="Email" htmlFor="buy-email">
               <Input id="buy-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" />
             </Field>
 
-            <div>
-              <p className="mb-2 text-[13px] font-medium text-ink-soft">Hosting plan</p>
-              <div className="flex gap-2">
-                <Chip as="button" selected={plan === "monthly"} onClick={() => setPlan("monthly")}>
-                  ${HOSTING.monthly}/mo
-                </Chip>
-                <Chip as="button" selected={plan === "annual"} onClick={() => setPlan("annual")}>
-                  ${HOSTING.annual}/yr · save 2 months
-                </Chip>
-              </div>
-            </div>
-
             {error && <p className="text-[13.5px] text-danger">{error}</p>}
 
             <Button size="lg" onClick={purchase} loading={pending} disabled={pending || !email} className="mt-1 w-full">
               {pending ? "Starting…" : "Purchase & start onboarding"}
             </Button>
-            <p className="text-center text-[12px] text-muted">No discovery calls, no slide decks. You&apos;ll be scoping your site in the next minute.</p>
+            <p className="text-center text-[12px] text-muted">
+              Hosting is set up later — you only choose a plan once you&apos;ve picked the design you love.
+            </p>
           </div>
         </Card>
       </Container>
